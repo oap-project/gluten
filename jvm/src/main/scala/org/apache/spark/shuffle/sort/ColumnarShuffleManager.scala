@@ -110,7 +110,6 @@ class ColumnarShuffleManager(conf: SparkConf) extends ShuffleManager with Loggin
           shuffleExecutorComponents)
       case other: BaseShuffleHandle[K @unchecked, V @unchecked, _] =>
         new SortShuffleWriter(
-          shuffleBlockResolver,
           other,
           mapId,
           context,

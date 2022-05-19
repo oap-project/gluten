@@ -33,7 +33,7 @@ object UserAddedJarUtils {
     //TODO: don't fetch when exists
     val targetPath = Paths.get(targetDir + "/" + targetFileName)
     if (Files.notExists(targetPath)) {
-      Utils.doFetchFile(urlString, targetDirHandler, targetFileName, sparkConf, null, null)
+      Utils.doFetchFile(urlString, targetDirHandler, targetFileName, sparkConf, null)
     } else {}
   }
 }

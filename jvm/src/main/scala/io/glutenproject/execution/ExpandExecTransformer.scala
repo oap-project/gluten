@@ -73,4 +73,6 @@ case class ExpandExecTransformer(
   override def doTransform(context: SubstraitContext): TransformContext = {
     throw new UnsupportedOperationException(s"This operator doesn't support doTransform.")
   }
+  override protected def withNewChildInternal(newChild: SparkPlan): ExpandExecTransformer =
+    copy(child = newChild)
 }

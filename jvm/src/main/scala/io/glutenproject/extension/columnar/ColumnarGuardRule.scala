@@ -35,7 +35,7 @@ import org.apache.spark.sql.execution.joins._
 import org.apache.spark.sql.execution.window.WindowExec
 
 // A guard to prevent a plan being converted into the plan transformer.
-case class RowGuard(child: SparkPlan) extends SparkPlan {
+case class RowGuard(child: SparkPlan) extends UnaryExecNode {
 
   def output: Seq[Attribute] = child.output
 
@@ -43,7 +43,8 @@ case class RowGuard(child: SparkPlan) extends SparkPlan {
     throw new UnsupportedOperationException
   }
 
-  def children: Seq[SparkPlan] = Seq(child)
+  override protected def withNewChildInternal(newChild: SparkPlan): RowGuard =
+    copy(child = newChild)
 }
 
 // This rule will try to convert a plan into plan transformer.
@@ -81,7 +82,7 @@ case class TransformGuardRule() extends Rule[SparkPlan] {
           transformer */
         case plan: BatchScanExec =>
           if (!enableColumnarBatchScan) return false
-          val transformer = new BatchScanExecTransformer(plan.output, plan.scan)
+          val transformer = new BatchScanExecTransformer(plan.output, plan.scan, plan.runtimeFilters)
           transformer.doValidate()
         case plan: FileSourceScanExec =>
           if (!enableColumnarFileScan) return false
@@ -105,7 +106,7 @@ case class TransformGuardRule() extends Rule[SparkPlan] {
           if (!enableColumnarFilter) return false
           plan.child match {
             case batchScan: BatchScanExec =>
-              val childTransformer = new BatchScanExecTransformer(batchScan.output, batchScan.scan)
+              val childTransformer = new BatchScanExecTransformer(batchScan.output, batchScan.scan, batchScan.runtimeFilters)
               if (childTransformer.doValidate()) {
                 // If the BatchScan passes validation, all the filters can be pushed down and
                 // the computing of this Filter is not needed.

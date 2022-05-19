@@ -47,9 +47,11 @@ case class BroadcastHashJoinExecTransformer(
     nullAware: Boolean = false)
     extends BaseJoinExec
     with TransformSupport
-    with ShuffledJoin {
+    with ColumnarShuffledJoin {
 
   val sparkConf = sparkContext.getConf
+
+  def isSkewJoin: Boolean = false
 
   override lazy val metrics = Map(
     "numOutputRows" -> SQLMetrics.createMetric(sparkContext, "number of output rows"),
@@ -88,12 +90,9 @@ case class BroadcastHashJoinExecTransformer(
 
   val isNullAwareAntiJoin : Boolean = nullAware
 
-  val broadcastHashJoinOutputPartitioningExpandLimit: Int = sqlContext.getConf(
-    "spark.sql.execution.broadcastHashJoin.outputPartitioningExpandLimit").trim().toInt
-
   override lazy val outputPartitioning: Partitioning = {
     joinType match {
-      case _: InnerLike if broadcastHashJoinOutputPartitioningExpandLimit > 0 =>
+      case _: InnerLike if conf.broadcastHashJoinOutputPartitioningExpandLimit > 0 =>
         streamedPlan.outputPartitioning match {
           case h: HashPartitioning => expandOutputPartitioning(h)
           case c: PartitioningCollection => expandOutputPartitioning(c)
@@ -134,7 +133,7 @@ case class BroadcastHashJoinExecTransformer(
   // Seq("a", "b", "c"), Seq("a", "b", "y"), Seq("a", "x", "c"), Seq("a", "x", "y").
   // The expanded expressions are returned as PartitioningCollection.
   private def expandOutputPartitioning(partitioning: HashPartitioning): PartitioningCollection = {
-    val maxNumCombinations = broadcastHashJoinOutputPartitioningExpandLimit
+    val maxNumCombinations = conf.broadcastHashJoinOutputPartitioningExpandLimit
     var currentNumCombinations = 0
 
     def generateExprCombinations(current: Seq[Expression],
@@ -195,4 +194,8 @@ case class BroadcastHashJoinExecTransformer(
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     throw new UnsupportedOperationException(s"This operator doesn't support doExecuteColumnar().")
   }
+
+  override protected def withNewChildrenInternal(
+    newLeft: SparkPlan, newRight: SparkPlan): BroadcastHashJoinExecTransformer =
+  copy(left = newLeft, right = newRight)
 }

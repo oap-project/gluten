@@ -30,8 +30,8 @@ import org.apache.spark.sql.execution.datasources.v2.{BatchScanExec, FileScan}
 import org.apache.spark.sql.execution.metric.SQLMetrics
 import org.apache.spark.sql.vectorized.ColumnarBatch
 
-class BatchScanExecTransformer(output: Seq[AttributeReference], @transient scan: Scan)
-    extends BatchScanExec(output, scan) with BasicScanExecTransformer {
+class BatchScanExecTransformer(output: Seq[AttributeReference], @transient scan: Scan, runtimeFilters: Seq[Expression])
+    extends BatchScanExec(output, scan, runtimeFilters) with BasicScanExecTransformer {
 
   override def filterExprs(): Seq[Expression] = if (scan.isInstanceOf[FileScan]) {
     scan.asInstanceOf[FileScan].dataFilters

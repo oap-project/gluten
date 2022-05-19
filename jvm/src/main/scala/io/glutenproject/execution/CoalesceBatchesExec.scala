@@ -63,4 +63,6 @@ case class CoalesceBatchesExec(child: SparkPlan) extends UnaryExecNode {
           numInputBatches, numOutputBatches, collectTime, concatTime, avgCoalescedNumRows)
     }
   }
+  override protected def withNewChildInternal(newChild: SparkPlan): CoalesceBatchesExec =
+    copy(child = newChild)
 }

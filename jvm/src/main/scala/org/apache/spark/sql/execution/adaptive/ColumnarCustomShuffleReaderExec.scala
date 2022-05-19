@@ -33,11 +33,11 @@ import org.apache.spark.sql.vectorized.ColumnarBatch
  * @param partitionSpecs  The partition specs that defines the arrangement.
  * @param description     The string description of this shuffle reader.
  */
-case class ColumnarCustomShuffleReaderExec(
+case class ColumnarAQEShuffleReadExec(
     child: SparkPlan,
     partitionSpecs: Seq[ShufflePartitionSpec])
     extends UnaryExecNode {
-  // We don't extends CustomShuffleReaderExec since it has private constructor
+  // We don't extends AQEShuffleReadExec since it has private constructor
 
   override def output: Seq[Attribute] = child.output
   override lazy val outputPartitioning: Partitioning = {
@@ -48,11 +48,11 @@ case class ColumnarCustomShuffleReaderExec(
         partitionSpecs.map(_.asInstanceOf[PartialMapperPartitionSpec].mapIndex).toSet.size ==
           partitionSpecs.length) {
       child match {
-        case ShuffleQueryStageExec(_, s: ColumnarShuffleExchangeAdaptor) =>
+        case ShuffleQueryStageExec(_, s: ColumnarShuffleExchangeAdaptor, _) =>
           s.child.outputPartitioning
         case ShuffleQueryStageExec(
             _,
-            r @ ReusedExchangeExec(_, s: ColumnarShuffleExchangeAdaptor)) =>
+            r @ ReusedExchangeExec(_, s: ColumnarShuffleExchangeAdaptor), _) =>
           s.child.outputPartitioning match {
             case e: Expression => r.updateAttr(e).asInstanceOf[Partitioning]
             case other => other
@@ -90,4 +90,7 @@ case class ColumnarCustomShuffleReaderExec(
 
   override protected def doExecute(): RDD[InternalRow] =
     throw new UnsupportedOperationException()
+
+  override protected def withNewChildInternal(newChild: SparkPlan): ColumnarAQEShuffleReadExec =
+    copy(child = newChild)
 }

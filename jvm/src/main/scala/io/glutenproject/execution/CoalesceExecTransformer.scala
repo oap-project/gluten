@@ -73,6 +73,9 @@ case class CoalesceExecTransformer(numPartitions: Int, child: SparkPlan)
   override def doTransform(context: SubstraitContext): TransformContext = {
     throw new UnsupportedOperationException(s"This operator doesn't support doTransform.")
   }
+
+  override protected def withNewChildInternal(newChild: SparkPlan): CoalesceExecTransformer =
+    copy(child = newChild)
 }
 
 object CoalesceExecTransformer {

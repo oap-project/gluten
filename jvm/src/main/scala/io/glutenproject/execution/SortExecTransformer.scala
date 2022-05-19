@@ -104,4 +104,7 @@ case class SortExecTransformer(
   override def doExecuteColumnar(): RDD[ColumnarBatch] = {
     throw new UnsupportedOperationException(s"This operator doesn't support doExecuteColumnar().")
   }
+
+  override protected def withNewChildInternal(newChild: SparkPlan): SortExecTransformer =
+    copy(child = newChild)
 }

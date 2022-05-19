@@ -358,4 +358,6 @@ case class WholeStageTransformerExec(child: SparkPlan)(val transformStageId: Int
       new WholeStageZippedPartitionsRDD(sparkContext, inputRDDs, genFinalStageIterator)
     }
   }
+  override protected def withNewChildInternal(newChild: SparkPlan): WholeStageTransformerExec =
+    copy(child = newChild)(transformStageId)
 }

@@ -532,7 +532,7 @@ case class HashAggregateExecTransformer(
       val mode = exp.mode
       val aggregateFunc = exp.aggregateFunction
       aggregateFunc match {
-        case Average(_) =>
+        case Average(_,_) =>
           mode match {
             case Partial =>
               val avg = aggregateFunc.asInstanceOf[Average]
@@ -556,7 +556,7 @@ case class HashAggregateExecTransformer(
             case other =>
               throw new UnsupportedOperationException(s"not currently supported: $other.")
           }
-        case Sum(_) =>
+        case Sum(_,_) =>
           mode match {
             case Partial | PartialMerge =>
               val sum = aggregateFunc.asInstanceOf[Sum]
@@ -645,4 +645,6 @@ case class HashAggregateExecTransformer(
     }
     aggregateAttr.toList
   }
+  override protected def withNewChildInternal(newChild: SparkPlan): HashAggregateExecTransformer =
+    copy(child = newChild)
 }

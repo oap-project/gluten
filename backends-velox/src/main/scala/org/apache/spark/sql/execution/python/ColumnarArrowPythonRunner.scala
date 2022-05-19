@@ -62,10 +62,11 @@ class ColumnarArrowPythonRunner(
       startTime: Long,
       env: SparkEnv,
       worker: Socket,
+      pid: Option[Int],
       releasedOrClosed: AtomicBoolean,
       context: TaskContext): Iterator[ColumnarBatch] = {
 
-    new ReaderIterator(stream, writerThread, startTime, env, worker, releasedOrClosed, context) {
+    new ReaderIterator(stream, writerThread, startTime, env, worker, pid, releasedOrClosed, context) {
       private val allocator = SparkMemoryUtils.contextAllocator().newChildAllocator(
         s"stdin reader for $pythonExec", 0, Long.MaxValue)
 

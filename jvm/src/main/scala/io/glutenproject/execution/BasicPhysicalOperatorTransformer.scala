@@ -77,7 +77,7 @@ case class FilterExecTransformer(
     }
   }
 
-  def isNullIntolerant(expr: Expression): Boolean = expr match {
+  override def isNullIntolerant(expr: Expression): Boolean = expr match {
     case e: NullIntolerant => e.children.forall(isNullIntolerant)
     case _ => false
   }
@@ -211,6 +211,9 @@ case class FilterExecTransformer(
       }
     }
   }
+
+  override protected def withNewChildInternal(newChild: SparkPlan): FilterExecTransformer =
+    copy(child = newChild)
 }
 
 case class ProjectExecTransformer(projectList: Seq[NamedExpression],
@@ -253,7 +256,7 @@ case class ProjectExecTransformer(projectList: Seq[NamedExpression],
     }
   }
 
-  def isNullIntolerant(expr: Expression): Boolean = expr match {
+  override def isNullIntolerant(expr: Expression): Boolean = expr match {
     case e: NullIntolerant => e.children.forall(isNullIntolerant)
     case _ => false
   }
@@ -370,6 +373,9 @@ case class ProjectExecTransformer(projectList: Seq[NamedExpression],
       }
     }
   }
+   override protected def withNewChildInternal(newChild: SparkPlan): ProjectExecTransformer =
+     copy(child = newChild)
+
 }
 
 case class UnionExecTransformer(children: Seq[SparkPlan]) extends SparkPlan with TransformSupport {
@@ -417,4 +423,7 @@ case class UnionExecTransformer(children: Seq[SparkPlan]) extends SparkPlan with
   override def doTransform(context: SubstraitContext): TransformContext = {
     throw new UnsupportedOperationException(s"This operator doesn't support doTransform.")
   }
+
+  override protected def withNewChildrenInternal(newChildren: IndexedSeq[SparkPlan]): UnionExecTransformer =
+    copy(children = newChildren)
 }

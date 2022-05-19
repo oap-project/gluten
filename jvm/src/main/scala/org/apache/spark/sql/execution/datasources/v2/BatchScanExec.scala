@@ -32,7 +32,8 @@ import org.apache.spark.sql.connector.read.{InputPartition, PartitionReaderFacto
  * Physical plan node for scanning a batch of data from a data source v2.
  */
 case class BatchScanExec(output: Seq[AttributeReference],
-                         @transient scan: Scan) extends DataSourceV2ScanExecBase {
+                         @transient scan: Scan,
+                         runtimeFilters: Seq[Expression]) extends DataSourceV2ScanExecBase {
 
   @transient lazy val batch = scan.toBatch
 
@@ -52,7 +53,7 @@ case class BatchScanExec(output: Seq[AttributeReference],
   override lazy val readerFactory: PartitionReaderFactory = batch.createReaderFactory()
 
   override lazy val inputRDD: RDD[InternalRow] = {
-    new DataSourceRDD(sparkContext, partitions, readerFactory, supportsColumnar)
+    new DataSourceRDD(sparkContext, partitions, readerFactory, supportsColumnar, null)
   }
 
   override def doCanonicalize(): BatchScanExec = {

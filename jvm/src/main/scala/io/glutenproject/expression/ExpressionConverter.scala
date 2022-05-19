@@ -179,11 +179,6 @@ object ExpressionConverter extends Logging {
             columnarDivide,
             expr)
         }
-      case oaps: io.glutenproject.expression.ScalarSubqueryTransformer =>
-        oaps
-      case s: org.apache.spark.sql.execution.ScalarSubquery =>
-        logInfo(s"${expr.getClass} ${expr} is supported")
-        new ScalarSubqueryTransformer(s)
       case c: Concat =>
         logInfo(s"${expr.getClass} ${expr} is supported")
         val exprs = c.children.map { expr =>
@@ -231,8 +226,6 @@ object ExpressionConverter extends Logging {
         containsSubquery(i.value)
       case ss: Substring =>
         containsSubquery(ss.str) || containsSubquery(ss.pos) || containsSubquery(ss.len)
-      case oaps: io.glutenproject.expression.ScalarSubqueryTransformer =>
-        return true
       case s: org.apache.spark.sql.execution.ScalarSubquery =>
         return true
       case c: Concat =>

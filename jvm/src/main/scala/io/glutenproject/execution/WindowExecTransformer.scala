@@ -130,4 +130,7 @@ case class WindowExecTransformer(windowExpression: Seq[NamedExpression],
   override def doTransform(context: SubstraitContext): TransformContext = {
     throw new UnsupportedOperationException(s"This operator doesn't support doTransform.")
   }
+
+  override protected def withNewChildInternal(newChild: SparkPlan): WindowExecTransformer =
+    copy(child = newChild)
 }
