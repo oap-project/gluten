@@ -175,7 +175,7 @@ jobs:
           export MAVEN_OPTS="-Xmx5g -XX:ReservedCodeCacheSize=1g"
           mvn clean install -Pbackends-clickhouse -Dcheckstyle.skip
 
-  formatting-check:
+  cpp-formatting-check:
     name: Formatting Check
     runs-on: ubuntu-latest
     steps:
@@ -186,3 +186,44 @@ jobs:
         clang-format-version: '10'
         check-path: 'gluten/cpp/src'
         fallback-style: 'Google' # optional
+
+  java-checkstyle-check:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Run check style
+      uses: nikitasavinov/checkstyle-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        reporter: 'github-pr-check'
+        tool_name: 'testtool'
+
+  scala-checkstyle-check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.8
+
+    - run: sudo swapoff -a
+    - run: free
+    - run: sudo apt-get update
+    - run: sudo apt-get install cmake ccache
+    - run: sudo apt-get install libboost-all-dev libcurl4-openssl-dev
+
+    - uses: actions/cache@v1
+      with:
+        path: ~/.m2/repository
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        restore-keys: |
+          ${{ runner.os }}-maven-
+    - name: Build with Maven
+      run: |
+        bash tools/build_arrow.sh --build_arrow=ON
+        mvn -B verify checkstyle:checkstyle -DskipTests
+    - uses: jwgmeligmeyling/checkstyle-github-action@master
+      with:
+        path: '**/checkstyle-result.xml'
