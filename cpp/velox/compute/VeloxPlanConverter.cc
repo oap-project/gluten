@@ -45,6 +45,10 @@ namespace compute {
 
 namespace {
 const std::string kHiveConnectorId = "test-hive";
+const std::string kSparkBatchSizeKey =
+    "spark.sql.execution.arrow.maxRecordsPerBatch";
+const std::string kVeloxPreferredBatchSize = "preferred_output_batch_size";
+
 std::atomic<int32_t> taskSerial;
 } // namespace
 
@@ -300,12 +304,12 @@ VeloxPlanConverter::GetResultIterator(
   if (scanInfos.size() == 0) {
     // Source node is not required.
     auto wholestageIter = std::make_shared<WholeStageResIterMiddleStage>(
-        veloxPool, planNode_, streamIds);
+        veloxPool, planNode_, streamIds, confMap_);
     return std::make_shared<gluten::ArrowArrayResultIterator>(
         std::move(wholestageIter));
   }
   auto wholestageIter = std::make_shared<WholeStageResIterFirstStage>(
-      veloxPool, planNode_, scanIds, scanInfos, streamIds);
+      veloxPool, planNode_, scanIds, scanInfos, streamIds, confMap_);
   return std::make_shared<gluten::ArrowArrayResultIterator>(
       std::move(wholestageIter));
 }
@@ -331,7 +335,7 @@ VeloxPlanConverter::GetResultIterator(
 
   auto veloxPool = gluten::memory::AsWrappedVeloxMemoryPool(allocator);
   auto wholestageIter = std::make_shared<WholeStageResIterFirstStage>(
-      veloxPool, planNode_, scanIds, setScanInfos, streamIds);
+      veloxPool, planNode_, scanIds, setScanInfos, streamIds, confMap_);
   return std::make_shared<gluten::ArrowArrayResultIterator>(
       std::move(wholestageIter));
 }
@@ -385,6 +389,19 @@ memory::MemoryPool* WholeStageResIter::getPool() const {
   return pool_.get();
 }
 
+void WholeStageResIter::setConfToQueryContext(
+    const std::shared_ptr<core::QueryCtx>& queryCtx) {
+  std::unordered_map<std::string, std::string> configs = {};
+  // Only batch size is considered currently.
+  auto got = confMap_.find(kSparkBatchSizeKey);
+  if (got != confMap_.end()) {
+    configs[kVeloxPreferredBatchSize] = got->second;
+  }
+  if (configs.size() > 0) {
+    queryCtx->setConfigOverridesUnsafe(std::move(configs));
+  }
+}
+
 class VeloxPlanConverter::WholeStageResIterFirstStage
     : public WholeStageResIter {
  public:
@@ -394,8 +411,9 @@ class VeloxPlanConverter::WholeStageResIterFirstStage
       const std::vector<core::PlanNodeId>& scanNodeIds,
       const std::vector<std::shared_ptr<facebook::velox::substrait::SplitInfo>>&
           scanInfos,
-      const std::vector<core::PlanNodeId>& streamIds)
-      : WholeStageResIter(pool, planNode),
+      const std::vector<core::PlanNodeId>& streamIds,
+      const std::unordered_map<std::string, std::string>& confMap)
+      : WholeStageResIter(pool, planNode, confMap),
         scanNodeIds_(scanNodeIds),
         scanInfos_(scanInfos),
         streamIds_(streamIds) {
@@ -436,6 +454,8 @@ class VeloxPlanConverter::WholeStageResIterFirstStage
         planNode, core::ExecutionStrategy::kUngrouped, 1};
     std::shared_ptr<core::QueryCtx> queryCtx =
         createNewVeloxQueryCtx(getPool());
+    // Set customized confs to query context.
+    setConfToQueryContext(queryCtx);
     task_ = std::make_shared<exec::Task>(
         fmt::format("gluten task {}", ++taskSerial),
         std::move(planFragment),
@@ -478,12 +498,15 @@ class VeloxPlanConverter::WholeStageResIterMiddleStage
   WholeStageResIterMiddleStage(
       std::shared_ptr<memory::MemoryPool> pool,
       const std::shared_ptr<const core::PlanNode>& planNode,
-      const std::vector<core::PlanNodeId>& streamIds)
-      : WholeStageResIter(pool, planNode), streamIds_(streamIds) {
+      const std::vector<core::PlanNodeId>& streamIds,
+      const std::unordered_map<std::string, std::string>& confMap)
+      : WholeStageResIter(pool, planNode, confMap), streamIds_(streamIds) {
     core::PlanFragment planFragment{
         planNode, core::ExecutionStrategy::kUngrouped, 1};
     std::shared_ptr<core::QueryCtx> queryCtx =
         createNewVeloxQueryCtx(getPool());
+    // Set customized confs to query context.
+    setConfToQueryContext(queryCtx);
     task_ = std::make_shared<exec::Task>(
         fmt::format("gluten task {}", ++taskSerial),
         std::move(planFragment),

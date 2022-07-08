@@ -34,6 +34,46 @@
 
 static std::unordered_map<std::string, std::string> sparkConfs_;
 
+// Extract Spark confs from Substrait plan and set them to the conf map.
+void setUpConfMap(JNIEnv* env, jobject obj, jbyteArray planArray) {
+  if (sparkConfs_.size() != 0) {
+    return;
+  }
+
+  auto planData =
+      reinterpret_cast<const uint8_t*>(env->GetByteArrayElements(planArray, 0));
+  auto planSize = env->GetArrayLength(planArray);
+  ::substrait::Plan subPlan;
+  ParseProtobuf(planData, planSize, &subPlan);
+
+  if (subPlan.has_advanced_extensions()) {
+    auto extension = subPlan.advanced_extensions();
+    if (extension.has_enhancement()) {
+      const auto& enhancement = extension.enhancement();
+      ::substrait::Expression expression;
+      if (!enhancement.UnpackTo(&expression)) {
+        std::string error_message =
+            "Can't Unapck the Any object to Expression Literal when passing the spark "
+            "conf to velox";
+        gluten::JniThrow(error_message);
+      }
+      if (expression.has_literal()) {
+        auto literal = expression.literal();
+        if (literal.has_map()) {
+          auto literal_map = literal.map();
+          auto size = literal_map.key_values_size();
+          for (auto i = 0; i < size; i++) {
+            ::substrait::Expression_Literal_Map_KeyValue keyValue =
+                literal_map.key_values(i);
+            sparkConfs_.emplace(
+                keyValue.key().string(), keyValue.value().string());
+          }
+        }
+      }
+    }
+  }
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -61,44 +101,10 @@ Java_io_glutenproject_vectorized_ExpressionEvaluatorJniWrapper_nativeInitNative(
     jobject obj,
     jbyteArray planArray) {
   JNI_METHOD_START
-  gluten::SetBackendFactory(
-      [] { return std::make_shared<::velox::compute::VeloxPlanConverter>(); });
-
-  if (sparkConfs_.size() == 0) {
-    auto planData = reinterpret_cast<const uint8_t*>(
-        env->GetByteArrayElements(planArray, 0));
-    auto planSize = env->GetArrayLength(planArray);
-    ::substrait::Plan subPlan;
-    ParseProtobuf(planData, planSize, &subPlan);
-
-    if (subPlan.has_advanced_extensions()) {
-      auto extension = subPlan.advanced_extensions();
-      if (extension.has_enhancement()) {
-        const auto& enhancement = extension.enhancement();
-        ::substrait::Expression expression;
-        if (!enhancement.UnpackTo(&expression)) {
-          std::string error_message =
-              "Can't Unapck the Any object to Expression Literal when passing the spark "
-              "conf to velox";
-          gluten::JniThrow(error_message);
-        }
-        if (expression.has_literal()) {
-          auto literal = expression.literal();
-          if (literal.has_map()) {
-            auto literal_map = literal.map();
-            auto size = literal_map.key_values_size();
-            for (auto i = 0; i < size; i++) {
-              ::substrait::Expression_Literal_Map_KeyValue keyValue =
-                  literal_map.key_values(i);
-              sparkConfs_.emplace(
-                  keyValue.key().string(), keyValue.value().string());
-            }
-          }
-        }
-      }
-    }
-  }
-
+  gluten::SetBackendFactory([] {
+    return std::make_shared<::velox::compute::VeloxPlanConverter>(sparkConfs_);
+  });
+  setUpConfMap(env, obj, planArray);
   static auto veloxInitializer =
       std::make_shared<::velox::compute::VeloxInitializer>();
   JNI_METHOD_END()
@@ -148,7 +154,6 @@ Java_io_glutenproject_spark_sql_execution_datasources_velox_DwrfDatasourceJniWra
         pool.get());
     // dwrfDatasource->Init( );
     return arrow::dataset::jni::CreateNativeRef(dwrfDatasource);
-
   } else {
     std::shared_ptr<arrow::Schema> schema = gluten::JniGetOrThrow(
         arrow::ImportSchema(reinterpret_cast<struct ArrowSchema*>(c_schema)));

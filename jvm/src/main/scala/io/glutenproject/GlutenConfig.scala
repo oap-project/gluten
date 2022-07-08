@@ -178,7 +178,7 @@ class GlutenConfig(conf: SQLConf) extends Logging {
     conf.getConfString("spark.gluten.sql.columnar.joinOptimizationLevel", "12").toInt
 
   val batchSize: Int =
-    conf.getConfString("spark.sql.execution.arrow.maxRecordsPerBatch", "10000").toInt
+    conf.getConfString(GlutenConfig.SPARK_BATCH_SIZE, "32768").toInt
 
   // enable or disable metrics in columnar wholestagecodegen operator
   val enableMetricsTime: Boolean =
@@ -242,12 +242,24 @@ object GlutenConfig {
   val GLUTEN_LIB_PATH = "spark.gluten.sql.columnar.libpath"
   val GLUTEN_LOAD_ARROW = "spark.gluten.sql.columnar.loadarrow"
   val GLUTEN_BACKEND_LIB = "spark.gluten.sql.columnar.backend.lib"
+
+  // Hive configurations.
+  val HIVE_EXEC_ORC_STRIPE_SIZE = "hive.exec.orc.stripe.size"
+  val SPARK_HIVE_EXEC_ORC_STRIPE_SIZE: String = "spark." + HIVE_EXEC_ORC_STRIPE_SIZE
+  val HIVE_EXEC_ORC_ROW_INDEX_STRIDE = "hive.exec.orc.row.index.stride"
+  val SPARK_HIVE_EXEC_ORC_ROW_INDEX_STRIDE: String = "spark." + HIVE_EXEC_ORC_ROW_INDEX_STRIDE
+  val HIVE_EXEC_ORC_COMPRESS = "hive.exec.orc.compress"
+  val SPARK_HIVE_EXEC_ORC_COMPRESS: String = "spark." + HIVE_EXEC_ORC_COMPRESS
+
+  val SPARK_BATCH_SIZE = "spark.sql.execution.arrow.maxRecordsPerBatch"
+
+  // Backends.
   val GLUTEN_VELOX_BACKEND = "velox"
   val GLUTEN_CLICKHOUSE_BACKEND = "ch"
   val GLUTEN_GAZELLE_BACKEND = "gazelle_cpp"
 
-  var ins: GlutenConfig = null
-  var random_temp_dir_path: String = null
+  var ins: GlutenConfig = _
+  var random_temp_dir_path: String = _
 
   /**
    * @deprecated We should avoid caching this value in entire JVM. us
