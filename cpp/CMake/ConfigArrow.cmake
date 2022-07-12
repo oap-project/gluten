@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-set(ARROW_SHARED_LIBRARY_SUFFIX ".so.800")
-set(ARROW_SHARED_LIBRARY_PARENT_SUFFIX ".so.800.0.0")
+set(ARROW_SHARED_LIBRARY_SUFFIX ".so.900")
+set(ARROW_SHARED_LIBRARY_PARENT_SUFFIX ".so.900.0.0")
 
 set(ARROW_LIB_NAME "arrow")
 set(GANDIVA_LIB_NAME "gandiva")

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -eux
 
 NPROC=$(nproc)
 
@@ -65,7 +65,9 @@ echo "ARROW_PREFIX=${ARROW_PREFIX}"
 echo "ARROW_SOURCE_DIR=${ARROW_SOURCE_DIR}"
 mkdir -p $ARROW_SOURCE_DIR
 mkdir -p $ARROW_ROOT
-git clone https://github.com/oap-project/arrow.git -b arrow-8.0.0-gluten-20220427a $ARROW_SOURCE_DIR
+#git clone https://github.com/oap-project/arrow.git -b arrow-8.0.0-gluten-20220427a $ARROW_SOURCE_DIR
+#git clone https://github.com/apache/arrow.git -b master $ARROW_SOURCE_DIR
+git clone https://github.com/jinchengchenghh/arrow.git -b gluten-arrow $ARROW_SOURCE_DIR
 pushd $ARROW_SOURCE_DIR
 
 mkdir -p java/c/build
@@ -73,31 +75,22 @@ pushd java/c/build
 cmake ..
 cmake --build .
 popd
- 
-cmake -DARROW_BUILD_STATIC=OFF \
+
+mkdir -p cpp/build
+pushd cpp/build
+cmake --preset ninja-release \
         -DARROW_BUILD_SHARED=ON \
-        -DARROW_COMPUTE=ON \
         -DARROW_SUBSTRAIT=ON \
         -DARROW_S3=ON \
         -DARROW_GANDIVA_JAVA=ON \
         -DARROW_GANDIVA=ON \
-        -DARROW_PARQUET=ON \
         -DARROW_ORC=OFF \
         -DARROW_HDFS=ON \
         -DARROW_BOOST_USE_SHARED=OFF \
         -DARROW_JNI=ON \
-        -DARROW_DATASET=ON \
         -DARROW_WITH_PROTOBUF=ON \
         -DARROW_PROTOBUF_USE_SHARED=OFF \
-        -DARROW_WITH_SNAPPY=ON \
-        -DARROW_WITH_LZ4=ON \
-        -DARROW_WITH_ZSTD=OFF \
-        -DARROW_WITH_BROTLI=OFF \
-        -DARROW_WITH_ZLIB=OFF \
-        -DARROW_WITH_FASTPFOR=ON \
-        -DARROW_FILESYSTEM=ON \
         -DARROW_JSON=ON \
-        -DARROW_CSV=ON \
         -DARROW_FLIGHT=OFF \
         -DARROW_JEMALLOC=ON \
         -DARROW_SIMD_LEVEL=AVX2 \
@@ -106,14 +99,13 @@ cmake -DARROW_BUILD_STATIC=OFF \
         -Dre2_SOURCE=AUTO \
         -DCMAKE_INSTALL_PREFIX=$ARROW_INSTALL_DIR \
         -DCMAKE_INSTALL_LIBDIR=lib \
-        cpp
+        ..
 
-make -j$NPROC
-
-make install
+cmake --build . --target install
+popd
 
 cd java
-mvn clean install -P arrow-jni -pl dataset,gandiva -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
+mvn clean install -P arrow-jni -pl dataset,gandiva,compression -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
 echo "Finish to build Arrow from Source !!!"
 else
 echo "Use ARROW_ROOT as Arrow Library Path"

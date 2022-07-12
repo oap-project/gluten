@@ -17,19 +17,20 @@
 
 package org.apache.spark.sql.execution.datasources.v2.arrow
 
-import io.glutenproject.memory.{NativeMemoryAllocator, NativeSQLMemoryConsumer, NativeSQLMemoryMetrics, SparkManagedAllocationListener, SparkManagedReservationListener, Spiller}
-import org.apache.arrow.memory.{AllocationListener, BufferAllocator, MemoryChunkCleaner, MemoryChunkManager, RootAllocator}
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicLong
+
+import scala.collection.JavaConverters._
+
+import io.glutenproject.memory._
+import org.apache.arrow.memory.{AllocationListener, BufferAllocator, RootAllocator}
+
 import org.apache.spark.{SparkEnv, TaskContext}
 import org.apache.spark.internal.Logging
 import org.apache.spark.internal.config._
 import org.apache.spark.memory.TaskMemoryManager
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.util.TaskCompletionListener
-import scala.collection.JavaConverters._;
-
-import java.io.{ByteArrayOutputStream, PrintWriter}
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicLong
 
 object SparkMemoryUtils extends Logging {
 
@@ -46,56 +47,18 @@ object SparkMemoryUtils extends Logging {
 
     val sharedMetrics = new NativeSQLMemoryMetrics()
 
-    val isArrowAutoReleaseEnabled: Boolean = {
-      SQLConf.get
-        .getConfString("spark.gluten.sql.columnar.autorelease", "false").toBoolean
-    }
-
-    val memoryChunkManagerFactory: MemoryChunkManager.Factory = if (isArrowAutoReleaseEnabled) {
-      MemoryChunkCleaner.newFactory(MemoryChunkCleaner.Mode.HYBRID_WITH_LOG)
-    } else {
-      MemoryChunkManager.FACTORY
-    }
-
-    val sparkManagedArrowAllocationListener = new SparkManagedAllocationListener(
+    val arrowAllocListener = new SparkManagedAllocationListener(
       new NativeSQLMemoryConsumer(getTaskMemoryManager(), Spiller.NO_OP),
       sharedMetrics)
 
-    val arrowAllocListener: AllocationListener = if (isArrowAutoReleaseEnabled) {
-      MemoryChunkCleaner.gcTrigger(sparkManagedArrowAllocationListener)
-    } else {
-      sparkManagedArrowAllocationListener
-    }
-
-    val arrowAllocListenerUnmanaged: AllocationListener = if (isArrowAutoReleaseEnabled) {
-      MemoryChunkCleaner.gcTrigger()
-    } else {
-      AllocationListener.NOOP
-    }
-
-    private def collectStackForDebug = {
-      if (DEBUG) {
-        val out = new ByteArrayOutputStream()
-        val writer = new PrintWriter(out)
-        new Exception().printStackTrace(writer)
-        writer.close()
-        out.toString
-      } else {
-        null
-      }
-    }
+    val arrowAllocListenerUnmanaged: AllocationListener = AllocationListener.NOOP
 
     private val arrowAllocators = new java.util.ArrayList[BufferAllocator]()
 
     private val nativeAllocators = new java.util.ArrayList[NativeMemoryAllocator]()
 
     val taskDefaultArrowAllocator: BufferAllocator = {
-      val alloc = new RootAllocator(
-        RootAllocator.configBuilder()
-          .maxAllocation(Long.MaxValue)
-          .memoryChunkManagerFactory(memoryChunkManagerFactory)
-          .listener(arrowAllocListener)
-          .build)
+      val alloc = new RootAllocator(arrowAllocListener, Long.MaxValue)
       arrowAllocators.add(alloc)
       alloc
     }
@@ -185,17 +148,12 @@ object SparkMemoryUtils extends Logging {
     }
 
     def release(): Unit = {
-      closeIfCloseable(memoryChunkManagerFactory)
       for (allocator <- arrowAllocators.asScala.reverse) {
         val allocated = allocator.getAllocatedMemory
         if (allocated == 0L) {
           close(allocator)
         } else {
-          if (isArrowAutoReleaseEnabled) {
-            close(allocator)
-          } else {
             softClose(allocator)
-          }
         }
       }
       for (alloc <- nativeAllocators.asScala) {
@@ -206,7 +164,7 @@ object SparkMemoryUtils extends Logging {
           softClose(alloc)
         }
       }
-      closeIfCloseable(sparkManagedArrowAllocationListener)
+      closeIfCloseable(arrowAllocListener)
     }
   }
 
@@ -264,12 +222,7 @@ object SparkMemoryUtils extends Logging {
     SparkEnv.get.conf.get(MEMORY_OFFHEAP_SIZE)
   }
 
-  private val globalArrowAlloc = new RootAllocator(
-    RootAllocator.configBuilder()
-      .maxAllocation(maxAllocationSize)
-      .memoryChunkManagerFactory(MemoryChunkCleaner.newFactory())
-      .listener(MemoryChunkCleaner.gcTrigger())
-      .build)
+  private val globalArrowAlloc = new RootAllocator(maxAllocationSize)
 
   def globalArrowAllocator(): BufferAllocator = {
     globalArrowAlloc

@@ -27,9 +27,9 @@ set(ARROW_INCLUDE_DIR "${ARROW_EP_INSTALL_PREFIX}/include")
 set(BINARY_RELEASE_DIR "${root_directory}/releases")
 
 ExternalProject_Add(arrow_ep
-    GIT_REPOSITORY https://github.com/oap-project/arrow.git
+    GIT_REPOSITORY https://github.com/jinchengchenghh/arrow.git
     SOURCE_DIR ${ARROW_EP_SOURCE_DIR}
-    GIT_TAG arrow-8.0.0-gluten-20220427a
+    GIT_TAG gluten-arrow
     BUILD_IN_SOURCE 1
     INSTALL_DIR ${ARROW_EP_INSTALL_PREFIX}
     SOURCE_SUBDIR cpp
@@ -54,7 +54,6 @@ ExternalProject_Add(arrow_ep
     -DARROW_WITH_ZSTD=OFF
     -DARROW_WITH_BROTLI=OFF
     -DARROW_WITH_ZLIB=OFF
-    -DARROW_WITH_FASTPFOR=ON
     -DARROW_FILESYSTEM=ON
     -DARROW_JSON=ON
     -DARROW_FLIGHT=OFF

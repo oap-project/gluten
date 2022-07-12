@@ -49,7 +49,7 @@ if [ $BUILD_VELOX_FROM_SOURCE == "ON" ]; then
     echo "VELOX_INSTALL_DIR=${VELOX_INSTALL_DIR}"
     mkdir -p $VELOX_SOURCE_DIR
     mkdir -p $VELOX_INSTALL_DIR
-    git clone https://github.com/oap-project/velox.git -b main $VELOX_SOURCE_DIR
+    git clone https://github.com/jinchengchenghh/velox.git -b main $VELOX_SOURCE_DIR
     pushd $VELOX_SOURCE_DIR
 
     #sync submodules
@@ -66,7 +66,7 @@ if [ $BUILD_VELOX_FROM_SOURCE == "ON" ]; then
     sed -i '/^  run_and_time install_folly/i \ \ run_and_time install_pb' scripts/setup-ubuntu.sh
 
     scripts/setup-ubuntu.sh
-    make release EXTRA_CMAKE_FLAGS=" -DVELOX_ENABLE_PARQUET=ON -DVELOX_ENABLE_ARROW=ON"
+    make release EXTRA_CMAKE_FLAGS=" -DVELOX_ENABLE_PARQUET=ON -DVELOX_ENABLE_ARROW=ON -DVELOX_BUILD_TESTING=ON"
     echo "Finish to build Velox from Source !!!"
 else
     echo "Use existing Velox."
