@@ -32,7 +32,6 @@
     <scala.version>2.12.10</scala.version>
     <scala.binary.version>2.12</scala.binary.version>
     <scala.plugin.version>4.3.0</scala.plugin.version>
-    <scalatest-maven-plugin.version>3.2.2</scalatest-maven-plugin.version>
   </properties>
 
   <dependencies>
@@ -90,11 +89,12 @@
         <plugin>
             <groupId>net.alchim31.maven</groupId>
             <artifactId>scala-maven-plugin</artifactId>
-             <version>${scala.plugin.version}</version>
+            <version>${scala.plugin.version}</version>
         </plugin>
         <plugin>
             <groupId>org.scalatest</groupId>
             <artifactId>scalatest-maven-plugin</artifactId>
+            <version>${scalatest-maven-plugin.version}</version>
             <executions>
               <execution>
                   <id>test</id>

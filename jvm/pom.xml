@@ -38,10 +38,7 @@
         <parquet.deps.scope>provided</parquet.deps.scope>
         <jars.target.dir>${project.build.directory}/scala-${scala.binary.version}/jars
         </jars.target.dir>
-        <jvm.build_arrow>${build_arrow}</jvm.build_arrow>
         <jvm.cpp_tests>${cpp_tests}</jvm.cpp_tests>
-        <jvm.static_arrow>${static_arrow}</jvm.static_arrow>
-        <jvm.arrow_root>${arrow_root}</jvm.arrow_root>
         <protobuf.version>3.13.0</protobuf.version>
         <!-- protobuf paths -->
         <protobuf.input.directory>${resource.dir}/substrait/proto</protobuf.input.directory>
@@ -56,6 +53,51 @@
         <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
+            <artifactId>${arrow-memory.artifact}</artifactId>
+            <version>${arrow.version}</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
+            <artifactId>arrow-memory-core</artifactId>
+            <version>${arrow.version}</version>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-buffer</artifactId>
+                </exclusion>
+            </exclusions>
+            <!--scope>provided</scope-->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
+            <artifactId>arrow-vector</artifactId>
+            <version>${arrow.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.netty</groupId>
+                    <artifactId>netty-buffer</artifactId>
+                </exclusion>
+            </exclusions>
+            <!--scope>provided</scope-->
+        </dependency>
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
+            <artifactId>arrow-c-data</artifactId>
+            <version>${arrow.version}</version>
+            <scope>compile</scope>
+        </dependency>
         <!-- Prevent our dummy JAR from being included in Spark distributions or uploaded to YARN -->
         <dependency>
             <groupId>org.apache.spark</groupId>
@@ -374,30 +416,6 @@
                 <version>3.0.1</version>
             </plugin>
             <plugin>
-                <artifactId>exec-maven-plugin</artifactId>
-                <groupId>org.codehaus.mojo</groupId>
-                <version>1.6.0</version>
-                <executions>
-                    <execution>
-                        <id>Build arrow</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>bash</executable>
-                            <arguments>
-                                <argument>${arrow.script.dir}/build_arrow.sh</argument>
-                                <argument>--tests=${jvm.cpp_tests}</argument>
-                                <argument>--build_arrow=${jvm.build_arrow}</argument>
-                                <argument>--static_arrow=${jvm.static_arrow}</argument>
-                                <argument>--arrow_root=${jvm.arrow_root}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
                 <version>4.3.0</version>
@@ -501,6 +519,7 @@
             <plugin>
                 <groupId>org.scalatest</groupId>
                 <artifactId>scalatest-maven-plugin</artifactId>
+                <version>${scalatest-maven-plugin.version}</version>
                 <configuration>
                     <junitxml>.</junitxml>
                 </configuration>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>gluten-parent</artifactId>
+        <groupId>io.glutenproject</groupId>
+        <version>1.0.0-snapshot</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+    <artifactId>gluten-install-deps</artifactId>
+    <packaging>pom</packaging>
+
+    <properties>
+        <jvm.build_arrow>${build_arrow}</jvm.build_arrow>
+        <jvm.static_arrow>${static_arrow}</jvm.static_arrow>
+        <jvm.arrow_root>${arrow_root}</jvm.arrow_root>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>exec-maven-plugin</artifactId>
+                <groupId>org.codehaus.mojo</groupId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>Build arrow</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>bash</executable>
+                            <arguments>
+                                <argument>${arrow.script.dir}/build_arrow.sh</argument>
+                                <argument>--tests=${jvm.cpp_tests}</argument>
+                                <argument>--build_arrow=${jvm.build_arrow}</argument>
+                                <argument>--static_arrow=${jvm.static_arrow}</argument>
+                                <argument>--arrow_root=${jvm.arrow_root}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

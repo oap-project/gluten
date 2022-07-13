@@ -30,6 +30,7 @@
   </licenses>
 
   <modules>
+    <module>install-deps</module>
     <module>jvm</module>
     <module>shims</module>
   </modules>
@@ -37,6 +38,7 @@
   <properties>
     <scala.version>2.12.10</scala.version>
     <scala.binary.version>2.12</scala.binary.version>
+    <scalatest-maven-plugin.version>2.0.2</scalatest-maven-plugin.version>
     <spark.version>3.1.1</spark.version>
     <arrow.version>8.0.0-gluten-SNAPSHOT</arrow.version>
     <arrow-memory.artifact>arrow-memory-unsafe</arrow-memory.artifact>

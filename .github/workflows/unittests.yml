@@ -101,7 +101,15 @@ jobs:
       - run: sudo swapoff -a
       - run: free
       - run: sudo apt-get update
+      - run: sudo apt-get install -y cmake ccache build-essential
       - run: sudo apt-get install -y maven
+      - run: sudo apt-get install -y git
+      - run: sudo apt-get install -y libboost-all-dev libcurl4-openssl-dev
+      - run: sudo apt-get install -y libssl-dev
+      - run: sudo apt-get install -y libz-dev
+      - run: sudo apt-get install -y llvm clang
+      - run: sudo apt-get install -y libdwarf-dev
+      - run: sudo apt-get install -y libre2-dev
       - name: ccache cache files
         uses: actions/cache@v2
         with:
@@ -122,7 +130,7 @@ jobs:
       - name: Run Gluten + ClickHouse Backend unit tests
         run: |
           export MAVEN_OPTS="-Xmx5g -XX:ReservedCodeCacheSize=1g"
-          mvn clean install -Pbackends-clickhouse -Dmaven.test.failure.ignore=true
+          mvn clean install -Pbackends-clickhouse -Dmaven.test.failure.ignore=true -Dbuild_arrow=ON
 
   formatting-check:
     name: Formatting Check
