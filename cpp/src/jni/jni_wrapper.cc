@@ -23,7 +23,6 @@
 #include <arrow/record_batch.h>
 #include <arrow/util/compression.h>
 #include <jni.h>
-#include <jni/dataset/jni_util.h>
 #include <malloc.h>
 
 #include <iostream>
@@ -162,16 +161,16 @@ class JavaArrowArrayIterator {
     if (!env->CallBooleanMethod(
             java_serialized_arrow_array_iterator_,
             serialized_arrow_array_iterator_hasNext)) {
-      RETURN_NOT_OK(arrow::dataset::jni::CheckException(env));
+      CheckException(env);
       return nullptr; // stream ended
     }
-    RETURN_NOT_OK(arrow::dataset::jni::CheckException(env));
+    CheckException(env);
     ArrowArray c_array{};
     env->CallObjectMethod(
         java_serialized_arrow_array_iterator_,
         serialized_arrow_array_iterator_next,
         reinterpret_cast<jlong>(&c_array));
-    RETURN_NOT_OK(arrow::dataset::jni::CheckException(env));
+    CheckException(env);
     auto array = std::make_shared<ArrowArray>(c_array);
     return array;
   }

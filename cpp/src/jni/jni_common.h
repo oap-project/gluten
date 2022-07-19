@@ -148,140 +148,6 @@ arrow::Status FIXOffsetBuffer(
   return arrow::Status::OK();
 }
 
-arrow::Status MakeArrayData(
-    std::shared_ptr<arrow::DataType> type,
-    int num_rows,
-    std::vector<std::shared_ptr<arrow::Buffer>> in_bufs,
-    int in_bufs_len,
-    std::shared_ptr<arrow::ArrayData>* arr_data,
-    int* buf_idx_ptr) {
-  if (arrow::is_nested(type->id())) {
-    // Maybe ListType, MapType, StructType or UnionType
-    switch (type->id()) {
-      case arrow::Type::LIST:
-      case arrow::Type::LARGE_LIST: {
-        auto offset_data_type = GetOffsetDataType(type);
-        auto list_type = std::dynamic_pointer_cast<arrow::ListType>(type);
-        auto child_type = list_type->value_type();
-        std::shared_ptr<arrow::ArrayData> child_array_data, offset_array_data;
-        // create offset array
-        // Chendi: For some reason, for ListArray::FromArrays will remove last
-        // row from offset array, refer to array_nested.cc CleanListOffsets
-        // function
-        FIXOffsetBuffer(&in_bufs[*buf_idx_ptr], num_rows);
-        RETURN_NOT_OK(MakeArrayData(
-            offset_data_type,
-            num_rows + 1,
-            in_bufs,
-            in_bufs_len,
-            &offset_array_data,
-            buf_idx_ptr));
-        auto offset_array = arrow::MakeArray(offset_array_data);
-        // create child data array
-        RETURN_NOT_OK(MakeArrayData(
-            child_type,
-            -1,
-            in_bufs,
-            in_bufs_len,
-            &child_array_data,
-            buf_idx_ptr));
-        auto child_array = arrow::MakeArray(child_array_data);
-        auto list_array =
-            arrow::ListArray::FromArrays(*offset_array, *child_array)
-                .ValueOrDie();
-        *arr_data = list_array->data();
-
-      } break;
-      default:
-        return arrow::Status::NotImplemented(
-            "MakeArrayData for type ",
-            type->ToString(),
-            " is not supported yet.");
-    }
-
-  } else {
-    int64_t null_count = arrow::kUnknownNullCount;
-    std::vector<std::shared_ptr<arrow::Buffer>> buffers;
-    if (*buf_idx_ptr >= in_bufs_len) {
-      return arrow::Status::Invalid("insufficient number of in_buf_addrs");
-    }
-    if (in_bufs[*buf_idx_ptr]->size() == 0) {
-      null_count = 0;
-    }
-    buffers.push_back(in_bufs[*buf_idx_ptr]);
-    *buf_idx_ptr += 1;
-
-    if (arrow::is_binary_like(type->id())) {
-      if (*buf_idx_ptr >= in_bufs_len) {
-        return arrow::Status::Invalid("insufficient number of in_buf_addrs");
-      }
-
-      buffers.push_back(in_bufs[*buf_idx_ptr]);
-      auto offsets_size = in_bufs[*buf_idx_ptr]->size();
-      *buf_idx_ptr += 1;
-      if (num_rows == -1)
-        num_rows = offsets_size / 4 - 1;
-    }
-
-    if (*buf_idx_ptr >= in_bufs_len) {
-      return arrow::Status::Invalid("insufficient number of in_buf_addrs");
-    }
-    auto value_size = in_bufs[*buf_idx_ptr]->size();
-    buffers.push_back(in_bufs[*buf_idx_ptr]);
-    *buf_idx_ptr += 1;
-    if (num_rows == -1) {
-      num_rows = value_size * 8 / arrow::bit_width(type->id());
-    }
-
-    *arr_data =
-        arrow::ArrayData::Make(type, num_rows, std::move(buffers), null_count);
-  }
-  return arrow::Status::OK();
-}
-
-arrow::Status MakeRecordBatch(
-    const std::shared_ptr<arrow::Schema>& schema,
-    int num_rows,
-    std::vector<std::shared_ptr<arrow::Buffer>> in_bufs,
-    int in_bufs_len,
-    std::shared_ptr<arrow::RecordBatch>* batch) {
-  std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
-  auto num_fields = schema->num_fields();
-  int buf_idx = 0;
-
-  for (int i = 0; i < num_fields; i++) {
-    auto field = schema->field(i);
-    std::shared_ptr<arrow::ArrayData> array_data;
-    RETURN_NOT_OK(MakeArrayData(
-        field->type(), num_rows, in_bufs, in_bufs_len, &array_data, &buf_idx));
-    arrays.push_back(array_data);
-  }
-
-  *batch = arrow::RecordBatch::Make(schema, num_rows, arrays);
-  return arrow::Status::OK();
-}
-
-arrow::Status MakeRecordBatch(
-    const std::shared_ptr<arrow::Schema>& schema,
-    int num_rows,
-    int64_t* in_buf_addrs,
-    int64_t* in_buf_sizes,
-    int in_bufs_len,
-    std::shared_ptr<arrow::RecordBatch>* batch) {
-  std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
-  std::vector<std::shared_ptr<arrow::Buffer>> buffers;
-  for (int i = 0; i < in_bufs_len; i++) {
-    if (in_buf_addrs[i] != 0) {
-      auto data = std::shared_ptr<arrow::Buffer>(new arrow::Buffer(
-          reinterpret_cast<uint8_t*>(in_buf_addrs[i]), in_buf_sizes[i]));
-      buffers.push_back(data);
-    } else {
-      buffers.push_back(std::make_shared<arrow::Buffer>(nullptr, 0));
-    }
-  }
-  return MakeRecordBatch(schema, num_rows, buffers, in_bufs_len, batch);
-}
-
 std::string JStringToCString(JNIEnv* env, jstring string) {
   int32_t jlen, clen;
   clen = env->GetStringUTFLength(string);
@@ -289,6 +155,35 @@ std::string JStringToCString(JNIEnv* env, jstring string) {
   std::vector<char> buffer(clen);
   env->GetStringUTFRegion(string, 0, jlen, buffer.data());
   return std::string(buffer.data(), clen);
+}
+
+/// \brief Create a new shared_ptr on heap from shared_ptr t to prevent
+/// the managed object from being garbage-collected.
+///
+/// \return address of the newly created shared pointer
+template <typename T>
+jlong CreateNativeRef(std::shared_ptr<T> t) {
+  std::shared_ptr<T>* retained_ptr = new std::shared_ptr<T>(t);
+  return reinterpret_cast<jlong>(retained_ptr);
+}
+
+/// \brief Get the shared_ptr that was derived via function CreateNativeRef.
+///
+/// \param[in] ref address of the shared_ptr
+/// \return the shared_ptr object
+template <typename T>
+std::shared_ptr<T> RetrieveNativeInstance(jlong ref) {
+  std::shared_ptr<T>* retrieved_ptr = reinterpret_cast<std::shared_ptr<T>*>(ref);
+  return *retrieved_ptr;
+}
+
+/// \brief Destroy a shared_ptr using its memory address.
+///
+/// \param[in] ref address of the shared_ptr
+template <typename T>
+void ReleaseNativeRef(jlong ref) {
+  std::shared_ptr<T>* retrieved_ptr = reinterpret_cast<std::shared_ptr<T>*>(ref);
+  delete retrieved_ptr;
 }
 
 jbyteArray ToSchemaByteArray(
@@ -338,7 +233,7 @@ void CheckException(JNIEnv* env) {
     jthrowable t = env->ExceptionOccurred();
     env->ExceptionClear();
     jclass describer_class =
-        env->FindClass("org/apache/arrow/dataset/jni/JniExceptionDescriber");
+        env->FindClass("io/glutenproject/exception/JniExceptionDescriber");
     jmethodID describe_method = env->GetStaticMethodID(
         describer_class,
         "describe",

@@ -22,7 +22,6 @@ set(ARROW_LIB_NAME "arrow")
 set(GANDIVA_LIB_NAME "gandiva")
 set(PARQUET_LIB_NAME "parquet")
 set(ARROW_DATASET_LIB_NAME "arrow_dataset")
-set(ARROW_DATASET_JNI_LIB_NAME "arrow_dataset_jni")
 set(ARROW_SUBSTRAIT_LIB_NAME "arrow_substrait")
 
 function(FIND_ARROW_LIB LIB_NAME)

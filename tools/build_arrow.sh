@@ -105,7 +105,7 @@ cmake --build . --target install
 popd
 
 cd java
-mvn clean install -P arrow-jni -pl dataset,gandiva,compression -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
+mvn clean install -P arrow-jni -pl gandiva,compression -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
 echo "Finish to build Arrow from Source !!!"
 else
 echo "Use ARROW_ROOT as Arrow Library Path"
