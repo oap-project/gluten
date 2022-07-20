@@ -64,7 +64,12 @@ case class VeloxHashAggregateExecTransformer(
           case Partial =>
             // Will use sum and count to replace partial avg.
             assert(childrenNodeList.size() == 1, "Partial Average expects one child node.")
-            val inputType = aggregateFunction.inputAggBufferAttributes.head.dataType
+            val inputType = if (aggregateFunction.children.head.isInstanceOf[Cast]) {
+              aggregateFunction.children.head.dataType
+            } else {
+              aggregateFunction.inputAggBufferAttributes.head.dataType
+            }
+
             val inputNullable = aggregateFunction.inputAggBufferAttributes.head.nullable
 
             val sumNode = ExpressionBuilder.makeAggregateFunction(
