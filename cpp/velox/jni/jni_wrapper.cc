@@ -19,12 +19,12 @@
 #include <folly/system/ThreadName.h>
 #include <jni.h>
 
+#include <jni/jni_common.h>
 #include "compute/DwrfDatasource.h"
 #include "compute/VeloxPlanConverter.h"
 #include "jni/jni_errors.h"
 #include "memory/velox_memory_pool.h"
 #include "velox/substrait/SubstraitToVeloxPlanValidator.h"
-#include <jni/jni_common.h>
 
 #include <iostream>
 
@@ -139,9 +139,7 @@ Java_io_glutenproject_spark_sql_execution_datasources_velox_DwrfDatasourceJniWra
   if (c_schema == -1) {
     // Only inspect the schema and not write
     auto dwrfDatasource = std::make_shared<::velox::compute::DwrfDatasource>(
-        JStringToCString(env, file_path),
-        nullptr,
-        pool.get());
+        JStringToCString(env, file_path), nullptr, pool.get());
     // dwrfDatasource->Init( );
     return CreateNativeRef(dwrfDatasource);
 
@@ -150,9 +148,7 @@ Java_io_glutenproject_spark_sql_execution_datasources_velox_DwrfDatasourceJniWra
         arrow::ImportSchema(reinterpret_cast<struct ArrowSchema*>(c_schema)));
 
     auto dwrfDatasource = std::make_shared<::velox::compute::DwrfDatasource>(
-        JStringToCString(env, file_path),
-        schema,
-        pool.get());
+        JStringToCString(env, file_path), schema, pool.get());
     dwrfDatasource->Init(sparkConfs_);
     return CreateNativeRef(dwrfDatasource);
   }
@@ -164,8 +160,8 @@ Java_io_glutenproject_spark_sql_execution_datasources_velox_DwrfDatasourceJniWra
     jobject obj,
     jlong instanceId) {
   JNI_METHOD_START
-  auto dwrfDatasource = RetrieveNativeInstance<
-      ::velox::compute::DwrfDatasource>(instanceId);
+  auto dwrfDatasource =
+      RetrieveNativeInstance<::velox::compute::DwrfDatasource>(instanceId);
   auto schema = dwrfDatasource->InspectSchema();
   return ToSchemaByteArray(env, schema);
   JNI_METHOD_END(nullptr)
@@ -177,11 +173,10 @@ Java_io_glutenproject_spark_sql_execution_datasources_velox_DwrfDatasourceJniWra
     jobject obj,
     jlong instanceId) {
   JNI_METHOD_START
-  auto dwrfDatasource = RetrieveNativeInstance<
-      ::velox::compute::DwrfDatasource>(instanceId);
+  auto dwrfDatasource =
+      RetrieveNativeInstance<::velox::compute::DwrfDatasource>(instanceId);
   dwrfDatasource->Close();
-  ReleaseNativeRef<::velox::compute::DwrfDatasource>(
-      instanceId);
+  ReleaseNativeRef<::velox::compute::DwrfDatasource>(instanceId);
   JNI_METHOD_END()
 }
 
@@ -198,8 +193,8 @@ Java_io_glutenproject_spark_sql_execution_datasources_velox_DwrfDatasourceJniWra
           reinterpret_cast<struct ArrowArray*>(c_array),
           reinterpret_cast<struct ArrowSchema*>(c_schema)));
 
-  auto dwrfDatasource = RetrieveNativeInstance<
-      ::velox::compute::DwrfDatasource>(instanceId);
+  auto dwrfDatasource =
+      RetrieveNativeInstance<::velox::compute::DwrfDatasource>(instanceId);
   dwrfDatasource->Write(rb);
   JNI_METHOD_END()
 }

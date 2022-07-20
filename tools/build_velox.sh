@@ -61,10 +61,8 @@ if [ $BUILD_VELOX_FROM_SOURCE == "ON" ]; then
     sed -i '/^sudo apt install/a\  libiberty-dev \\' scripts/setup-ubuntu.sh
     sed -i 's/^  liblzo2-dev.*/  liblzo2-dev/g' scripts/setup-ubuntu.sh
     sed -i 's/^  ninja -C "${BINARY_DIR}" install/  sudo ninja -C "${BINARY_DIR}" install/g' scripts/setup-helper-functions.sh
-    if [ $BUILD_PROTUBUF == "ON" ]; then
-      sed -i '/^function install_folly.*/i function install_pb {\n  github_checkout protocolbuffers/protobuf v3.13.0\n  git submodule update --init --recursive\n  ./autogen.sh\n  ./configure CFLAGS=-fPIC CXXFLAGS=-fPIC\n  make -j$(nproc)\n  make check\n  sudo make install\n sudo ldconfig\n}\n' scripts/setup-ubuntu.sh
-      sed -i '/^  run_and_time install_folly/i \ \ run_and_time install_pb' scripts/setup-ubuntu.sh
-    fi;
+    sed -i '/^function install_folly.*/i function install_pb {\n  github_checkout protocolbuffers/protobuf v3.13.0\n  git submodule update --init --recursive\n  ./autogen.sh\n  ./configure CFLAGS=-fPIC CXXFLAGS=-fPIC\n  make -j$(nproc)\n  make check\n  sudo make install\n sudo ldconfig\n}\n' scripts/setup-ubuntu.sh
+    sed -i '/^  run_and_time install_folly/i \ \ run_and_time install_pb' scripts/setup-ubuntu.sh
     sed -i 's/-mavx2 -mfma -mavx -mf16c -mlzcnt -std=c++17/-march=native -std=c++17 -mno-avx512f/g' scripts/setup-helper-functions.sh
 
     scripts/setup-ubuntu.sh

@@ -42,6 +42,7 @@
 
 #include "compute/protobuf_utils.h"
 #include "memory/arrow_memory_pool.h"
+#include "utils/exception.h"
 
 static jint JNI_VERSION = JNI_VERSION_1_8;
 
@@ -173,7 +174,8 @@ jlong CreateNativeRef(std::shared_ptr<T> t) {
 /// \return the shared_ptr object
 template <typename T>
 std::shared_ptr<T> RetrieveNativeInstance(jlong ref) {
-  std::shared_ptr<T>* retrieved_ptr = reinterpret_cast<std::shared_ptr<T>*>(ref);
+  std::shared_ptr<T>* retrieved_ptr =
+      reinterpret_cast<std::shared_ptr<T>*>(ref);
   return *retrieved_ptr;
 }
 
@@ -182,7 +184,8 @@ std::shared_ptr<T> RetrieveNativeInstance(jlong ref) {
 /// \param[in] ref address of the shared_ptr
 template <typename T>
 void ReleaseNativeRef(jlong ref) {
-  std::shared_ptr<T>* retrieved_ptr = reinterpret_cast<std::shared_ptr<T>*>(ref);
+  std::shared_ptr<T>* retrieved_ptr =
+      reinterpret_cast<std::shared_ptr<T>*>(ref);
   delete retrieved_ptr;
 }
 

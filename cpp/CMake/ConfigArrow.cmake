@@ -85,7 +85,7 @@ else()
 
   # Copy arrow headers
   set(ARROW_INCLUDE_DST_DIR ${root_directory}/releases/include)
-  set(ARROW_INCLUDE_SUB_DIR arrow gandiva jni parquet)
+  set(ARROW_INCLUDE_SUB_DIR arrow gandiva parquet)
   message(STATUS "Copy Arrow headers from ${ARROW_INCLUDE_SRC_DIR} to ${ARROW_INCLUDE_DST_DIR}")
   file(MAKE_DIRECTORY ${ARROW_INCLUDE_DST_DIR})
   foreach(SUB_DIR ${ARROW_INCLUDE_SUB_DIR})
