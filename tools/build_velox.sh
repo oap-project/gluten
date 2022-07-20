@@ -49,7 +49,7 @@ if [ $BUILD_VELOX_FROM_SOURCE == "ON" ]; then
     echo "VELOX_INSTALL_DIR=${VELOX_INSTALL_DIR}"
     mkdir -p $VELOX_SOURCE_DIR
     mkdir -p $VELOX_INSTALL_DIR
-    git clone https://github.com/oap-project/velox.git -b main $VELOX_SOURCE_DIR
+    git clone https://github.com/zhejiangxiaomai/velox.git -b arrowStream $VELOX_SOURCE_DIR
     pushd $VELOX_SOURCE_DIR
 
     #sync submodules
