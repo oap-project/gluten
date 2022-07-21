@@ -20,14 +20,13 @@ package io.glutenproject
 import java.util.{Collections, Objects}
 
 import scala.language.implicitConversions
-
 import com.google.protobuf.Any
 import io.glutenproject.GlutenPlugin.{GLUTEN_SESSION_EXTENSION_NAME, SPARK_SESSION_EXTS_KEY}
 import io.glutenproject.backendsapi.BackendsApiManager
 import io.glutenproject.extension.{ColumnarOverrides, ColumnarQueryStagePreparations, OthersExtensionOverrides, StrategyOverrides}
 import io.glutenproject.substrait.expression.ExpressionBuilder
 import io.glutenproject.substrait.extensions.ExtensionBuilder
-import io.glutenproject.substrait.plan.PlanBuilder
+import io.glutenproject.substrait.plan.{PlanBuilder, PlanNode}
 import io.glutenproject.vectorized.ExpressionEvaluator
 import java.util
 
@@ -128,6 +127,33 @@ private[glutenproject] object GlutenPlugin {
     new SparkConfImplicits(conf)
   }
 
+  def buildNativeConfNode(conf: SparkConf): PlanNode = {
+    val nativeConfMap = new util.HashMap[String, String]()
+
+    if (conf.contains(GlutenConfig.SPARK_HIVE_EXEC_ORC_STRIPE_SIZE)) {
+      nativeConfMap.put(
+        GlutenConfig.HIVE_EXEC_ORC_STRIPE_SIZE,
+        conf.get(GlutenConfig.SPARK_HIVE_EXEC_ORC_STRIPE_SIZE))
+    }
+    if (conf.contains(GlutenConfig.SPARK_HIVE_EXEC_ORC_ROW_INDEX_STRIDE)) {
+      nativeConfMap.put(
+        GlutenConfig.HIVE_EXEC_ORC_ROW_INDEX_STRIDE,
+        conf.get(GlutenConfig.SPARK_HIVE_EXEC_ORC_ROW_INDEX_STRIDE))
+    }
+    if (conf.contains(GlutenConfig.SPARK_HIVE_EXEC_ORC_COMPRESS)) {
+      nativeConfMap.put(
+        GlutenConfig.HIVE_EXEC_ORC_COMPRESS, conf.get(GlutenConfig.SPARK_HIVE_EXEC_ORC_COMPRESS))
+    }
+
+    nativeConfMap.put(
+      GlutenConfig.SPARK_BATCH_SIZE, conf.get(GlutenConfig.SPARK_BATCH_SIZE, "32768"))
+
+    val stringMapNode = ExpressionBuilder.makeStringMap(nativeConfMap)
+    val extensionNode = ExtensionBuilder
+      .makeAdvancedExtension(Any.pack(stringMapNode.toProtobuf))
+    PlanBuilder.makePlan(extensionNode)
+  }
+
   def initNative(conf: SparkConf): Unit = {
     // SQLConf is not initialed here, so it can not use 'GlutenConfig.getConf' to get conf.
     if (conf.getBoolean(GlutenConfig.GLUTEN_LOAD_NATIVE, defaultValue = true)) {
@@ -139,24 +165,8 @@ private[glutenproject] object GlutenPlugin {
         customBackendLib,
         conf.getBoolean(GlutenConfig.GLUTEN_LOAD_ARROW, defaultValue = true))
       if (customGlutenLib.nonEmpty || customBackendLib.nonEmpty) {
-        // Pass the spark confs to velox
-        val confs = new util.HashMap[String, String]()
-        if (conf.contains("spark.hive.exec.orc.stripe.size")) {
-          confs.put("hive.exec.orc.stripe.size", conf.get("spark.hive.exec.orc.stripe.size"))
-        }
-        if (conf.contains("spark.hive.exec.orc.row.index.stride")) {
-          confs.put("hive.exec.orc.row.index.stride",
-            conf.get("spark.hive.exec.orc.row.index.stride"))
-        }
-        if (conf.contains("spark.hive.exec.orc.compress")) {
-          confs.put("hive.exec.orc.compress", conf.get("spark.hive.exec.orc.compress"))
-        }
-
-        val stringMapNode = ExpressionBuilder.makeStringMap(confs)
-        val extensionNode = ExtensionBuilder.makeAdvancedExtension(
-          Any.pack(stringMapNode.toProtobuf))
-        initKernel.initNative(
-          PlanBuilder.makePlan(extensionNode).toProtobuf.toByteArray)
+        // Initialize the native backend with spark confs.
+        initKernel.initNative(buildNativeConfNode(conf).toProtobuf.toByteArray)
       }
     }
   }
