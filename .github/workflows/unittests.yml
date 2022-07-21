@@ -33,7 +33,12 @@ jobs:
           java-version: '8'
           java-package: jdk
           overwrite-settings: false
-      - run: sudo swapoff -a
+      - name: free disk space
+        run: |
+          sudo swapoff -a
+          sudo rm -rf /tmp/
+          sudo apt clean
+          sudo df -h
       - run: free
       - run: sudo apt-get update
       - run: sudo apt-get install -y cmake ccache build-essential
