@@ -16,7 +16,7 @@ If you wish to automatically build velox from source. The default velox installa
 -Dbuild_velox=ON -Dbuild_velox_from_source=ON
 ```
 
-If you wish to enable Velox backend and you have an existing compiled Velox, please use velox_home to set the path.
+If you wish to enable Velox backend and you have an existing compiled Velox or Velox repo, please use velox_home to set the path.
 
 ```shell script
 -Dbuild_velox=ON -Dvelox_home=${VELOX_HOME}
