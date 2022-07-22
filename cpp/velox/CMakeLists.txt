@@ -82,6 +82,7 @@ macro(ADD_VELOX_DEPENDENCIES)
   add_velox_dependency(vector::arrow::bridge "${VELOX_COMPONENTS_PATH}/vector/arrow/libvelox_arrow_bridge.a")
 
   add_velox_dependency(connector::hive "${VELOX_COMPONENTS_PATH}/connectors/hive/libvelox_hive_connector.a")
+  add_velox_dependency(filesystems::hdfs "${VELOX_COMPONENTS_PATH}/connectors/hive/storage_adapters/hdfs/libvelox_hdfs.a")
   add_velox_dependency(connector "${VELOX_COMPONENTS_PATH}/connectors/libvelox_connector.a")
 
   add_velox_dependency(dwio::dwrf::test_utils "${VELOX_COMPONENTS_PATH}/dwio/dwrf/test/utils/libvelox_dwrf_test_utils.a")
@@ -132,6 +133,16 @@ macro(ADD_VELOX_DEPENDENCIES)
 
 endmacro()
 
+macro(find_libhdfs3)
+  # Find the libhdfs3 library
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
+  find_library(LIBHDFS3_LIBRARY NAMES hdfs3 PATHS ${SYSTEM_LIB_PATH} ${SYSTEM_LIB64_PATH} ${SYSTEM_LIB_MULTIARCH_PATH} ${SYSTEM_LOCAL_LIB_PATH} ${SYSTEM_LOCAL_LIB64_PATH} NO_DEFAULT_PATH)
+  if (NOT LIBHDFS3_LIBRARY)
+     message(FATAL_ERROR "LIBHDFS3 Library Not Found")
+  else()
+    message(STATUS "LIBHDFS3 Library Can Be Found in ${LIBHDFS3_LIBRARY}")
+  endif()
+endmacro()
 
 # Build Velox backend.
 set(VELOX_SRCS
@@ -165,6 +176,12 @@ find_package(gflags REQUIRED COMPONENTS shared CONFIG)
 target_link_libraries(velox PUBLIC spark_columnar_jni)
 add_velox_dependencies()
 target_link_libraries(velox PUBLIC Folly::folly)
+
+find_libhdfs3()
+add_library(libhdfs3 SHARED IMPORTED)
+set_target_properties(libhdfs3
+                      PROPERTIES IMPORTED_LOCATION "${LIBHDFS3_LIBRARY}")
+target_link_libraries(velox PUBLIC libhdfs3)
 
 if(BUILD_BENCHMARKS)
   add_subdirectory(benchmarks)
