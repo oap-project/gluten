@@ -286,6 +286,7 @@
                                 <argument>
                                     --build_velox_from_source=${velox.build_velox_from_source}
                                 </argument>
+                                <argument>${velox.velox_home}</argument>
                             </arguments>
                         </configuration>
                     </execution>
