@@ -69,7 +69,7 @@ class VeloxColumnarShuffleWriter[K, V](
   private val customizedCompressCodec =
     GlutenConfig.getConf.columnarShuffleUseCustomizedCompressionCodec
   private val defaultCompressionCodec = if (conf.getBoolean("spark.shuffle.compress", true)) {
-    conf.get("spark.io.compression.codec", "lz4")
+    conf.get("spark.io.compression.codec", CompressType.LZ4_FRAME.getAlias)
   } else {
     "uncompressed"
   }

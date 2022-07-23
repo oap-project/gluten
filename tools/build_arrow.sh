@@ -94,7 +94,6 @@ cmake -DARROW_BUILD_STATIC=OFF \
         -DARROW_WITH_ZSTD=OFF \
         -DARROW_WITH_BROTLI=OFF \
         -DARROW_WITH_ZLIB=OFF \
-        -DARROW_WITH_FASTPFOR=ON \
         -DARROW_FILESYSTEM=ON \
         -DARROW_JSON=ON \
         -DARROW_CSV=ON \
@@ -113,7 +112,7 @@ make -j$NPROC
 make install
 
 cd java
-mvn clean install -P arrow-jni -pl dataset,gandiva -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
+mvn clean install -P arrow-jni -pl dataset,gandiva,compression -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
 echo "Finish to build Arrow from Source !!!"
 else
 echo "Use ARROW_ROOT as Arrow Library Path"
