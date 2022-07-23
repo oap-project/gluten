@@ -54,7 +54,6 @@ ExternalProject_Add(arrow_ep
     -DARROW_WITH_ZSTD=OFF
     -DARROW_WITH_BROTLI=OFF
     -DARROW_WITH_ZLIB=OFF
-    -DARROW_WITH_FASTPFOR=ON
     -DARROW_FILESYSTEM=ON
     -DARROW_JSON=ON
     -DARROW_FLIGHT=OFF
@@ -111,17 +110,6 @@ if(STATIC_ARROW)
       "${ARROW_EP_INSTALL_PREFIX}/include")
   add_dependencies(Arrow::arrow arrow_ep)
 
-  set(
-      ARROW_DATASET_JNI_STATIC_LIB
-      "${ARROW_EP_INSTALL_PREFIX}/lib/${CMAKE_STATIC_LIBRARY_PREFIX}${ARROW_DATASET_JNI_LIB_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}"
-  )
-  add_library(Arrow::arrow_dataset_jni STATIC IMPORTED)
-  set_target_properties(Arrow::arrow_dataset_jni
-      PROPERTIES IMPORTED_LOCATION "${ARROW_DATASET_JNI_STATIC_LIB}"
-      INTERFACE_INCLUDE_DIRECTORIES
-      "${ARROW_EP_INSTALL_PREFIX}/include")
-  add_dependencies(Arrow::arrow_dataset_jni arrow_ep)
-
   # Load Static Gandiva Library
   set(
       GANDIVA_STATIC_LIB
@@ -133,6 +121,5 @@ if(STATIC_ARROW)
       INTERFACE_INCLUDE_DIRECTORIES
       "${ARROW_EP_INSTALL_PREFIX}/include")
   add_dependencies(Arrow::gandiva arrow_ep)
-  target_link_libraries(spark_columnar_jni PRIVATE Arrow::arrow Arrow::arrow_dataset_jni Arrow::gandiva Threads::Threads)
 
 endif()

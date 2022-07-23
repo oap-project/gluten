@@ -23,7 +23,6 @@
 #include <arrow/record_batch.h>
 #include <arrow/util/compression.h>
 #include <jni.h>
-#include <jni/dataset/jni_util.h>
 #include <malloc.h>
 
 #include <iostream>
@@ -84,8 +83,6 @@ using gluten::shuffle::SplitOptions;
 using gluten::shuffle::Splitter;
 static arrow::jni::ConcurrentMap<std::shared_ptr<Splitter>>
     shuffle_splitter_holder_;
-static arrow::jni::ConcurrentMap<std::shared_ptr<arrow::Schema>>
-    decompression_schema_holder_;
 
 std::shared_ptr<ArrowArrayResultIterator> GetArrayIterator(
     JNIEnv* env,
@@ -164,16 +161,16 @@ class JavaArrowArrayIterator {
     if (!env->CallBooleanMethod(
             java_serialized_arrow_array_iterator_,
             serialized_arrow_array_iterator_hasNext)) {
-      RETURN_NOT_OK(arrow::dataset::jni::CheckException(env));
+      CheckException(env);
       return nullptr; // stream ended
     }
-    RETURN_NOT_OK(arrow::dataset::jni::CheckException(env));
+    CheckException(env);
     ArrowArray c_array{};
     env->CallObjectMethod(
         java_serialized_arrow_array_iterator_,
         serialized_arrow_array_iterator_next,
         reinterpret_cast<jlong>(&c_array));
-    RETURN_NOT_OK(arrow::dataset::jni::CheckException(env));
+    CheckException(env);
     auto array = std::make_shared<ArrowArray>(c_array);
     return array;
   }
@@ -311,7 +308,6 @@ void JNI_OnUnload(JavaVM* vm, void* reserved) {
   array_iterator_holder_.Clear();
   columnar_to_row_converter_holder_.Clear();
   shuffle_splitter_holder_.Clear();
-  decompression_schema_holder_.Clear();
 }
 
 JNIEXPORT void JNICALL
@@ -815,117 +811,6 @@ Java_io_glutenproject_vectorized_ShuffleSplitterJniWrapper_close(
   JNI_METHOD_START
   shuffle_splitter_holder_.Erase(splitter_id);
   JNI_METHOD_END()
-}
-
-JNIEXPORT jlong JNICALL
-Java_io_glutenproject_vectorized_ShuffleDecompressionJniWrapper_make(
-    JNIEnv* env,
-    jobject,
-    jlong c_schema) {
-  JNI_METHOD_START
-  std::shared_ptr<arrow::Schema> schema = gluten::JniGetOrThrow(
-      arrow::ImportSchema(reinterpret_cast<struct ArrowSchema*>(c_schema)));
-  return decompression_schema_holder_.Insert(schema);
-  JNI_METHOD_END(-1L)
-}
-
-JNIEXPORT jboolean JNICALL
-Java_io_glutenproject_vectorized_ShuffleDecompressionJniWrapper_decompress(
-    JNIEnv* env,
-    jobject obj,
-    jlong schema_holder_id,
-    jstring compression_type_jstr,
-    jint num_rows,
-    jlongArray buf_addrs,
-    jlongArray buf_sizes,
-    jlongArray buf_mask,
-    jlong c_schema,
-    jlong c_array) {
-  JNI_METHOD_START
-  auto schema = decompression_schema_holder_.Lookup(schema_holder_id);
-  if (!schema) {
-    std::string error_message =
-        "Invalid schema holder id " + std::to_string(schema_holder_id);
-    gluten::JniThrow(error_message);
-  }
-  if (buf_addrs == NULL) {
-    gluten::JniThrow("Native decompress: buf_addrs can't be null");
-  }
-  if (buf_sizes == NULL) {
-    gluten::JniThrow("Native decompress: buf_sizes can't be null");
-  }
-  if (buf_mask == NULL) {
-    gluten::JniThrow("Native decompress: buf_mask can't be null");
-  }
-
-  int in_bufs_len = env->GetArrayLength(buf_addrs);
-  if (in_bufs_len != env->GetArrayLength(buf_sizes)) {
-    gluten::JniThrow(
-        "Native decompress: length of buf_addrs and buf_sizes mismatch");
-  }
-
-  auto compression_type = arrow::Compression::UNCOMPRESSED;
-  if (compression_type_jstr != NULL) {
-    auto compression_type_result =
-        GetCompressionType(env, compression_type_jstr);
-    if (compression_type_result.status().ok()) {
-      compression_type = compression_type_result.MoveValueUnsafe();
-    }
-  }
-
-  // make buffers from raws
-  auto in_buf_addrs = env->GetLongArrayElements(buf_addrs, JNI_FALSE);
-  auto in_buf_sizes = env->GetLongArrayElements(buf_sizes, JNI_FALSE);
-  auto in_buf_mask = env->GetLongArrayElements(buf_mask, JNI_FALSE);
-
-  std::vector<std::shared_ptr<arrow::Buffer>> input_buffers;
-  input_buffers.reserve(in_bufs_len);
-  for (auto buffer_idx = 0; buffer_idx < in_bufs_len; buffer_idx++) {
-    input_buffers.push_back(std::make_shared<arrow::Buffer>(
-        reinterpret_cast<const uint8_t*>(in_buf_addrs[buffer_idx]),
-        in_buf_sizes[buffer_idx]));
-  }
-
-  // decompress buffers
-  auto options = arrow::ipc::IpcReadOptions::Defaults();
-  options.memory_pool =
-      gluten::memory::GetDefaultWrappedArrowMemoryPool().get();
-  options.use_threads = false;
-  gluten::JniAssertOkOrThrow(
-      DecompressBuffers(
-          compression_type,
-          options,
-          (uint8_t*)in_buf_mask,
-          input_buffers,
-          schema->fields()),
-      "ShuffleDecompressionJniWrapper_decompress, failed to decompress buffers");
-
-  env->ReleaseLongArrayElements(buf_addrs, in_buf_addrs, JNI_ABORT);
-  env->ReleaseLongArrayElements(buf_sizes, in_buf_sizes, JNI_ABORT);
-  env->ReleaseLongArrayElements(buf_mask, in_buf_mask, JNI_ABORT);
-
-  // make arrays from buffers
-  std::shared_ptr<arrow::RecordBatch> rb;
-  gluten::JniAssertOkOrThrow(
-      MakeRecordBatch(
-          schema, num_rows, input_buffers, input_buffers.size(), &rb),
-      "ShuffleDecompressionJniWrapper_decompress, failed to MakeRecordBatch upon "
-      "buffers");
-
-  gluten::JniAssertOkOrThrow(arrow::ExportRecordBatch(
-      *rb,
-      reinterpret_cast<struct ArrowArray*>(c_array),
-      reinterpret_cast<struct ArrowSchema*>(c_schema)));
-  return true;
-  JNI_METHOD_END(false)
-}
-
-JNIEXPORT void JNICALL
-Java_io_glutenproject_vectorized_ShuffleDecompressionJniWrapper_close(
-    JNIEnv* env,
-    jobject,
-    jlong schema_holder_id) {
-  decompression_schema_holder_.Erase(schema_holder_id);
 }
 
 JNIEXPORT jlong JNICALL

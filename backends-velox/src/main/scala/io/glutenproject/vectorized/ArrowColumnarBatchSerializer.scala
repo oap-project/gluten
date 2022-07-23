@@ -21,22 +21,19 @@ import java.io._
 import java.nio.ByteBuffer
 
 import scala.collection.JavaConverters._
-import scala.collection.mutable
-import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.utils.ArrowAbiUtil
-import org.apache.arrow.c.{ArrowArray, ArrowSchema}
-import org.apache.arrow.memory.{ArrowBuf, BufferAllocator}
-import org.apache.arrow.vector.{VectorLoader, VectorSchemaRoot}
+import org.apache.arrow.compression.CommonsCompressionFactory
+import org.apache.arrow.memory.BufferAllocator
+import org.apache.arrow.vector.VectorSchemaRoot
+import org.apache.arrow.vector.compression.NoCompressionCodec
 import org.apache.arrow.vector.ipc.ArrowStreamReader
 import org.apache.arrow.vector.types.pojo.Schema
 
 import org.apache.spark.SparkEnv
 import org.apache.spark.internal.Logging
 import org.apache.spark.serializer.{DeserializationStream, SerializationStream, Serializer, SerializerInstance}
-import org.apache.spark.sql.execution.datasources.v2.arrow.{SparkMemoryUtils, SparkVectorUtils}
+import org.apache.spark.sql.execution.datasources.v2.arrow.{SparkMemoryUtils}
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types.StructType
@@ -63,12 +60,8 @@ private class ArrowColumnarBatchSerializerInstance(
 
   override def deserializeStream(in: InputStream): DeserializationStream = {
     new DeserializationStream {
-
-      private val readSchema = GlutenConfig.getConf.columnarShuffleWriteSchema
-
       private val compressionEnabled =
         SparkEnv.get.conf.getBoolean("spark.shuffle.compress", true)
-
       private val allocator: BufferAllocator = SparkMemoryUtils
         .contextArrowAllocatorUnmanaged()
         .newChildAllocator("ArrowColumnarBatch deserialize", 0, Long.MaxValue)
@@ -78,10 +71,6 @@ private class ArrowColumnarBatchSerializerInstance(
       private var vectors: Array[ColumnVector] = _
       private var cb: ColumnarBatch = _
       private var batchLoaded = true
-
-      private var jniWrapper: ShuffleDecompressionJniWrapper = _
-      private var schemaHolderId: Long = 0
-      private var vectorLoader: VectorLoader = _
 
       private var numBatchesTotal: Long = _
       private var numRowsTotal: Long = _
@@ -123,19 +112,6 @@ private class ArrowColumnarBatchSerializerInstance(
             numBatchesTotal += 1
             numRowsTotal += numRows
 
-            // jni call to decompress buffers
-            if (compressionEnabled &&
-              reader.asInstanceOf[SchemaAwareArrowCompressedStreamReader]
-                .isCurrentBatchCompressed) {
-              try {
-                decompressVectors()
-              } catch {
-                case e: UnsupportedOperationException =>
-                  this.close()
-                  throw e
-              }
-            }
-
             val newFieldVectors = root.getFieldVectors.asScala.map { vector =>
               val newVector = vector.getField.createVector(allocator)
               vector.makeTransferPair(newVector).transfer()
@@ -153,12 +129,12 @@ private class ArrowColumnarBatchSerializerInstance(
             throw new EOFException
           }
         } else {
-          val suggestedSchema = if (readSchema) null else schema
-          if (compressionEnabled) {
-            reader = new SchemaAwareArrowCompressedStreamReader(suggestedSchema, in, allocator)
+          reader = if (compressionEnabled) {
+            new ArrowStreamReader(in, allocator, CommonsCompressionFactory.INSTANCE)
           } else {
-            reader = new SchemaAwareArrowStreamReader(suggestedSchema, in, allocator)
+            new ArrowStreamReader(in, allocator, NoCompressionCodec.Factory.INSTANCE)
           }
+
           try {
             root = reader.getVectorSchemaRoot
           } catch {
@@ -183,86 +159,7 @@ private class ArrowColumnarBatchSerializerInstance(
           numOutputRows += numRowsTotal
           if (cb != null) cb.close()
           if (reader != null) reader.close(true)
-          if (jniWrapper != null) jniWrapper.close(schemaHolderId)
           isClosed = true
-        }
-      }
-
-      private def decompressVectors(): Unit = {
-        if (jniWrapper == null) {
-          jniWrapper = new ShuffleDecompressionJniWrapper
-          val out = ArrowSchema.allocateNew(SparkMemoryUtils.contextArrowAllocator())
-          try {
-            ArrowAbiUtil.exportSchema(SparkMemoryUtils.contextArrowAllocator(), root.getSchema, out)
-            schemaHolderId = jniWrapper.make(out.memoryAddress())
-          } finally {
-            out.close()
-          }
-        }
-        if (vectorLoader == null) {
-          vectorLoader = new VectorLoader(root)
-        }
-        val bufAddrs = new ListBuffer[Long]()
-        val bufSizes = new ListBuffer[Long]()
-        val bufBS = mutable.BitSet()
-        var bufIdx = 0
-
-        root.getFieldVectors.asScala.foreach { vector =>
-          val buffers = new java.util.ArrayList[ArrowBuf]()
-          val bits = new java.util.ArrayList[Boolean]()
-          SparkVectorUtils.appendNodes(vector, null, buffers, bits);
-          (buffers.asScala zip bits.asScala).foreach {
-            case (buffer, is_bit) =>
-              if (is_bit) {
-                val validityBuf = buffer
-                if (validityBuf
-                  .capacity() <= 8 || java.lang.Long.bitCount(validityBuf.getLong(0)) == 64
-                  || java.lang.Long.bitCount(validityBuf.getLong(0)) == 0) {
-                  bufBS.add(bufIdx)
-                }
-              }
-
-              bufAddrs += buffer.memoryAddress()
-              // buffer.readableBytes() will return wrong readable length here
-              // since it is initialized by
-              // data stored in IPC message header, which is not the actual compressed length
-              bufSizes += buffer.capacity()
-              bufIdx += 1
-          }
-        }
-        val cArray = ArrowArray.allocateNew(allocator)
-        val cSchema = ArrowSchema.allocateNew(allocator)
-
-        try {
-          val open = jniWrapper.decompress(
-            schemaHolderId,
-            reader.asInstanceOf[SchemaAwareArrowCompressedStreamReader].getCompressType,
-            root.getRowCount,
-            bufAddrs.toArray,
-            bufSizes.toArray,
-            bufBS.toBitMask,
-            cSchema.memoryAddress(),
-            cArray.memoryAddress())
-
-          if (!open) {
-            // expected an error before reaching this line
-            throw new IllegalStateException()
-          }
-
-          val decompressedRecordBatch =
-            ArrowAbiUtil.importToArrowRecordBatch(allocator, cSchema, cArray)
-
-          root.clear()
-          if (decompressedRecordBatch != null) {
-            vectorLoader.load(decompressedRecordBatch)
-            logDebug(
-              s"ArrowColumnarBatchSerializer, Decompressed vector is " +
-                s"${root.contentToTSVString()}")
-            decompressedRecordBatch.close()
-          }
-        } finally {
-          cArray.close()
-          cSchema.close()
         }
       }
     }

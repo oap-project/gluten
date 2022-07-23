@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu
+set -eux
 
 NPROC=$(nproc)
 
@@ -73,7 +73,7 @@ pushd java/c/build
 cmake ..
 cmake --build .
 popd
- 
+
 cmake -DARROW_BUILD_STATIC=OFF \
         -DARROW_BUILD_SHARED=ON \
         -DARROW_COMPUTE=ON \
@@ -113,7 +113,7 @@ make -j$NPROC
 make install
 
 cd java
-mvn clean install -P arrow-jni -pl dataset,gandiva -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
+mvn clean install -P arrow-jni -pl gandiva,compression -am -Darrow.cpp.build.dir=$ARROW_INSTALL_DIR/lib -DskipTests -Dcheckstyle.skip
 echo "Finish to build Arrow from Source !!!"
 else
 echo "Use ARROW_ROOT as Arrow Library Path"

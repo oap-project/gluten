@@ -67,7 +67,7 @@ jobs:
           sudo apt-get install -y google-mock
       - name: Install Gluten Velox-backend
         run: |
-          mvn clean install -DskipTests -Pbackends-velox -Dbuild_protobuf=OFF -Dbuild_cpp=ON -Dbuild_velox=ON -Dbuild_velox_from_source=ON -Dbuild_gazelle_cpp=ON -Dbuild_arrow=ON -Dcpp_tests=ON -Dcpp_benchmarks=ON
+          mvn clean install -DskipTests -Pbackends-velox -Dbuild_protobuf=OFF -Dbuild_cpp=ON -Dbuild_velox=ON -Dbuild_velox_from_source=ON -Dbuild_arrow=ON -Dcpp_tests=ON -Dcpp_benchmarks=OFF
       - name: Run unit tests
         run: |
           mvn test -Dcheckstyle.skip -Dexec.skip -Pbackends-velox

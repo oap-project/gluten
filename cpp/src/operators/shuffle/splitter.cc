@@ -346,26 +346,17 @@ arrow::Status Splitter::Init() {
   ipc_write_options.memory_pool = options_.memory_pool.get();
   ipc_write_options.use_threads = false;
 
-  if (options_.compression_type == arrow::Compression::FASTPFOR) {
-    ARROW_ASSIGN_OR_RAISE(
-        ipc_write_options.codec,
-        arrow::util::Codec::CreateInt32(arrow::Compression::FASTPFOR));
-
-  } else if (options_.compression_type == arrow::Compression::LZ4_FRAME) {
+  if (options_.compression_type == arrow::Compression::LZ4_FRAME) {
     ARROW_ASSIGN_OR_RAISE(
         ipc_write_options.codec,
         arrow::util::Codec::Create(arrow::Compression::LZ4_FRAME));
   } else {
-    ARROW_ASSIGN_OR_RAISE(
-        ipc_write_options.codec,
-        arrow::util::Codec::CreateInt32(arrow::Compression::UNCOMPRESSED));
+    ipc_write_options.codec = nullptr;
   }
 
   // initialize tiny batch write options
   tiny_bach_write_options_ = ipc_write_options;
-  ARROW_ASSIGN_OR_RAISE(
-      tiny_bach_write_options_.codec,
-      arrow::util::Codec::CreateInt32(arrow::Compression::UNCOMPRESSED));
+  tiny_bach_write_options_.codec = nullptr;
 
   // Allocate first buffer for split reducer
   ARROW_ASSIGN_OR_RAISE(
@@ -418,19 +409,12 @@ int64_t Splitter::CompressedSize(const arrow::RecordBatch& rb) {
 
 arrow::Status Splitter::SetCompressType(
     arrow::Compression::type compressed_type) {
-  if (compressed_type == arrow::Compression::FASTPFOR) {
-    ARROW_ASSIGN_OR_RAISE(
-        options_.ipc_write_options.codec,
-        arrow::util::Codec::CreateInt32(arrow::Compression::FASTPFOR));
-
-  } else if (compressed_type == arrow::Compression::LZ4_FRAME) {
+  if (compressed_type == arrow::Compression::LZ4_FRAME) {
     ARROW_ASSIGN_OR_RAISE(
         options_.ipc_write_options.codec,
         arrow::util::Codec::Create(arrow::Compression::LZ4_FRAME));
   } else {
-    ARROW_ASSIGN_OR_RAISE(
-        options_.ipc_write_options.codec,
-        arrow::util::Codec::CreateInt32(arrow::Compression::UNCOMPRESSED));
+    options_.ipc_write_options.codec = nullptr;
   }
   return arrow::Status::OK();
 }

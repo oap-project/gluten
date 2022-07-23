@@ -22,7 +22,6 @@ set(ARROW_LIB_NAME "arrow")
 set(GANDIVA_LIB_NAME "gandiva")
 set(PARQUET_LIB_NAME "parquet")
 set(ARROW_DATASET_LIB_NAME "arrow_dataset")
-set(ARROW_DATASET_JNI_LIB_NAME "arrow_dataset_jni")
 set(ARROW_SUBSTRAIT_LIB_NAME "arrow_substrait")
 
 function(FIND_ARROW_LIB LIB_NAME)
@@ -86,7 +85,7 @@ else()
 
   # Copy arrow headers
   set(ARROW_INCLUDE_DST_DIR ${root_directory}/releases/include)
-  set(ARROW_INCLUDE_SUB_DIR arrow gandiva jni parquet)
+  set(ARROW_INCLUDE_SUB_DIR arrow gandiva parquet)
   message(STATUS "Copy Arrow headers from ${ARROW_INCLUDE_SRC_DIR} to ${ARROW_INCLUDE_DST_DIR}")
   file(MAKE_DIRECTORY ${ARROW_INCLUDE_DST_DIR})
   foreach(SUB_DIR ${ARROW_INCLUDE_SUB_DIR})

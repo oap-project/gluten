@@ -119,7 +119,6 @@ public class JniLibLoader {
   public void loadArrowLibs() {
     newTransaction()
         .loadAndCreateLink("libarrow.so.800.0.0", "libarrow.so.800")
-        .loadAndCreateLink("libarrow_dataset_jni.so.800.0.0", "libarrow_dataset_jni.so.800")
         .loadAndCreateLink("libgandiva.so.800.0.0", "libgandiva.so.800")
         .commit();
   }
