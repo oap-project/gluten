@@ -29,7 +29,7 @@ set(BINARY_RELEASE_DIR "${root_directory}/releases")
 ExternalProject_Add(arrow_ep
     GIT_REPOSITORY https://github.com/oap-project/arrow.git
     SOURCE_DIR ${ARROW_EP_SOURCE_DIR}
-    GIT_TAG gluten-main
+    GIT_TAG arrow-8.0.0-gluten-20220427a
     BUILD_IN_SOURCE 1
     INSTALL_DIR ${ARROW_EP_INSTALL_PREFIX}
     SOURCE_SUBDIR cpp

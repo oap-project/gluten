@@ -65,7 +65,7 @@ echo "ARROW_PREFIX=${ARROW_PREFIX}"
 echo "ARROW_SOURCE_DIR=${ARROW_SOURCE_DIR}"
 mkdir -p $ARROW_SOURCE_DIR
 mkdir -p $ARROW_ROOT
-git clone https://github.com/oap-project/arrow.git -b gluten-main $ARROW_SOURCE_DIR
+git clone https://github.com/oap-project/arrow.git -b arrow-8.0.0-gluten-20220427a $ARROW_SOURCE_DIR
 pushd $ARROW_SOURCE_DIR
 
 mkdir -p java/c/build
