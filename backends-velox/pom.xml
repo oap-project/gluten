@@ -160,6 +160,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.arrow</groupId>
+            <artifactId>arrow-compression</artifactId>
+            <version>${arrow.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.arrow</groupId>
             <artifactId>arrow-memory-core</artifactId>
             <version>${arrow.version}</version>
             <scope>compile</scope>
