@@ -444,6 +444,9 @@ std::unordered_map<std::string, std::string> WholeStageResultIterator::getQueryC
         veloxCfg_->get<std::string>(kSessionTimezone, defaultTimezone);
     // Adjust timestamp according to the above configured session timezone.
     configs[velox::core::QueryConfig::kAdjustTimestampToTimezone] = std::to_string(true);
+    // To align with Spark's behavior, allow decimal precision loss or not.
+    configs[velox::core::QueryConfig::kAllowPrecisionLoss] =
+        veloxCfg_->get<std::string>(kAllowPrecisionLoss, "true");
     // Align Velox size function with Spark.
     configs[velox::core::QueryConfig::kSparkLegacySizeOfNull] = std::to_string(veloxCfg_->get<bool>(kLegacySize, true));
 

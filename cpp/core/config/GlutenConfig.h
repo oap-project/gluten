@@ -34,6 +34,8 @@ const std::string kLegacySize = "spark.sql.legacy.sizeOfNull";
 
 const std::string kSessionTimezone = "spark.sql.session.timeZone";
 
+const std::string kAllowPrecisionLoss = "spark.sql.decimalOperations.allowPrecisionLoss";
+
 const std::string kIgnoreMissingFiles = "spark.sql.files.ignoreMissingFiles";
 
 const std::string kDefaultSessionTimezone = "spark.gluten.sql.session.timeZone.default";
