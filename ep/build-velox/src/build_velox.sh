@@ -280,15 +280,18 @@ function compile_arrow_java_module() {
     ARROW_HOME="${VELOX_HOME}/_build/$COMPILE_TYPE/third_party/arrow_ep/src/arrow_ep"
     ARROW_INSTALL_DIR="${ARROW_HOME}/../../install"
 
-    # Arrow C Data Interface CPP libraries
     pushd $ARROW_HOME/java
-    mvn generate-resources -P generate-libs-cdata-all-os -Darrow.c.jni.dist.dir=$ARROW_INSTALL_DIR -N
-    popd
+    mvn clean install -pl maven/module-info-compiler-maven-plugin -am \
+          -Dmaven.test.skip -Drat.skip -Dmaven.gitcommitid.skip -Dcheckstyle.skip
+
+    # Arrow C Data Interface CPP libraries
+    mvn generate-resources -P generate-libs-cdata-all-os -Darrow.c.jni.dist.dir=$ARROW_INSTALL_DIR \
+      -Dmaven.test.skip -Drat.skip -Dmaven.gitcommitid.skip -Dcheckstyle.skip -N
 
     # Arrow Java libraries
-    pushd $ARROW_HOME/java
     mvn clean install -P arrow-c-data -pl c -am -DskipTests -Dcheckstyle.skip \
-      -Darrow.c.jni.dist.dir=$ARROW_INSTALL_DIR/lib -Dmaven.gitcommitid.skip=true
+      -Darrow.c.jni.dist.dir=$ARROW_INSTALL_DIR/lib \
+      -Dmaven.test.skip -Drat.skip -Dmaven.gitcommitid.skip -Dcheckstyle.skip
     popd
 }
 

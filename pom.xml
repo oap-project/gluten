@@ -51,7 +51,7 @@
     <spark.version>3.4.2</spark.version>
     <sparkshim.artifactId>spark-sql-columnar-shims-spark32</sparkshim.artifactId>
     <celeborn.version>0.3.2-incubating</celeborn.version>
-    <arrow.version>14.0.1</arrow.version>
+    <arrow.version>15.0.0</arrow.version>
     <arrow-memory.artifact>arrow-memory-unsafe</arrow-memory.artifact>
     <hadoop.version>2.7.4</hadoop.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

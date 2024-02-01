@@ -25,13 +25,6 @@
   </parent>
 
   <dependencies>
-    <dependency>
-      <groupId>io.glutenproject</groupId>
-      <artifactId>gluten-core</artifactId>
-      <version>${project.version}</version>
-      <scope>compile</scope>
-    </dependency>
-
     <!-- Do not remove the following. They are for enforcer plugin -->
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -88,7 +81,7 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <configuration>
-          <finalName>gluten-package-${project.version}</finalName>
+          <finalName>${jar.assembly.name.prefix}-${backend_type}-bundle-spark${sparkbundle.version}_${scala.binary.version}-${os.detected.release}_${os.detected.release.version}_${os.detected.arch}-${project.version}</finalName>
         </configuration>
         <executions>
           <execution>
@@ -97,7 +90,6 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <createSourcesJar>true</createSourcesJar>
               <relocations>
                 <relocation>
                   <pattern>com.google.protobuf</pattern>
@@ -156,28 +148,16 @@
                   <shadedPattern>${gluten.shade.packageName}.com.google.flatbuffers</shadedPattern>
                 </relocation>
               </relocations>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>copy-fat-jar</id>
-            <phase>package</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <executable>cp</executable>
-              <arguments>
-                <argument>target/gluten-package-${project.version}.jar</argument>
-                <argument>
-                  target/${jar.assembly.name.prefix}-${backend_type}-bundle-spark${sparkbundle.version}_${scala.binary.version}-${os.detected.release}_${os.detected.release.version}_${os.detected.arch}-${project.version}.jar
-                </argument>
-              </arguments>
+              <filters>
+                <filter>
+                  <artifact>*:*</artifact>
+                  <excludes>
+                    <exclude>META-INF/*.SF</exclude>
+                    <exclude>META-INF/*.DSA</exclude>
+                    <exclude>META-INF/*.RSA</exclude>
+                  </excludes>
+                </filter>
+              </filters>
             </configuration>
           </execution>
         </executions>
