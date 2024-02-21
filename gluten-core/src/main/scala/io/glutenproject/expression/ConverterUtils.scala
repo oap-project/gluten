@@ -192,7 +192,7 @@ object ConverterUtils extends Logging {
           typ =>
             val (field, nullable) = parseFromSubstraitType(typ)
             StructField("", field, nullable)
-        }
+        }.asJava
         (StructType(fields), isNullable(substraitType.getStruct.getNullability))
       case Type.KindCase.LIST =>
         val list = substraitType.getList

@@ -23,17 +23,19 @@ import org.apache.spark.internal.io.FileCommitProtocol
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
-import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression, PlanExpression}
 import org.apache.spark.sql.catalyst.plans.physical.Distribution
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.Table
 import org.apache.spark.sql.connector.expressions.Transform
 import org.apache.spark.sql.execution.{FileSourceScanExec, GlobalLimitExec, SparkPlan, TakeOrderedAndProjectExec}
-import org.apache.spark.sql.execution.datasources.{FilePartition, FileScanRDD, PartitionDirectory, PartitionedFile, PartitioningAwareFileIndex, WriteJobDescription, WriteTaskResult}
+import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.execution.datasources.v2.BatchScanExec
 import org.apache.spark.sql.execution.datasources.v2.text.TextScan
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
+
+import org.apache.hadoop.fs.Path
 
 sealed abstract class ShimDescriptor
 
@@ -50,6 +52,8 @@ trait SparkShims {
   // https://github.com/apache/spark/pull/32875
   def getDistribution(leftKeys: Seq[Expression], rightKeys: Seq[Expression]): Seq[Distribution]
 
+  def structFromAttributes(attrs: Seq[Attribute]): StructType
+
   def expressionMappings: Seq[Sig]
 
   def convertPartitionTransforms(partitions: Seq[Transform]): (Seq[String], Option[BucketSpec])
@@ -59,6 +63,15 @@ trait SparkShims {
       readFunction: (PartitionedFile) => Iterator[InternalRow],
       filePartitions: Seq[FilePartition],
       fileSourceScanExec: FileSourceScanExec): FileScanRDD
+
+  def splitFiles(
+      sparkSession: SparkSession,
+      // Hack -- the type changes in a non-backwards compatible way
+      file: Object,
+      filePath: Path,
+      isSplitable: Boolean,
+      maxSplitBytes: Long,
+      partitionValues: InternalRow): Seq[PartitionedFile]
 
   def getTextScan(
       sparkSession: SparkSession,

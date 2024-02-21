@@ -205,8 +205,8 @@ object GlutenImplicits {
       FallbackSummary(
         totalNumGlutenNodes,
         totalNumFallbackNodes,
-        totalPhysicalPlanDescription,
-        totalFallbackNodeToReason
+        totalPhysicalPlanDescription.toSeq,
+        totalFallbackNodeToReason.toSeq
       )
     }
 

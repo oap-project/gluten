@@ -207,8 +207,10 @@ function check_commit {
       fi
     fi
   else
-    # Branch-new build requires all untracked files to be deleted. We only need the source code.
-    git clean -dffx :/
+    # On linux some of the scripts use sudo in the build so it fails to clean.
+    # Yes the right solution is having the build scripts not use sudo, but that's
+    # huge change and depends on sub-modules.
+    git clean -dffx :/ || sudo git clean -dffx :/ 
   fi
 
   if [ -f ${VELOX_HOME}/velox-build.cache ]; then

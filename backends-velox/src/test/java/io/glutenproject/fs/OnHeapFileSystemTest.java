@@ -23,6 +23,8 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import static org.junit.Assume.*;
+
 // FIXME our checkstyle config doesn't allow "Suite" as suffix of Java tests
 public class OnHeapFileSystemTest {
   private final JniFilesystem fs = OnHeapFileSystem.INSTANCE;
@@ -33,6 +35,13 @@ public class OnHeapFileSystemTest {
     final String text = "HELLO WORLD";
     final long fileSize;
     JniFilesystem.WriteFile writeFile = fs.openFileForWrite(path);
+
+    try {
+      ByteBuffer buf = PlatformDependent.allocateDirectNoCleaner(1);
+      PlatformDependent.freeDirectNoCleaner(buf);
+    } catch (java.lang.AssertionError e) {
+      assumeTrue("We are in a JVM which does not support allocateDirectNoCleaner.", false);
+    }
     try {
       byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
       ByteBuffer buf = PlatformDependent.allocateDirectNoCleaner(bytes.length);

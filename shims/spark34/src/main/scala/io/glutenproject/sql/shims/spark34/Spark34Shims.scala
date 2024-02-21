@@ -33,12 +33,14 @@ import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.Table
 import org.apache.spark.sql.connector.expressions.Transform
 import org.apache.spark.sql.execution.{FileSourceScanExec, GlobalLimitExec, GlutenFileFormatWriter, PartitionedFileUtil, SparkPlan, TakeOrderedAndProjectExec}
-import org.apache.spark.sql.execution.datasources.{BucketingUtils, FilePartition, FileScanRDD, PartitionDirectory, PartitionedFile, PartitioningAwareFileIndex, WriteJobDescription, WriteTaskResult}
+import org.apache.spark.sql.execution.datasources._
 import org.apache.spark.sql.execution.datasources.v2.BatchScanExec
 import org.apache.spark.sql.execution.datasources.v2.text.TextScan
 import org.apache.spark.sql.execution.datasources.v2.utils.CatalogUtil
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types._
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
+
+import org.apache.hadoop.fs._
 
 class Spark34Shims extends SparkShims {
   override def getShimDescriptor: ShimDescriptor = SparkShimProvider.DESCRIPTOR
@@ -47,6 +49,10 @@ class Spark34Shims extends SparkShims {
       leftKeys: Seq[Expression],
       rightKeys: Seq[Expression]): Seq[Distribution] = {
     ClusteredDistribution(leftKeys) :: ClusteredDistribution(rightKeys) :: Nil
+  }
+
+  override def structFromAttributes(attrs: Seq[Attribute]): StructType = {
+    StructType(attrs.map(a => StructField(a.name, a.dataType, a.nullable, a.metadata)))
   }
 
   override def expressionMappings: Seq[Sig] = {
@@ -197,5 +203,21 @@ class Spark34Shims extends SparkShims {
 
   override def createTestTaskContext(): TaskContext = {
     TaskContextUtils.createTestTaskContext()
+  }
+
+  override def splitFiles(
+      sparkSession: SparkSession,
+      file: Object,
+      filePath: Path,
+      isSplitable: Boolean,
+      maxSplitBytes: Long,
+      partitionValues: InternalRow): Seq[PartitionedFile] = {
+    PartitionedFileUtil.splitFiles(
+      sparkSession,
+      file.asInstanceOf[FileStatus],
+      filePath,
+      isSplitable,
+      maxSplitBytes,
+      partitionValues)
   }
 }

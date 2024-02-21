@@ -66,6 +66,9 @@ case class ColumnarShuffleExchangeExec(
     }
   }
 
+  // Added in 3.5
+  def advisoryPartitionSize: Option[Long] = None
+
   /**
    * A [[ShuffleDependency]] that will partition rows of its child based on the partitioning scheme
    * defined in `newPartitioning`. Those partitions of the returned ShuffleDependency will be the

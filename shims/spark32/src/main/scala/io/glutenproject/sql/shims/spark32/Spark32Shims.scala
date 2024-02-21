@@ -27,12 +27,12 @@ import org.apache.spark.network.util.ByteUnit
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
-import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}
 import org.apache.spark.sql.catalyst.plans.physical.{Distribution, HashClusteredDistribution}
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.Table
 import org.apache.spark.sql.connector.expressions.Transform
-import org.apache.spark.sql.execution.{FileSourceScanExec, PartitionedFileUtil, SparkPlan}
+import org.apache.spark.sql.execution._
 import org.apache.spark.sql.execution.datasources.{BucketingUtils, FilePartition, FileScanRDD, PartitionDirectory, PartitionedFile, PartitioningAwareFileIndex}
 import org.apache.spark.sql.execution.datasources.FileFormatWriter.Empty2Null
 import org.apache.spark.sql.execution.datasources.v2.BatchScanExec
@@ -40,6 +40,7 @@ import org.apache.spark.sql.execution.datasources.v2.text.TextScan
 import org.apache.spark.sql.execution.datasources.v2.utils.CatalogUtil
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.util.CaseInsensitiveStringMap
+import org.apache.hadoop.fs.Path
 
 import java.util.Properties
 
@@ -50,6 +51,11 @@ class Spark32Shims extends SparkShims {
       leftKeys: Seq[Expression],
       rightKeys: Seq[Expression]): Seq[Distribution] = {
     HashClusteredDistribution(leftKeys) :: HashClusteredDistribution(rightKeys) :: Nil
+  }
+
+  override def structFromAttributes(
+      attrs: Seq[Attribute]): StructType = {
+    StructType.fromAttributes(attrs)
   }
 
   override def expressionMappings: Seq[Sig] = Seq(Sig[Empty2Null](ExpressionNames.EMPTY2NULL))
@@ -115,8 +121,24 @@ class Spark32Shims extends SparkShims {
 
   override def extractSubPlanFromMightContain(expr: Expression): Option[SparkPlan] = None
 
+
   override def getExtendedColumnarPostRules(): List[SparkSession => Rule[SparkPlan]] = {
     List(session => GlutenParquetWriterInjects.getInstance().getExtendedColumnarPostRule(session))
+
+  override def splitFiles(
+       sparkSession: SparkSession,
+       file: FileStatusWithMetadata,
+       filePath: Path,
+       isSplitable: Boolean,
+       maxSplitBytes: Long,
+       partitionValues: InternalRow): Seq[PartitionedFile] = {
+    PartitionedFileUtil.splitFiles(
+      sparkSession,
+      file,
+      filePath,
+      isSplitable,
+      maxSplitBytes,
+      partitionValues)
   }
 
   override def createTestTaskContext(): TaskContext = {

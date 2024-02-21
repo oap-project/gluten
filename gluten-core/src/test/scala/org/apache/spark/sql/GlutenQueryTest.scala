@@ -107,21 +107,7 @@ abstract class GlutenQueryTest extends PlanTest {
   }
 
   private def getResult[T](ds: => Dataset[T]): Array[T] = {
-    val analyzedDS =
-      try ds
-      catch {
-        case ae: AnalysisException =>
-          if (ae.plan.isDefined) {
-            fail(s"""
-                    |Failed to analyze query: $ae
-                    |${ae.plan.get}
-                    |
-                    |${stackTraceToString(ae)}
-             """.stripMargin)
-          } else {
-            throw ae
-          }
-      }
+    val analyzedDS = ds
     assertEmptyMissingInput(analyzedDS)
 
     try ds.collect()
@@ -148,21 +134,7 @@ abstract class GlutenQueryTest extends PlanTest {
    *   the expected result in a [[Seq]] of [[Row]]s.
    */
   protected def checkAnswer(df: => DataFrame, expectedAnswer: Seq[Row]): Unit = {
-    val analyzedDF =
-      try df
-      catch {
-        case ae: AnalysisException =>
-          if (ae.plan.isDefined) {
-            fail(s"""
-                    |Failed to analyze query: $ae
-                    |${ae.plan.get}
-                    |
-                    |${stackTraceToString(ae)}
-                    |""".stripMargin)
-          } else {
-            throw ae
-          }
-      }
+    val analyzedDF = df
 
     assertEmptyMissingInput(analyzedDF)
 
