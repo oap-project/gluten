@@ -370,6 +370,7 @@ target_include_directories(velox PUBLIC
 if(BUILD_JEMALLOC)
   include(Buildjemalloc_pic)
   build_jemalloc()
+  add_definitions(-DENABLE_JEMALLOC)
   target_link_libraries(velox PUBLIC jemalloc::libjemalloc)
 endif()
 

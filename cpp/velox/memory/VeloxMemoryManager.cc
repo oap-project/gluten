@@ -16,7 +16,9 @@
  */
 
 #include "VeloxMemoryManager.h"
+#ifdef ENABLE_JEMALLOC
 #include <jemalloc/jemalloc.h>
+#endif
 
 #include "velox/common/memory/MallocAllocator.h"
 #include "velox/common/memory/MemoryPool.h"
@@ -282,7 +284,9 @@ VeloxMemoryManager::~VeloxMemoryManager() {
     usleep(waitMs * 1000);
     accumulatedWaitMs += waitMs;
   }
+#ifdef ENABLE_JEMALLOC
   je_gluten_malloc_stats_print(NULL, NULL, NULL);
+#endif
 }
 
 } // namespace gluten
