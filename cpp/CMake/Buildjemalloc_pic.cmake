@@ -73,5 +73,5 @@ macro(build_jemalloc)
                IMPORTED_LOCATION "${JEMALLOC_STATIC_LIB}"
                INTERFACE_INCLUDE_DIRECTORIES
                "${JEMALLOC_INCLUDE_DIR}")
-  add_dependencies(jemalloc::libjemalloc protobuf_ep)
+  add_dependencies(jemalloc::libjemalloc jemalloc_ep)
 endmacro()
