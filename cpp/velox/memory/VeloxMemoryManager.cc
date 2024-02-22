@@ -16,6 +16,8 @@
  */
 
 #include "VeloxMemoryManager.h"
+#include <jemalloc/jemalloc.h>
+
 #include "velox/common/memory/MallocAllocator.h"
 #include "velox/common/memory/MemoryPool.h"
 #include "velox/exec/MemoryReclaimer.h"
@@ -280,6 +282,7 @@ VeloxMemoryManager::~VeloxMemoryManager() {
     usleep(waitMs * 1000);
     accumulatedWaitMs += waitMs;
   }
+  je_gluten_malloc_stats_print(NULL, NULL, NULL);
 }
 
 } // namespace gluten

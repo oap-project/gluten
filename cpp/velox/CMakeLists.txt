@@ -367,6 +367,12 @@ target_include_directories(velox PUBLIC
         ${GTEST_INCLUDE_DIRS}
         ${PROTOBUF_INCLUDE})
 
+if(BUILD_JEMALLOC)
+  include(Buildjemalloc_pic)
+  build_jemalloc()
+  target_link_libraries(velox PUBLIC jemalloc::libjemalloc)
+endif()
+
 target_link_libraries(velox PUBLIC gluten)
 add_velox_dependencies()
 
