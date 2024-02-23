@@ -36,7 +36,7 @@ import org.apache.spark.sql.catalyst.{AggregateFunctionRewriteRule, FlushableHas
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
-import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Cast, CreateNamedStruct, ElementAt, Expression, ExpressionInfo, GetArrayItem, GetMapValue, GetStructField, If, IsNaN, Literal, Murmur3Hash, NamedExpression, NaNvl, Round, StringSplit, StringTrim}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Attribute, Cast, CreateNamedStruct, ElementAt, Expression, ExpressionInfo, GetArrayItem, GetMapValue, GetStructField, If, IsNaN, Literal, Murmur3Hash, NamedExpression, NaNvl, Round, StringTrim}
 import org.apache.spark.sql.catalyst.expressions.aggregate.{AggregateExpression, HLLAdapter}
 import org.apache.spark.sql.catalyst.optimizer.BuildSide
 import org.apache.spark.sql.catalyst.plans.JoinType
@@ -404,17 +404,6 @@ class SparkPlanExecApiImpl extends SparkPlanExecApi {
       child: ExpressionTransformer,
       original: Round): ExpressionTransformer = {
     DecimalRoundTransformer(substraitExprName, child, original)
-  }
-
-  /** Generate StringSplit transformer. */
-  override def genStringSplitTransformer(
-      substraitExprName: String,
-      srcExpr: ExpressionTransformer,
-      regexExpr: ExpressionTransformer,
-      limitExpr: ExpressionTransformer,
-      original: StringSplit): ExpressionTransformer = {
-    // In velox, split function just support tow args, not support limit arg for now
-    VeloxStringSplitTransformer(substraitExprName, srcExpr, regexExpr, limitExpr, original)
   }
 
   /**

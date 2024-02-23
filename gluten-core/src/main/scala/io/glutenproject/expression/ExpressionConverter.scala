@@ -353,14 +353,6 @@ object ExpressionConverter extends SQLConfHelper with Logging {
           replaceWithExpressionTransformerInternal(l.third, attributeSeq, expressionsMap),
           l
         )
-      case s: StringSplit =>
-        BackendsApiManager.getSparkPlanExecApiInstance.genStringSplitTransformer(
-          substraitExprName,
-          replaceWithExpressionTransformerInternal(s.str, attributeSeq, expressionsMap),
-          replaceWithExpressionTransformerInternal(s.regex, attributeSeq, expressionsMap),
-          replaceWithExpressionTransformerInternal(s.limit, attributeSeq, expressionsMap),
-          s
-        )
       case r: RegExpReplace =>
         RegExpReplaceTransformer(
           substraitExprName,
