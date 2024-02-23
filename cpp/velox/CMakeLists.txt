@@ -246,7 +246,7 @@ macro(find_libhdfs3)
       libhdfs3_LIBRARY
     )
     add_library(HDFS::hdfs3 SHARED IMPORTED)
-      set_target_properties(HDFS::hdfs3 PROPERTIES
+    set_target_properties(HDFS::hdfs3 PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES "${libhdfs3_INCLUDE_DIR}"
       IMPORTED_LOCATION "${libhdfs3_LIBRARY}"
     )
@@ -368,8 +368,12 @@ target_include_directories(velox PUBLIC
         ${PROTOBUF_INCLUDE})
 
 if(BUILD_JEMALLOC)
-  include(Buildjemalloc_pic)
-  build_jemalloc()
+  include(Findjemalloc_pic)
+  find_jemalloc()
+  if(JEMALLOC_NOT_FOUND)
+    include(Buildjemalloc_pic)
+    build_jemalloc()
+  endif()
   add_definitions(-DENABLE_JEMALLOC)
   target_link_libraries(velox PUBLIC jemalloc::libjemalloc)
 endif()

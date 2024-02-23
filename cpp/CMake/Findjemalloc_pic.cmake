@@ -17,11 +17,20 @@
 
 # Find Jemalloc
 macro(find_jemalloc)
-  # Find the existing Protobuf
+  # Find the existing jemalloc
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-  find_package(jemalloc_pic)
-  if ("${Jemalloc_LIBRARY}" STREQUAL "Jemalloc_LIBRARY-NOTFOUND")
-    message(FATAL_ERROR "Jemalloc Library Not Found")
-  endif()
-  set(PROTOC_BIN ${Jemalloc_PROTOC_EXECUTABLE})
+  # Find from vcpkg-installed lib path.
+  find_library(JEMALLOC_LIBRARY NAMES jemalloc_pic PATHS ${CMAKE_CURRENT_BINARY_DIR}/../../../dev/vcpkg/vcpkg_installed/x64-linux-avx/lib/ NO_DEFAULT_PATH)
+  if ("${JEMALLOC_LIBRARY}" STREQUAL "JEMALLOC_LIBRARY-NOTFOUND")
+    message(STATUS "Jemalloc Library Not Found.")
+    set(JEMALLOC_NOT_FOUND TRUE)
+  else()
+    message(STATUS "Found jemalloc: ${JEMALLOC_LIBRARY}")
+    find_path(JEMALLOC_INCLUDE_DIR jemalloc/jemalloc.h)
+    add_library(jemalloc::libjemalloc STATIC IMPORTED)
+    set_target_properties(jemalloc::libjemalloc PROPERTIES
+         INTERFACE_INCLUDE_DIRECTORIES "${JEMALLOC_INCLUDE_DIR}"
+         IMPORTED_LOCATION "${JEMALLOC_LIBRARY}"
+    )
+   endif()
 endmacro()
