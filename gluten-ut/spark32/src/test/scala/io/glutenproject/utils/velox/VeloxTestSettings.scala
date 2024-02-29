@@ -197,10 +197,6 @@ class VeloxTestSettings extends BackendTestSettings {
     .exclude("Shuffle")
     // TODO: ArrayDistinct should handle duplicated Double.NaN
     .excludeByPrefix("SPARK-36741")
-    // TODO: ArrayIntersect should handle duplicated Double.NaN
-    .excludeByPrefix("SPARK-36754")
-    // Not supported case.
-    .exclude("SPARK-36753: ArrayExcept should handle duplicated Double.NaN and Float.Nan")
   enableSuite[GlutenDateExpressionsSuite]
     // Rewrite because Spark collect causes long overflow.
     .exclude("TIMESTAMP_MICROS")

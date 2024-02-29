@@ -668,7 +668,6 @@ class ClickHouseTestSettings extends BackendTestSettings {
     .exclude("SPARK-36639: Start and end equal in month range with a negative step")
     .exclude("SPARK-33386: element_at ArrayIndexOutOfBoundsException")
     .exclude("SPARK-33460: element_at NoSuchElementException")
-    .exclude("SPARK-36753: ArrayExcept should handle duplicated Double.NaN and Float.Nan")
     .exclude("SPARK-36755: ArraysOverlap hould handle duplicated Double.NaN and Float.Nan")
     .exclude(
       "SPARK-36740: ArrayMin/ArrayMax/SortArray should handle NaN greater then non-NaN value")
