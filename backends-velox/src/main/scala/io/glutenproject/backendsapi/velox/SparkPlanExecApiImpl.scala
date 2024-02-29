@@ -269,6 +269,26 @@ class SparkPlanExecApiImpl extends SparkPlanExecApi {
       right,
       isNullAwareAntiJoin)
 
+  override def genSortMergeJoinExecTransformer(
+      leftKeys: Seq[Expression],
+      rightKeys: Seq[Expression],
+      joinType: JoinType,
+      condition: Option[Expression],
+      left: SparkPlan,
+      right: SparkPlan,
+      isSkewJoin: Boolean = false,
+      projectList: Seq[NamedExpression] = null): SortMergeJoinExecTransformerBase = {
+    SortMergeJoinExecTransformer(
+      leftKeys,
+      rightKeys,
+      joinType,
+      condition,
+      left,
+      right,
+      isSkewJoin,
+      projectList
+    )
+  }
   override def genCartesianProductExecTransformer(
       left: SparkPlan,
       right: SparkPlan,

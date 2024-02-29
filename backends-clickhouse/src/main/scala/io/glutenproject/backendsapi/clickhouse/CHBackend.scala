@@ -216,7 +216,7 @@ object CHBackendSettings extends BackendSettingsApi with Logging {
   }
 
   override def supportSortMergeJoinExec(): Boolean = {
-    false
+    GlutenConfig.getConf.enableColumnarSortMergeJoin
   }
 
   override def supportWindowExec(windowFunctions: Seq[NamedExpression]): Boolean = {

@@ -623,14 +623,15 @@ case class AddTransformHintRule() extends Rule[SparkPlan] {
               plan,
               "columnar sort merge join is not enabled or join type is FullOuter")
           } else {
-            val transformer = SortMergeJoinExecTransformer(
-              plan.leftKeys,
-              plan.rightKeys,
-              plan.joinType,
-              plan.condition,
-              plan.left,
-              plan.right,
-              plan.isSkewJoin)
+            val transformer = BackendsApiManager.getSparkPlanExecApiInstance
+              .genSortMergeJoinExecTransformer(
+                plan.leftKeys,
+                plan.rightKeys,
+                plan.joinType,
+                plan.condition,
+                plan.left,
+                plan.right,
+                plan.isSkewJoin)
             transformer.doValidate().tagOnFallback(plan)
           }
         case plan: CartesianProductExec =>

@@ -311,6 +311,26 @@ class CHSparkPlanExecApi extends SparkPlanExecApi {
       right,
       isNullAwareAntiJoin)
 
+  override def genSortMergeJoinExecTransformer(
+      leftKeys: Seq[Expression],
+      rightKeys: Seq[Expression],
+      joinType: JoinType,
+      condition: Option[Expression],
+      left: SparkPlan,
+      right: SparkPlan,
+      isSkewJoin: Boolean = false,
+      projectList: Seq[NamedExpression] = null): SortMergeJoinExecTransformerBase =
+    CHSortMergeJoinExecTransformer(
+      leftKeys,
+      rightKeys,
+      joinType,
+      condition,
+      left,
+      right,
+      isSkewJoin,
+      projectList
+    )
+
   /** Generate CartesianProductExecTransformer */
   override def genCartesianProductExecTransformer(
       left: SparkPlan,

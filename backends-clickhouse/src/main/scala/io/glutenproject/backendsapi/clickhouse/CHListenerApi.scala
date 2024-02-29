@@ -25,6 +25,7 @@ import io.glutenproject.vectorized.{CHNativeExpressionEvaluator, JniLibLoader}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging
+import org.apache.spark.network.util.JavaUtils
 import org.apache.spark.sql.execution.datasources.v1._
 
 import org.apache.commons.lang3.StringUtils
@@ -61,6 +62,21 @@ class CHListenerApi extends ListenerApi with Logging {
       s"${CHBackendSettings.getBackendConfigPrefix}.runtime_config" +
         s".local_engine.settings.log_processors_profiles",
       "true")
+
+    // add memory limit for external sort
+    val externalSortKey = s"${CHBackendSettings.getBackendConfigPrefix}.runtime_config" +
+      s".local_engine.settings.max_bytes_before_external_sort"
+    if (conf.getInt(externalSortKey, -1) < 0) {
+      if (conf.getBoolean("spark.memory.offHeap.enabled", false)) {
+        val memSize = JavaUtils.byteStringAsBytes(conf.get("spark.memory.offHeap.size")).toInt
+        if (memSize > 0) {
+          val cores = conf.getInt("spark.executor.cores", 1)
+          val sortMemLimit = ((memSize / cores) * 0.8).toInt
+          logInfo(s"max memory for sorting: $sortMemLimit")
+          conf.set(externalSortKey, sortMemLimit.toString)
+        }
+      }
+    }
 
     // Load supported hive/python/scala udfs
     UDFMappings.loadFromSparkConf(conf)
