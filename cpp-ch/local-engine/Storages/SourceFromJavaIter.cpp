@@ -49,26 +49,54 @@ static DB::Block getRealHeader(const DB::Block & header)
     return BlockUtil::buildRowCountHeader();
 }
 
-SourceFromJavaIter::SourceFromJavaIter(DB::ContextPtr context_, DB::Block header, jobject java_iter_, bool materialize_input_)
+
+DB::Block * SourceFromJavaIter::peekBlock(JNIEnv * env, jobject java_iter)
+{
+    jboolean has_next = safeCallBooleanMethod(env, java_iter, serialized_record_batch_iterator_hasNext);
+    if (has_next)
+    {
+        jbyteArray block = static_cast<jbyteArray>(safeCallObjectMethod(env, java_iter, serialized_record_batch_iterator_next));
+        return reinterpret_cast<DB::Block *>(byteArrayToLong(env, block));
+    }
+    return nullptr;
+}
+
+
+SourceFromJavaIter::SourceFromJavaIter(
+    DB::ContextPtr context_, DB::Block header, jobject java_iter_, bool materialize_input_, DB::Block * first_block_)
     : DB::ISource(getRealHeader(header))
+    , context(context_)
+    , original_header(header)
     , java_iter(java_iter_)
     , materialize_input(materialize_input_)
-    , original_header(header)
-    , context(context_)
+    , first_block(first_block_)
 {
 }
 
 DB::Chunk SourceFromJavaIter::generate()
 {
     GET_JNIENV(env)
-    jboolean has_next = safeCallBooleanMethod(env, java_iter, serialized_record_batch_iterator_hasNext);
+    SCOPE_EXIT({CLEAN_JNIENV});
+
     DB::Chunk result;
+    jboolean has_next = safeCallBooleanMethod(env, java_iter, serialized_record_batch_iterator_hasNext);
     if (has_next)
     {
-        jbyteArray block = static_cast<jbyteArray>(safeCallObjectMethod(env, java_iter, serialized_record_batch_iterator_next));
-        DB::Block * data = reinterpret_cast<DB::Block *>(byteArrayToLong(env, block));
+        DB::Block * data = nullptr;
+        if (first_block) [[unlikely]]
+        {
+            data = first_block;
+            first_block = nullptr;
+        }
+        else
+        {
+            jbyteArray block = static_cast<jbyteArray>(safeCallObjectMethod(env, java_iter, serialized_record_batch_iterator_next));
+            data = reinterpret_cast<DB::Block *>(byteArrayToLong(env, block));
+        }
+
         if (materialize_input)
             materializeBlockInplace(*data);
+
         if (data->rows() > 0)
         {
             size_t rows = data->rows();
@@ -89,7 +117,6 @@ DB::Chunk SourceFromJavaIter::generate()
             }
         }
     }
-    CLEAN_JNIENV
     return result;
 }
 

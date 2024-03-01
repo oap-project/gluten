@@ -89,6 +89,7 @@
 #include <Common/MergeTreeTool.h>
 #include <Common/logger_useful.h>
 #include <Common/typeid_cast.h>
+#include <Common/JNIUtils.h>
 
 namespace DB
 {
@@ -312,12 +313,17 @@ QueryPlanStepPtr SerializedPlanParser::parseReadRealWithJavaIter(const substrait
     auto iter = rel.local_files().items().at(0).uri_file();
     auto pos = iter.find(':');
     auto iter_index = std::stoi(iter.substr(pos + 1, iter.size()));
+    jobject input_iter = input_iters[iter_index];
+    bool materialize_input = materialize_inputs[iter_index];
 
-    auto source = std::make_shared<SourceFromJavaIter>(
-        context,
-        TypeParser::buildBlockFromNamedStruct(rel.base_schema()),
-        input_iters[iter_index],
-        materialize_inputs[iter_index]);
+    GET_JNIENV(env)
+    SCOPE_EXIT({CLEAN_JNIENV});
+    auto * first_block = SourceFromJavaIter::peekBlock(env, input_iter);
+
+    /// Try to decide header from the first block read from Java iterator. Thus AggregateFunction with parameters has more precise types.
+    auto header = first_block ? first_block->cloneEmpty() : TypeParser::buildBlockFromNamedStruct(rel.base_schema());
+    auto source = std::make_shared<SourceFromJavaIter>(context, std::move(header), input_iter, materialize_input, first_block);
+
     QueryPlanStepPtr source_step = std::make_unique<ReadFromPreparedSource>(Pipe(source));
     source_step->setStepDescription("Read From Java Iter");
     return source_step;

@@ -46,6 +46,7 @@ object ExpressionNames {
   final val FIRST_IGNORE_NULL = "first_ignore_null"
   final val APPROX_DISTINCT = "approx_distinct"
   final val SKEWNESS = "skewness"
+  final val APPROX_PERCENTILE = "approx_percentile"
 
   // Function names used by Substrait plan.
   final val ADD = "add"

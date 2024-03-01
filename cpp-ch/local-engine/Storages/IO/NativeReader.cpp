@@ -55,6 +55,7 @@ DB::Block NativeReader::read()
     if (columns_parse_util.empty())
     {
         result_block = prepareByFirstBlock();
+        std::cout << "first block:" << result_block.dumpStructure() << std::endl;
         if (!result_block)
             return {};
     }
@@ -183,6 +184,7 @@ DB::Block NativeReader::prepareByFirstBlock()
         {
             agg_opt_column = true;
             real_type_name = type_name.substr(0, type_name.length() - NativeWriter::AGG_STATE_SUFFIX.length());
+            std::cout << "real_type_name:" << real_type_name << std::endl;
         }
         column.type = data_type_factory.get(real_type_name);
         auto nested_type = DB::removeNullable(column.type);
