@@ -27,6 +27,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Filter, LogicalPlan}
 import org.apache.spark.sql.catalyst.plans.physical.{Distribution, HashClusteredDistribution}
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.Table
@@ -111,7 +112,13 @@ class Spark32Shims extends SparkShims {
   override def hasBloomFilterAggregate(
       agg: org.apache.spark.sql.execution.aggregate.ObjectHashAggregateExec): Boolean = false
 
+  override def needsPreProjectForBloomFilterAgg(filter: Filter)(
+      needsPreProject: LogicalPlan => Boolean): Boolean = false
+
   override def extractSubPlanFromMightContain(expr: Expression): Option[SparkPlan] = None
+
+  override def addPreProjectForBloomFilter(filter: Filter)(
+      transformAgg: Aggregate => LogicalPlan): LogicalPlan = filter
 
   override def getExtendedColumnarPostRules(): List[SparkSession => Rule[SparkPlan]] = {
     List(session => GlutenParquetWriterInjects.getInstance().getExtendedColumnarPostRule(session))

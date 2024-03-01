@@ -30,6 +30,8 @@ import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate.BloomFilterAggregate
+import org.apache.spark.sql.catalyst.optimizer.{ColumnPruning, ConstantFolding}
+import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, Filter, LogicalPlan}
 import org.apache.spark.sql.catalyst.plans.physical.{ClusteredDistribution, Distribution}
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.Table
@@ -46,7 +48,7 @@ import org.apache.spark.storage.{BlockId, BlockManagerId}
 
 import org.apache.hadoop.fs.Path
 
-class Spark33Shims extends SparkShims {
+class Spark33Shims extends SparkShims with PredicateHelper {
   override def getShimDescriptor: ShimDescriptor = SparkShimProvider.DESCRIPTOR
 
   override def getDistribution(
@@ -139,6 +141,18 @@ class Spark33Shims extends SparkShims {
       expr => expr.aggregateFunction.isInstanceOf[BloomFilterAggregate])
   }
 
+  override def needsPreProjectForBloomFilterAgg(filter: Filter)(
+      needsPreProject: LogicalPlan => Boolean): Boolean = {
+    splitConjunctivePredicates(filter.condition).exists {
+      case _ @BloomFilterMightContain(sub: ScalarSubquery, _) =>
+        sub.plan.exists {
+          case agg: Aggregate => needsPreProject(agg)
+          case _ => false
+        }
+      case _ => false
+    }
+  }
+
   override def extractSubPlanFromMightContain(expr: Expression): Option[SparkPlan] = {
     expr match {
       case mc @ BloomFilterMightContain(sub: org.apache.spark.sql.execution.ScalarSubquery, _) =>
@@ -149,6 +163,19 @@ class Spark33Shims extends SparkShims {
         Some(sub.plan)
       case _ => None
     }
+  }
+
+  override def addPreProjectForBloomFilter(filter: Filter)(
+      transformAgg: Aggregate => LogicalPlan): LogicalPlan = {
+    val newConditions = splitConjunctivePredicates(filter.condition).map {
+      case bloom @ BloomFilterMightContain(sub: ScalarSubquery, _) =>
+        val newSubqueryPlan = sub.plan.transform {
+          case agg: Aggregate => ConstantFolding(ColumnPruning(transformAgg(agg)))
+        }
+        bloom.copy(bloomFilterExpression = sub.copy(plan = newSubqueryPlan))
+      case other => other
+    }
+    filter.copy(condition = newConditions.reduceLeft(And))
   }
 
   private def invalidBucketFile(path: String): Throwable = {

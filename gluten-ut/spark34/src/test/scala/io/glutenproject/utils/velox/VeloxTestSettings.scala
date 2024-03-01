@@ -1118,6 +1118,10 @@ class VeloxTestSettings extends BackendTestSettings {
     )
     // exclude as it checks spark plan
     .exclude("SPARK-36280: Remove redundant aliases after RewritePredicateSubquery")
+    // exclude as pre-project change the number of reused subquery in plan
+    .exclude("Merge non-correlated scalar subqueries in a subquery")
+    .exclude("Merge non-correlated scalar subqueries from different levels")
+    .exclude("Merge non-correlated scalar subqueries from different parent plans")
   enableSuite[GlutenTypedImperativeAggregateSuite]
   enableSuite[GlutenUnwrapCastInComparisonEndToEndSuite]
     // Rewrite with NaN test cases excluded.

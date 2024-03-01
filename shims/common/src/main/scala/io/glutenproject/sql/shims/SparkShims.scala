@@ -26,6 +26,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions.Expression
+import org.apache.spark.sql.catalyst.plans.logical.{Aggregate, LogicalPlan}
 import org.apache.spark.sql.catalyst.plans.physical.Distribution
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.connector.catalog.Table
@@ -90,7 +91,13 @@ trait SparkShims {
   def hasBloomFilterAggregate(
       agg: org.apache.spark.sql.execution.aggregate.ObjectHashAggregateExec): Boolean
 
+  def needsPreProjectForBloomFilterAgg(filter: org.apache.spark.sql.catalyst.plans.logical.Filter)(
+      needsPreProject: LogicalPlan => Boolean): Boolean
+
   def extractSubPlanFromMightContain(expr: Expression): Option[SparkPlan]
+
+  def addPreProjectForBloomFilter(filter: org.apache.spark.sql.catalyst.plans.logical.Filter)(
+      transformAgg: Aggregate => LogicalPlan): LogicalPlan
 
   def getLimitAndOffsetFromGlobalLimit(plan: GlobalLimitExec): (Int, Int) = (plan.limit, 0)
 
