@@ -79,42 +79,41 @@ DB::Chunk SourceFromJavaIter::generate()
     SCOPE_EXIT({CLEAN_JNIENV});
 
     DB::Chunk result;
-    jboolean has_next = safeCallBooleanMethod(env, java_iter, serialized_record_batch_iterator_hasNext);
-    if (has_next)
+    DB::Block * data = nullptr;
+    if (first_block) [[unlikely]]
     {
-        DB::Block * data = nullptr;
-        if (first_block) [[unlikely]]
+        data = first_block;
+        first_block = nullptr;
+    }
+    else if (jboolean has_next = safeCallBooleanMethod(env, java_iter, serialized_record_batch_iterator_hasNext))
+    {
+        jbyteArray block = static_cast<jbyteArray>(safeCallObjectMethod(env, java_iter, serialized_record_batch_iterator_next));
+        data = reinterpret_cast<DB::Block *>(byteArrayToLong(env, block));
+    }
+    else
+        return {};
+
+    /// Post-processing
+    if (materialize_input)
+        materializeBlockInplace(*data);
+
+    if (data->rows() > 0)
+    {
+        size_t rows = data->rows();
+        if (original_header.columns())
         {
-            data = first_block;
-            first_block = nullptr;
+            result.setColumns(data->mutateColumns(), rows);
+            convertNullable(result);
+            auto info = std::make_shared<DB::AggregatedChunkInfo>();
+            info->is_overflows = data->info.is_overflows;
+            info->bucket_num = data->info.bucket_num;
+            result.setChunkInfo(info);
         }
         else
         {
-            jbyteArray block = static_cast<jbyteArray>(safeCallObjectMethod(env, java_iter, serialized_record_batch_iterator_next));
-            data = reinterpret_cast<DB::Block *>(byteArrayToLong(env, block));
-        }
-
-        if (materialize_input)
-            materializeBlockInplace(*data);
-
-        if (data->rows() > 0)
-        {
-            size_t rows = data->rows();
-            if (original_header.columns())
-            {
-                result.setColumns(data->mutateColumns(), rows);
-                convertNullable(result);
-                auto info = std::make_shared<DB::AggregatedChunkInfo>();
-                info->is_overflows = data->info.is_overflows;
-                info->bucket_num = data->info.bucket_num;
-                result.setChunkInfo(info);
-            }
-            else
-            {
-                result = BlockUtil::buildRowCountChunk(rows);
-                auto info = std::make_shared<DB::AggregatedChunkInfo>();
-                result.setChunkInfo(info);
-            }
+            result = BlockUtil::buildRowCountChunk(rows);
+            auto info = std::make_shared<DB::AggregatedChunkInfo>();
+            result.setChunkInfo(info);
         }
     }
     return result;

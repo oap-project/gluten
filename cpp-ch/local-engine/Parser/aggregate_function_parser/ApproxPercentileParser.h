@@ -39,5 +39,7 @@ public:
 
     DB::Array
     parseFunctionParameters(const CommonFunctionInfo & /*func_info*/, DB::ActionsDAG::NodeRawConstPtrs & arg_nodes) const override;
+
+    DB::Array getDefaultFunctionParameters() const override;
 };
 }

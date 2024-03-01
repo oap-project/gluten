@@ -115,5 +115,11 @@ DB::Array ApproxPercentileParser::parseFunctionParameters(
     }
 }
 
+DB::Array ApproxPercentileParser::getDefaultFunctionParameters() const
+{
+    return {10000, 1};
+}
+
+
 static const AggregateFunctionParserRegister<ApproxPercentileParser> register_approx_percentile;
 }
