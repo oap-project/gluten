@@ -64,8 +64,8 @@ class CHListenerApi extends ListenerApi with Logging {
       "true")
 
     // add memory limit for external sort
-    val externalSortKey = s"${CHBackendSettings.getBackendConfigPrefix}.runtime_config" +
-      s".local_engine.settings.max_bytes_before_external_sort"
+    val externalSortKey = s"${CHBackendSettings.getBackendConfigPrefix}.runtime_settings" +
+      s".max_bytes_before_external_sort"
     if (conf.getInt(externalSortKey, -1) < 0) {
       if (conf.getBoolean("spark.memory.offHeap.enabled", false)) {
         val memSize = JavaUtils.byteStringAsBytes(conf.get("spark.memory.offHeap.size")).toInt

@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.adaptive.clickhouse
 
-import io.glutenproject.execution.{BroadcastHashJoinExecTransformer, ShuffledHashJoinExecTransformerBase, SortExecTransformer, SortMergeJoinExecTransformer}
+import io.glutenproject.execution.{BroadcastHashJoinExecTransformer, CHSortMergeJoinExecTransformer, HashJoinLikeExecTransformer, ShuffledHashJoinExecTransformerBase, SortExecTransformer, TransformSupport}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.scheduler.{SparkListener, SparkListenerEvent}
@@ -102,8 +102,8 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
   }
 
   private def findTopLevelSortMergeJoinTransform(
-      plan: SparkPlan): Seq[SortMergeJoinExecTransformer] = {
-    collect(plan) { case j: SortMergeJoinExecTransformer => j }
+      plan: SparkPlan): Seq[CHSortMergeJoinExecTransformer] = {
+    collect(plan) { case j: CHSortMergeJoinExecTransformer => j }
   }
 
   private def sortMergeJoinSize(plan: SparkPlan): Int = {
@@ -121,6 +121,13 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
 
   private def findTopLevelBaseJoin(plan: SparkPlan): Seq[BaseJoinExec] = {
     collect(plan) { case j: BaseJoinExec => j }
+  }
+
+  private def findTopLevelBaseJoinTransform(plan: SparkPlan): Seq[TransformSupport] = {
+    collect(plan) {
+      case j: CHSortMergeJoinExecTransformer => j
+      case i: HashJoinLikeExecTransformer => i
+    }
   }
 
   private def findTopLevelSort(plan: SparkPlan): Seq[SortExec] = {
@@ -260,7 +267,7 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
           .count()
         checkAnswer(testDf, Seq())
         val plan = testDf.queryExecution.executedPlan
-        assert(find(plan)(_.isInstanceOf[SortMergeJoinExecTransformer]).isDefined)
+        assert(find(plan)(_.isInstanceOf[CHSortMergeJoinExecTransformer]).isDefined)
       }
 
       withSQLConf(SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key -> "1") {
@@ -671,7 +678,7 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
                 rightSkewNum: Int): Unit = {
               assert(joins.size == 1)
               joins.head match {
-                case s: SortMergeJoinExecTransformer => assert(s.isSkewJoin)
+                case s: CHSortMergeJoinExecTransformer => assert(s.isSkewJoin)
                 case g: ShuffledHashJoinExecTransformerBase => assert(g.isSkewJoin)
                 case _ => assert(false)
               }
@@ -803,11 +810,6 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
   // null status
   ignore(
     GLUTEN_TEST + "SPARK-32573: Eliminate NAAJ when BuildSide is HashedRelationWithAllNullKeys") {}
-
-  // EmptyRelation case
-  ignore(
-    GLUTEN_TEST + "SPARK-35455: Unify empty relation optimization " +
-      "between normal and AQE optimizer - single join") {}
 
   testGluten("SPARK-32753: Only copy tags to node with no tags") {
     withSQLConf(SQLConf.ADAPTIVE_EXECUTION_ENABLED.key -> "true") {
@@ -1509,6 +1511,152 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
         withSQLConf(SQLConf.ADAPTIVE_EXECUTION_LOG_LEVEL.key -> level._1) {
           verifyLog(level._2)
         }
+    }
+  }
+
+  testGluten("SPARK-37652: optimize skewed join through union") {
+    withSQLConf(
+      SQLConf.ADAPTIVE_EXECUTION_ENABLED.key -> "true",
+      SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key -> "-1",
+      SQLConf.SKEW_JOIN_SKEWED_PARTITION_THRESHOLD.key -> "100",
+      SQLConf.ADVISORY_PARTITION_SIZE_IN_BYTES.key -> "100"
+    ) {
+      withTempView("skewData1", "skewData2") {
+        spark
+          .range(0, 1000, 1, 10)
+          .selectExpr("id % 3 as key1", "id as value1")
+          .createOrReplaceTempView("skewData1")
+        spark
+          .range(0, 1000, 1, 10)
+          .selectExpr("id % 1 as key2", "id as value2")
+          .createOrReplaceTempView("skewData2")
+
+        def checkSkewJoin(query: String, joinNums: Int, optimizeSkewJoinNums: Int): Unit = {
+          val (_, innerAdaptivePlan) = runAdaptiveAndVerifyResult(query)
+          val joins = findTopLevelSortMergeJoinTransform(innerAdaptivePlan)
+          val optimizeSkewJoins = joins.filter(_.isSkewJoin)
+          assert(joins.size == joinNums && optimizeSkewJoins.size == optimizeSkewJoinNums)
+        }
+
+        // skewJoin union skewJoin
+        checkSkewJoin(
+          "SELECT key1 FROM skewData1 JOIN skewData2 ON key1 = key2 " +
+            "UNION ALL SELECT key2 FROM skewData1 JOIN skewData2 ON key1 = key2",
+          2,
+          2)
+
+        // skewJoin union aggregate
+        checkSkewJoin(
+          "SELECT key1 FROM skewData1 JOIN skewData2 ON key1 = key2 " +
+            "UNION ALL SELECT key2 FROM skewData2 GROUP BY key2",
+          1,
+          1)
+
+        // skewJoin1 union (skewJoin2 join aggregate)
+        // skewJoin2 will lead to extra shuffles, but skew1 cannot be optimized
+        checkSkewJoin(
+          "SELECT key1 FROM skewData1 JOIN skewData2 ON key1 = key2 UNION ALL " +
+            "SELECT key1 from (SELECT key1 FROM skewData1 JOIN skewData2 ON key1 = key2) tmp1 " +
+            "JOIN (SELECT key2 FROM skewData2 GROUP BY key2) tmp2 ON key1 = key2",
+          3,
+          0
+        )
+      }
+    }
+  }
+
+  testGluten(
+    "SPARK-35455: Unify empty relation optimization between normal and AQE optimizer " +
+      "- single join") {
+    withSQLConf(
+      SQLConf.ADAPTIVE_EXECUTION_ENABLED.key -> "true",
+      SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key -> "-1") {
+      Seq(
+        // left semi join and empty left side
+        (
+          "SELECT * FROM (SELECT * FROM testData WHERE value = '0')t1 LEFT SEMI JOIN " +
+            "testData2 t2 ON t1.key = t2.a",
+          true),
+        // left anti join and empty left side
+        (
+          "SELECT * FROM (SELECT * FROM testData WHERE value = '0')t1 LEFT ANTI JOIN " +
+            "testData2 t2 ON t1.key = t2.a",
+          true),
+        // full outer join and both side empty
+        (
+          "SELECT * FROM (SELECT * FROM testData WHERE key = 0)t1 FULL JOIN " +
+            "(SELECT * FROM testData2 WHERE b = 0)t2 ON t1.key = t2.a",
+          true),
+        // full outer join and left side empty right side non-empty
+        (
+          "SELECT * FROM (SELECT * FROM testData WHERE key = 0)t1 FULL JOIN " +
+            "testData2 t2 ON t1.key = t2.a",
+          true)
+      ).foreach {
+        case (query, isEliminated) =>
+          val (plan, adaptivePlan) = runAdaptiveAndVerifyResult(query)
+          assert(findTopLevelBaseJoin(plan).size == 1)
+          assert(findTopLevelBaseJoin(adaptivePlan).isEmpty == isEliminated, adaptivePlan)
+      }
+
+      Seq(
+        // left outer join and empty left side
+        (
+          "SELECT * FROM (SELECT * FROM testData WHERE key = 0)t1 LEFT JOIN testData2 t2 ON " +
+            "t1.key = t2.a",
+          true),
+        // left outer join and non-empty left side
+        (
+          "SELECT * FROM testData t1 LEFT JOIN testData2 t2 ON " +
+            "t1.key = t2.a",
+          false),
+        // right outer join and empty right side
+        (
+          "SELECT * FROM testData t1 RIGHT JOIN (SELECT * FROM testData2 WHERE b = 0)t2 ON " +
+            "t1.key = t2.a",
+          true),
+        // right outer join and non-empty right side
+        (
+          "SELECT * FROM testData t1 RIGHT JOIN testData2 t2 ON " +
+            "t1.key = t2.a",
+          false)
+      ).foreach {
+        case (query, isEliminated) =>
+          val (plan, adaptivePlan) = runAdaptiveAndVerifyResult(query)
+          assert(findTopLevelBaseJoin(plan).size == 1)
+          assert(findTopLevelBaseJoinTransform(adaptivePlan).isEmpty == isEliminated, adaptivePlan)
+      }
+    }
+  }
+
+  test(
+    "Gluten-SPARK-35455: Unify empty relation optimization between normal and AQE optimizer " +
+      "- multi join") {
+    withSQLConf(
+      SQLConf.ADAPTIVE_EXECUTION_ENABLED.key -> "true",
+      SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key -> "-1") {
+      Seq(
+        """
+          |SELECT * FROM testData t1
+          | JOIN (SELECT * FROM testData2 WHERE b = 0) t2 ON t1.key = t2.a
+          | LEFT JOIN testData2 t3 ON t1.key = t3.a
+          |""".stripMargin,
+        """
+          |SELECT * FROM (SELECT * FROM testData WHERE key = 0) t1
+          | LEFT ANTI JOIN testData2 t2
+          | FULL JOIN (SELECT * FROM testData2 WHERE b = 0) t3 ON t1.key = t3.a
+          |""".stripMargin,
+        """
+          |SELECT * FROM testData t1
+          | LEFT SEMI JOIN (SELECT * FROM testData2 WHERE b = 0)
+          | RIGHT JOIN testData2 t3 on t1.key = t3.a
+          |""".stripMargin
+      ).foreach {
+        query =>
+          val (plan, adaptivePlan) = runAdaptiveAndVerifyResult(query)
+          assert(findTopLevelBaseJoin(plan).size == 2)
+          assert(findTopLevelBaseJoinTransform(adaptivePlan).isEmpty)
+      }
     }
   }
 }

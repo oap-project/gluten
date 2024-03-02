@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 package org.apache.spark.sql.connector
-import io.glutenproject.execution.SortMergeJoinExecTransformer
+import io.glutenproject.execution.SortMergeJoinExecTransformerBase
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.GlutenSQLTestsBaseTrait
@@ -109,7 +109,7 @@ class GlutenKeyGroupedPartitioningSuite
       plan: SparkPlan): Seq[ColumnarShuffleExchangeExec] = {
     // here we skip collecting shuffle operators that are not associated with SMJ
     collect(plan) {
-      case s: SortMergeJoinExecTransformer => s
+      case s: SortMergeJoinExecTransformerBase => s
       case s: SortMergeJoinExec => s
     }.flatMap(smj => collect(smj) { case s: ColumnarShuffleExchangeExec => s })
   }

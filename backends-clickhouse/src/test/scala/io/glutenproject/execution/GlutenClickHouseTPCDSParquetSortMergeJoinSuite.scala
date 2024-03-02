@@ -50,7 +50,6 @@ class GlutenClickHouseTPCDSParquetSortMergeJoinSuite extends GlutenClickHouseTPC
       .set("spark.sql.autoBroadcastJoinThreshold", "10MB")
       .set("spark.memory.offHeap.size", "8g")
       .set("spark.gluten.sql.columnar.forceShuffledHashJoin", "false")
-      .set("spark.gluten.sql.columnar.backend.ch.runtime_settings.join_algorithm", "grace_hash")
   }
 
   executeTPCDSTest(false)
@@ -80,8 +79,7 @@ class GlutenClickHouseTPCDSParquetSortMergeJoinSuite extends GlutenClickHouseTPC
       val testSql =
         """SELECT  count(*) cnt
           |FROM item i left outer join item j on j.i_category = i.i_category
-          |where
-          |i.i_current_price > 1.0 """.stripMargin
+        """.stripMargin
       compareResultsAgainstVanillaSpark(
         testSql,
         true,
@@ -100,8 +98,7 @@ class GlutenClickHouseTPCDSParquetSortMergeJoinSuite extends GlutenClickHouseTPC
       val testSql =
         """SELECT  count(*) cnt
           |FROM item i right outer join item j on j.i_category = i.i_category
-          |where
-          |i.i_current_price > 1.0 """.stripMargin
+        """.stripMargin
       compareResultsAgainstVanillaSpark(
         testSql,
         true,
@@ -147,25 +144,50 @@ class GlutenClickHouseTPCDSParquetSortMergeJoinSuite extends GlutenClickHouseTPC
     }
   }
 
+  val createItem =
+    """CREATE TABLE myitem (
+      |  i_current_price DECIMAL(7,2),
+      |  i_category STRING)
+      |USING parquet""".stripMargin
+
+  val insertItem =
+    """insert into myitem values
+      |(null,null),
+      |(null,null),
+      |(0.63,null),
+      |(0.74,null),
+      |(null,null),
+      |(90.72,'Books'),
+      |(99.89,'Books'),
+      |(99.41,'Books')
+      |""".stripMargin
+
+  // TODO this not pass
+  ignore("sort merge join: full outer join") {
+    withTable("myitem") {
+      withSQLConf("spark.sql.autoBroadcastJoinThreshold" -> "-1") {
+        spark.sql(createItem)
+        spark.sql(insertItem)
+        val testSql =
+          """SELECT  count(*) cnt
+            |FROM myitem i full outer join myitem j on j.i_category = i.i_category
+          """.stripMargin
+        compareResultsAgainstVanillaSpark(
+          testSql,
+          true,
+          df => {
+            val smjTransformers = df.queryExecution.executedPlan.collect {
+              case f: CHSortMergeJoinExecTransformer => f
+            }
+            assert(smjTransformers.size == 1)
+          }
+        )
+      }
+    }
+  }
+
   // TODO enable this after CH support nulls smallest in MergeJoinTransform
   ignore("sort merge join: nulls smallest") {
-    val createItem =
-      """CREATE TABLE myitem (
-        |  i_current_price DECIMAL(7,2),
-        |  i_category STRING)
-        |USING parquet""".stripMargin
-
-    val insertItem =
-      """insert into myitem values
-        |(null,null),
-        |(null,null),
-        |(0.63,null),
-        |(0.74,null),
-        |(null,null),
-        |(90.72,'Books'),
-        |(99.89,'Books'),
-        |(99.41,'Books')
-        |""".stripMargin
     withTable("myitem") {
       withSQLConf(
         "spark.sql.autoBroadcastJoinThreshold" -> "-1",

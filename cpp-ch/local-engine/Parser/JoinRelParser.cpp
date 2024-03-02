@@ -124,6 +124,8 @@ std::pair<DB::JoinKind, DB::JoinStrictness> getJoinKindAndStrictness(substrait::
             return {DB::JoinKind::Left, DB::JoinStrictness::Anti};
         case substrait::JoinRel_JoinType_JOIN_TYPE_LEFT:
             return {DB::JoinKind::Left, DB::JoinStrictness::All};
+        case substrait::JoinRel_JoinType_JOIN_TYPE_RIGHT:
+            return {DB::JoinKind::Right, DB::JoinStrictness::All};
         case substrait::JoinRel_JoinType_JOIN_TYPE_OUTER:
             return {DB::JoinKind::Full, DB::JoinStrictness::All};
         default:
