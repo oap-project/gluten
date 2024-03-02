@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.adaptive.clickhouse
 
-import io.glutenproject.execution.{BroadcastHashJoinExecTransformer, CHSortMergeJoinExecTransformer, HashJoinLikeExecTransformer, ShuffledHashJoinExecTransformerBase, SortExecTransformer, TransformSupport}
+import io.glutenproject.execution.{BroadcastHashJoinExecTransformer, HashJoinLikeExecTransformer, ShuffledHashJoinExecTransformerBase, SortExecTransformer, SortMergeJoinExecTransformerBase, TransformSupport}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.scheduler.{SparkListener, SparkListenerEvent}
@@ -102,8 +102,8 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
   }
 
   private def findTopLevelSortMergeJoinTransform(
-      plan: SparkPlan): Seq[CHSortMergeJoinExecTransformer] = {
-    collect(plan) { case j: CHSortMergeJoinExecTransformer => j }
+      plan: SparkPlan): Seq[SortMergeJoinExecTransformerBase] = {
+    collect(plan) { case j: SortMergeJoinExecTransformerBase => j }
   }
 
   private def sortMergeJoinSize(plan: SparkPlan): Int = {
@@ -125,7 +125,7 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
 
   private def findTopLevelBaseJoinTransform(plan: SparkPlan): Seq[TransformSupport] = {
     collect(plan) {
-      case j: CHSortMergeJoinExecTransformer => j
+      case j: SortMergeJoinExecTransformerBase => j
       case i: HashJoinLikeExecTransformer => i
     }
   }
@@ -267,7 +267,7 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
           .count()
         checkAnswer(testDf, Seq())
         val plan = testDf.queryExecution.executedPlan
-        assert(find(plan)(_.isInstanceOf[CHSortMergeJoinExecTransformer]).isDefined)
+        assert(find(plan)(_.isInstanceOf[SortMergeJoinExecTransformerBase]).isDefined)
       }
 
       withSQLConf(SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key -> "1") {
@@ -678,7 +678,7 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
                 rightSkewNum: Int): Unit = {
               assert(joins.size == 1)
               joins.head match {
-                case s: CHSortMergeJoinExecTransformer => assert(s.isSkewJoin)
+                case s: SortMergeJoinExecTransformerBase => assert(s.isSkewJoin)
                 case g: ShuffledHashJoinExecTransformerBase => assert(g.isSkewJoin)
                 case _ => assert(false)
               }

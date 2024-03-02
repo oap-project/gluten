@@ -27,11 +27,16 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.physical._
 import org.apache.spark.sql.execution._
+import org.apache.spark.sql.execution.joins.BaseJoinExec
 import org.apache.spark.sql.vectorized.ColumnarBatch
 
 import com.google.protobuf.{Any, StringValue}
 import io.substrait.proto.JoinRel
 
+trait MergeJoinLikeExecTransformer
+  extends BaseJoinExec
+  with TransformSupport
+  with ColumnarShuffledJoin {}
 abstract class SortMergeJoinExecTransformerBase(
     leftKeys: Seq[Expression],
     rightKeys: Seq[Expression],
@@ -41,8 +46,7 @@ abstract class SortMergeJoinExecTransformerBase(
     right: SparkPlan,
     isSkewJoin: Boolean = false,
     projectList: Seq[NamedExpression] = null)
-  extends BinaryExecNode
-  with TransformSupport {
+  extends MergeJoinLikeExecTransformer {
   // Note: "metrics" is made transient to avoid sending driver-side metrics to tasks.
   @transient override lazy val metrics =
     BackendsApiManager.getMetricsApiInstance.genSortMergeJoinTransformerMetrics(sparkContext)
