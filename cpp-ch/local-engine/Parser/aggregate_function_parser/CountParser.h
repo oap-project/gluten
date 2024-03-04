@@ -28,7 +28,7 @@ public:
     static constexpr auto name = "count";
     String getName() const override { return name; }
     String getCHFunctionName(const CommonFunctionInfo &) const override;
-    String getCHFunctionName(const DB::DataTypes &) const override;
+    String getCHFunctionName(DB::DataTypes &) const override;
     DB::ActionsDAG::NodeRawConstPtrs parseFunctionArguments(
         const CommonFunctionInfo & func_info, const String & ch_func_name, DB::ActionsDAGPtr & actions_dag) const override;
 };

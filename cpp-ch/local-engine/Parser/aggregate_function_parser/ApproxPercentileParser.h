@@ -34,7 +34,7 @@ public:
     String getName() const override { return name; }
     static constexpr auto name = "approx_percentile";
     String getCHFunctionName(const CommonFunctionInfo & func_info) const override;
-    String getCHFunctionName(const DB::DataTypes & types) const override;
+    String getCHFunctionName(DB::DataTypes & types) const override;
 
     DB::Array
     parseFunctionParameters(const CommonFunctionInfo & /*func_info*/, DB::ActionsDAG::NodeRawConstPtrs & arg_nodes) const override;

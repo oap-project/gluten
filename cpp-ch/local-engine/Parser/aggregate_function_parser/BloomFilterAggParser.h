@@ -29,7 +29,7 @@ public:
     String getName() const override { return name; }
     static constexpr auto name = "bloom_filter_agg";
     String getCHFunctionName(const CommonFunctionInfo &) const override { return "groupBloomFilterState"; }
-    String getCHFunctionName(const DB ::DataTypes &) const override { return "groupBloomFilterState"; }
+    String getCHFunctionName(DB::DataTypes &) const override { return "groupBloomFilterState"; }
 
     DB::Array
     parseFunctionParameters(const CommonFunctionInfo & /*func_info*/, DB::ActionsDAG::NodeRawConstPtrs & arg_nodes) const override;

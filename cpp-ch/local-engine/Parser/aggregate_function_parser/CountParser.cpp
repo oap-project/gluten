@@ -35,7 +35,7 @@ String CountParser::getCHFunctionName(const CommonFunctionInfo &) const
     return "count";
 }
 
-String CountParser::getCHFunctionName(const DB::DataTypes &) const
+String CountParser::getCHFunctionName(DB::DataTypes &) const
 {
     return "count";
 }

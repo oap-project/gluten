@@ -68,12 +68,13 @@ String ApproxPercentileParser::getCHFunctionName(const CommonFunctionInfo & func
     return output_type.has_list() ? "quantilesGK" : "quantileGK";
 }
 
-String ApproxPercentileParser::getCHFunctionName(const DB::DataTypes & types) const
+String ApproxPercentileParser::getCHFunctionName(DB::DataTypes & types) const
 {
     /// Always invoked during second stage
-    assertArgumentsSize(substrait::AGGREGATION_PHASE_INTERMEDIATE_TO_RESULT, types.size(), 1);
+    assertArgumentsSize(substrait::AGGREGATION_PHASE_INTERMEDIATE_TO_RESULT, types.size(), 2);
 
-    auto type = removeNullable(types[0]);
+    auto type = removeNullable(types[1]);
+    types.resize(1);
     return isArray(type) ? "quantilesGK" : "quantileGK";
 }
 

@@ -259,7 +259,7 @@ void AggregateRelParser::addMergingAggregatedStep()
 {
     AggregateDescriptions aggregate_descriptions;
     buildAggregateDescriptions(aggregate_descriptions);
-    auto settings = getContext()->getSettingsRef();
+    const auto & settings = getContext()->getSettingsRef();
     Aggregator::Params params(
         grouping_keys,
         aggregate_descriptions,

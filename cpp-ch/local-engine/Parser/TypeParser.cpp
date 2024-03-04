@@ -278,6 +278,8 @@ DB::Block TypeParser::buildBlockFromNamedStruct(const substrait::NamedStruct & s
             auto tmp_ctx = DB::Context::createCopy(SerializedPlanParser::global_context);
             SerializedPlanParser tmp_plan_parser(tmp_ctx);
             auto function_parser = AggregateFunctionParserFactory::instance().get(name_parts[3], &tmp_plan_parser);
+            /// This may remove elements from args_types, because some of them are used to determine CH function name, but not needed for the following
+            /// call `AggregateFunctionFactory::instance().get`
             auto agg_function_name = function_parser->getCHFunctionName(args_types);
             auto action = NullsAction::EMPTY;
             ch_type = AggregateFunctionFactory::instance()

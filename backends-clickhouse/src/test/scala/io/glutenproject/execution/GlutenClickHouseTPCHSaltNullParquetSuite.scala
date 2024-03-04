@@ -2464,5 +2464,18 @@ class GlutenClickHouseTPCHSaltNullParquetSuite extends GlutenClickHouseTPCHAbstr
     compareResultsAgainstVanillaSpark(select_sql, true, { _ => })
     spark.sql("drop table test_tbl_4997")
   }
+
+  test("aggregate function approx_percentile") {
+    // single percentage
+    val sql1 = "select l_linenumber % 10, approx_percentile(l_extendedprice, 0.5) " +
+      "from lineitem group by l_linenumber % 10"
+    runQueryAndCompare(sql1)({ _ => })
+
+    // multiple percentages
+    val sql2 =
+      "select l_linenumber % 10, approx_percentile(l_extendedprice, array(0.1, 0.2, 0.3)) " +
+        "from lineitem group by l_linenumber % 10"
+    runQueryAndCompare(sql2)({ _ => })
+  }
 }
 // scalastyle:on line.size.limit
