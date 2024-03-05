@@ -618,9 +618,7 @@ case class AddTransformHintRule() extends Rule[SparkPlan] {
           }
         case plan: SortMergeJoinExec =>
           if (!enableColumnarSortMergeJoin) {
-            TransformHints.tagNotTransformable(
-              plan,
-              "columnar sort merge join is not enabled")
+            TransformHints.tagNotTransformable(plan, "columnar sort merge join is not enabled")
           } else {
             val transformer = BackendsApiManager.getSparkPlanExecApiInstance
               .genSortMergeJoinExecTransformer(

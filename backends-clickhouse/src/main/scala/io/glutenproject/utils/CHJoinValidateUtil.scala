@@ -54,8 +54,10 @@ object CHJoinValidateUtil extends Logging {
       return shouldFallback
     }
     if (isSMJ) {
-      if (joinType.sql.contains("SEMI")
-      || joinType.sql.contains("ANTI")) {
+      if (
+        joinType.sql.contains("SEMI")
+        || joinType.sql.contains("ANTI")
+      ) {
         return true
       }
     }
