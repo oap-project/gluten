@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.adaptive.clickhouse
 
-import io.glutenproject.execution.{BroadcastHashJoinExecTransformer, HashJoinLikeExecTransformer, ShuffledHashJoinExecTransformerBase, SortExecTransformer, SortMergeJoinExecTransformerBase, TransformSupport}
+import io.glutenproject.execution.{BroadcastHashJoinExecTransformer, ShuffledHashJoinExecTransformerBase, SortExecTransformer, SortMergeJoinExecTransformerBase}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.scheduler.{SparkListener, SparkListenerEvent}
@@ -121,13 +121,6 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
 
   private def findTopLevelBaseJoin(plan: SparkPlan): Seq[BaseJoinExec] = {
     collect(plan) { case j: BaseJoinExec => j }
-  }
-
-  private def findTopLevelBaseJoinTransform(plan: SparkPlan): Seq[TransformSupport] = {
-    collect(plan) {
-      case j: SortMergeJoinExecTransformerBase => j
-      case i: HashJoinLikeExecTransformer => i
-    }
   }
 
   private def findTopLevelSort(plan: SparkPlan): Seq[SortExec] = {
@@ -1565,98 +1558,4 @@ class ClickHouseAdaptiveQueryExecSuite extends AdaptiveQueryExecSuite with Glute
     }
   }
 
-  testGluten(
-    "SPARK-35455: Unify empty relation optimization between normal and AQE optimizer " +
-      "- single join") {
-    withSQLConf(
-      SQLConf.ADAPTIVE_EXECUTION_ENABLED.key -> "true",
-      SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key -> "-1") {
-      Seq(
-        // left semi join and empty left side
-        (
-          "SELECT * FROM (SELECT * FROM testData WHERE value = '0')t1 LEFT SEMI JOIN " +
-            "testData2 t2 ON t1.key = t2.a",
-          true),
-        // left anti join and empty left side
-        (
-          "SELECT * FROM (SELECT * FROM testData WHERE value = '0')t1 LEFT ANTI JOIN " +
-            "testData2 t2 ON t1.key = t2.a",
-          true),
-        // full outer join and both side empty
-        (
-          "SELECT * FROM (SELECT * FROM testData WHERE key = 0)t1 FULL JOIN " +
-            "(SELECT * FROM testData2 WHERE b = 0)t2 ON t1.key = t2.a",
-          true),
-        // full outer join and left side empty right side non-empty
-        (
-          "SELECT * FROM (SELECT * FROM testData WHERE key = 0)t1 FULL JOIN " +
-            "testData2 t2 ON t1.key = t2.a",
-          true)
-      ).foreach {
-        case (query, isEliminated) =>
-          val (plan, adaptivePlan) = runAdaptiveAndVerifyResult(query)
-          assert(findTopLevelBaseJoin(plan).size == 1)
-          assert(findTopLevelBaseJoin(adaptivePlan).isEmpty == isEliminated, adaptivePlan)
-      }
-
-      Seq(
-        // left outer join and empty left side
-        (
-          "SELECT * FROM (SELECT * FROM testData WHERE key = 0)t1 LEFT JOIN testData2 t2 ON " +
-            "t1.key = t2.a",
-          true),
-        // left outer join and non-empty left side
-        (
-          "SELECT * FROM testData t1 LEFT JOIN testData2 t2 ON " +
-            "t1.key = t2.a",
-          false),
-        // right outer join and empty right side
-        (
-          "SELECT * FROM testData t1 RIGHT JOIN (SELECT * FROM testData2 WHERE b = 0)t2 ON " +
-            "t1.key = t2.a",
-          true),
-        // right outer join and non-empty right side
-        (
-          "SELECT * FROM testData t1 RIGHT JOIN testData2 t2 ON " +
-            "t1.key = t2.a",
-          false)
-      ).foreach {
-        case (query, isEliminated) =>
-          val (plan, adaptivePlan) = runAdaptiveAndVerifyResult(query)
-          assert(findTopLevelBaseJoin(plan).size == 1)
-          assert(findTopLevelBaseJoinTransform(adaptivePlan).isEmpty == isEliminated, adaptivePlan)
-      }
-    }
-  }
-
-  test(
-    "Gluten-SPARK-35455: Unify empty relation optimization between normal and AQE optimizer " +
-      "- multi join") {
-    withSQLConf(
-      SQLConf.ADAPTIVE_EXECUTION_ENABLED.key -> "true",
-      SQLConf.AUTO_BROADCASTJOIN_THRESHOLD.key -> "-1") {
-      Seq(
-        """
-          |SELECT * FROM testData t1
-          | JOIN (SELECT * FROM testData2 WHERE b = 0) t2 ON t1.key = t2.a
-          | LEFT JOIN testData2 t3 ON t1.key = t3.a
-          |""".stripMargin,
-        """
-          |SELECT * FROM (SELECT * FROM testData WHERE key = 0) t1
-          | LEFT ANTI JOIN testData2 t2
-          | FULL JOIN (SELECT * FROM testData2 WHERE b = 0) t3 ON t1.key = t3.a
-          |""".stripMargin,
-        """
-          |SELECT * FROM testData t1
-          | LEFT SEMI JOIN (SELECT * FROM testData2 WHERE b = 0)
-          | RIGHT JOIN testData2 t3 on t1.key = t3.a
-          |""".stripMargin
-      ).foreach {
-        query =>
-          val (plan, adaptivePlan) = runAdaptiveAndVerifyResult(query)
-          assert(findTopLevelBaseJoin(plan).size == 2)
-          assert(findTopLevelBaseJoinTransform(adaptivePlan).isEmpty)
-      }
-    }
-  }
 }

@@ -44,13 +44,20 @@ object CHJoinValidateUtil extends Logging {
       joinType: JoinType,
       leftOutputSet: AttributeSet,
       rightOutputSet: AttributeSet,
-      condition: Option[Expression]): Boolean = {
+      condition: Option[Expression],
+      isSMJ: Boolean = false): Boolean = {
     var shouldFallback = false
     if (joinType.toString.contains("ExistenceJoin")) {
       return true
     }
     if (joinType.sql.equals("INNER")) {
       return shouldFallback
+    }
+    if (isSMJ) {
+      if (joinType.sql.contains("SEMI")
+      || joinType.sql.contains("ANTI")) {
+        return true
+      }
     }
     if (condition.isDefined) {
       condition.get.transform {

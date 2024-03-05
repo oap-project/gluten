@@ -23,8 +23,6 @@ import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
 import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.execution.SparkPlan
 
-import io.substrait.proto.JoinRel
-
 case class CHSortMergeJoinExecTransformer(
     leftKeys: Seq[Expression],
     rightKeys: Seq[Expression],
@@ -46,18 +44,10 @@ case class CHSortMergeJoinExecTransformer(
 
   override protected def doValidateInternal(): ValidationResult = {
     val shouldFallback =
-      CHJoinValidateUtil.shouldFallback(joinType, left.outputSet, right.outputSet, condition)
+      CHJoinValidateUtil.shouldFallback(joinType, left.outputSet, right.outputSet, condition, true)
     if (shouldFallback) {
       return ValidationResult.notOk("ch join validate fail")
     }
-    if (
-      substraitJoinType == JoinRel.JoinType.JOIN_TYPE_LEFT_SEMI
-      || substraitJoinType == JoinRel.JoinType.JOIN_TYPE_ANTI
-    ) {
-      return ValidationResult
-        .notOk(s"Found unsupported join type of $joinType for CH backend SMJ")
-    }
-
     super.doValidateInternal()
   }
   override protected def withNewChildrenInternal(

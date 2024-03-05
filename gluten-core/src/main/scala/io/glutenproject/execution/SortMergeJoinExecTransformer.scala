@@ -308,6 +308,16 @@ case class SortMergeJoinExecTransformer(
     isSkewJoin,
     projectList) {
 
+  override protected def doValidateInternal(): ValidationResult = {
+    val substraitContext = new SubstraitContext
+    // Firstly, need to check if the Substrait plan for this operator can be successfully generated.
+    if (substraitJoinType == JoinRel.JoinType.JOIN_TYPE_OUTER) {
+      return ValidationResult
+        .notOk(s"Found unsupported join type of $joinType for velox smj: $substraitJoinType")
+    }
+    super.doValidateInternal()
+  }
+
   override protected def withNewChildrenInternal(
       newLeft: SparkPlan,
       newRight: SparkPlan): SortMergeJoinExecTransformer =

@@ -162,8 +162,7 @@ class GlutenClickHouseTPCDSParquetSortMergeJoinSuite extends GlutenClickHouseTPC
       |(99.41,'Books')
       |""".stripMargin
 
-  // TODO this not pass
-  ignore("sort merge join: full outer join") {
+  test("sort merge join: full outer join") {
     withTable("myitem") {
       withSQLConf("spark.sql.autoBroadcastJoinThreshold" -> "-1") {
         spark.sql(createItem)
