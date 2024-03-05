@@ -277,13 +277,19 @@ bool SubstraitToVeloxPlanValidator::validateCast(
     return false;
   }
 
-  const auto& toType = SubstraitParser::parseType(castExpr.type());
+    core::TypedExprPtr input = exprConverter_->toVeloxExpr(castExpr.input(), inputType);
+    const auto& toType = SubstraitParser::parseType(castExpr.type());
+    if((input->type()->kind() == TypeKind::BIGINT ||
+         input->type()->kind() == TypeKind::VARCHAR)
+         && toType->kind() == TypeKind::TIMESTAMP) {
+      return true;
+    }
+
   if (toType->kind() == TypeKind::TIMESTAMP) {
     LOG_VALIDATION_MSG("Casting to TIMESTAMP is not supported.");
     return false;
   }
 
-  core::TypedExprPtr input = exprConverter_->toVeloxExpr(castExpr.input(), inputType);
 
   // Casting from some types is not supported. See CastExpr::applyCast.
   if (input->type()->isDate()) {

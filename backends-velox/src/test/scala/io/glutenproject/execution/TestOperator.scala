@@ -945,6 +945,32 @@ class TestOperator extends VeloxWholeStageTransformerSuite with AdaptiveSparkPla
     }
   }
 
+  test("cast int as timestamp on velox") {
+    withSQLConf(SQLConf.SESSION_LOCAL_TIMEZONE.key -> "America/Los_Angeles") {
+      withTable("t") {
+        spark
+          .range(5)
+          .toDF("x")
+          .write
+          .format("parquet")
+          .saveAsTable("t")
+
+        runQueryAndCompare("select x, cast(x as timestamp) from t where cast(x as timestamp) in (timestamp'1970-01-01 00:00:01UTC')") {df => checkFallbackOperators(df, 0)}
+      }
+    }
+  }
+
+  test("cast string as timestamp on velox") {
+    withSQLConf(SQLConf.SESSION_LOCAL_TIMEZONE.key -> "America/Los_Angeles") {
+      withTable("t") {
+        sql("create table t (x varchar(30)) using parquet")
+        sql("insert into t values ('1970-01-01 00:00:01')")
+        sql("insert into t values ('1970-01-01 00:00:02')")
+        runQueryAndCompare("select x, cast(x as timestamp) from t WHERE cast(x as timestamp) IN (timestamp'1970-01-01 00:00:01',timestamp'1970-01-01 00:00:03',timestamp'1970-01-01 00:00:09')") { df => checkFallbackOperators(df, 0) }
+      }
+    }
+  }
+
   private def checkFallbackOperators(df: DataFrame, num: Int): Unit = {
     // Decrease one VeloxColumnarToRowExec for the top level node
     assert(
