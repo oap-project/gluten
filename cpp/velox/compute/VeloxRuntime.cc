@@ -27,6 +27,7 @@
 #include "compute/Runtime.h"
 #include "compute/VeloxPlanConverter.h"
 #include "config/GlutenConfig.h"
+#include "operators/serializer/VeloxColumnarToColumnarConverter.h"
 #include "operators/serializer/VeloxRowToColumnarConverter.h"
 #include "shuffle/VeloxShuffleReader.h"
 #include "shuffle/VeloxShuffleWriter.h"
@@ -168,6 +169,13 @@ std::shared_ptr<RowToColumnarConverter> VeloxRuntime::createRow2ColumnarConverte
     struct ArrowSchema* cSchema) {
   auto ctxVeloxPool = getLeafVeloxPool(memoryManager);
   return std::make_shared<VeloxRowToColumnarConverter>(cSchema, ctxVeloxPool);
+}
+
+std::shared_ptr<ColumnarToColumnarConverter> VeloxRuntime::createColumnar2ColumnarConverter(
+    MemoryManager* memoryManager,
+    struct ArrowSchema* cSchema) {
+  auto ctxVeloxPool = getLeafVeloxPool(memoryManager);
+  return std::make_shared<VeloxColumnarToColumnarConverter>(cSchema, ctxVeloxPool);
 }
 
 std::shared_ptr<ShuffleWriter> VeloxRuntime::createShuffleWriter(

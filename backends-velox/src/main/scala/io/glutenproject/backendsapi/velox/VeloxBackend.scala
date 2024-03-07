@@ -480,4 +480,6 @@ object BackendSettings extends BackendSettingsApi {
     // vanilla Spark, we need to rewrite the aggregate to get the correct data type.
     true
   }
+
+  override def supportVanillaColumnarToNativeColumnarExec(): Boolean = true
 }

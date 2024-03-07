@@ -19,6 +19,7 @@ package io.glutenproject.execution
 import io.glutenproject.backendsapi.BackendsApiManager
 import io.glutenproject.columnarbatch.ColumnarBatches
 import io.glutenproject.exec.Runtimes
+import io.glutenproject.extension.ValidationResult
 import io.glutenproject.memory.arrowalloc.ArrowBufferAllocators
 import io.glutenproject.memory.nmm.NativeMemoryManagers
 import io.glutenproject.utils.{ArrowAbiUtil, Iterators}
@@ -44,14 +45,20 @@ import scala.collection.mutable.ListBuffer
 
 case class RowToVeloxColumnarExec(child: SparkPlan) extends RowToColumnarExecBase(child = child) {
 
-  override def doExecuteColumnarInternal(): RDD[ColumnarBatch] = {
-    BackendsApiManager.getValidatorApiInstance.doSchemaValidate(schema).foreach {
-      reason =>
-        throw new UnsupportedOperationException(
-          s"Input schema contains unsupported type when convert row to columnar for $schema " +
-            s"due to $reason")
+  override protected def doValidateInternal(): ValidationResult = {
+    BackendsApiManager.getValidatorApiInstance.doSchemaValidate(schema) match {
+      case Some(reason) =>
+        ValidationResult(
+          isValid = false,
+          Some(
+            s"Input schema contains unsupported type when convert row to columnar for $schema " +
+              s"due to $reason"))
+      case None =>
+        ValidationResult(isValid = true, None)
     }
+  }
 
+  override def doExecuteColumnarInternal(): RDD[ColumnarBatch] = {
     val numInputRows = longMetric("numInputRows")
     val numOutputBatches = longMetric("numOutputBatches")
     val convertTime = longMetric("convertTime")

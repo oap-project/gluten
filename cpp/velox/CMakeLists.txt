@@ -307,6 +307,7 @@ set(VELOX_SRCS
     operators/serializer/VeloxColumnarToRowConverter.cc
     operators/serializer/VeloxColumnarBatchSerializer.cc
     operators/serializer/VeloxRowToColumnarConverter.cc
+    operators/serializer/VeloxColumnarToColumnarConverter.cc
     operators/writer/VeloxParquetDatasource.cc
     shuffle/VeloxShuffleReader.cc
     shuffle/VeloxShuffleWriter.cc

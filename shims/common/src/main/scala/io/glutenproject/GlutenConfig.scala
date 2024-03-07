@@ -70,6 +70,9 @@ class GlutenConfig(conf: SQLConf) extends Logging {
 
   def enableNativeColumnarToRow: Boolean = conf.getConf(COLUMNAR_COLUMNAR_TO_ROW_ENABLED)
 
+  def enableVanillaColumnarToNativeColumnar: Boolean =
+    conf.getConf(VANILLA_COLUMNAR_TO_NATIVE_COLUMNAR_ENABLED)
+
   def forceShuffledHashJoin: Boolean = conf.getConf(COLUMNAR_FPRCE_SHUFFLED_HASH_JOIN_ENABLED)
 
   def enableColumnarSortMergeJoin: Boolean = conf.getConf(COLUMNAR_SORTMERGEJOIN_ENABLED)
@@ -776,6 +779,13 @@ object GlutenConfig {
       .doc("Enable or disable columnar columnarToRow.")
       .booleanConf
       .createWithDefault(true)
+
+  val VANILLA_COLUMNAR_TO_NATIVE_COLUMNAR_ENABLED =
+    buildConf("spark.gluten.sql.columnar.vanillaColumnarToNativeColumnar")
+      .internal()
+      .doc("Enable or disable native VanillaColumnarToNativeColumnar.")
+      .booleanConf
+      .createWithDefault(false)
 
   val COLUMNAR_SORTMERGEJOIN_ENABLED =
     buildConf("spark.gluten.sql.columnar.sortMergeJoin")

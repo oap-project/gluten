@@ -663,6 +663,48 @@ JNIEXPORT void JNICALL Java_io_glutenproject_vectorized_NativeRowToColumnarJniWr
   JNI_METHOD_END()
 }
 
+JNIEXPORT jlong JNICALL Java_io_glutenproject_vectorized_VanillaColumnarToNativeColumnarJniWrapper_init( // NOLINT
+    JNIEnv* env,
+    jobject wrapper,
+    jlong cSchema,
+    jlong memoryManagerHandle) {
+  JNI_METHOD_START
+  auto ctx = gluten::getRuntime(env, wrapper);
+  auto memoryManager = jniCastOrThrow<MemoryManager>(memoryManagerHandle);
+
+  return ctx->objectStore()->save(
+      ctx->createColumnar2ColumnarConverter(memoryManager, reinterpret_cast<struct ArrowSchema*>(cSchema)));
+  JNI_METHOD_END(kInvalidResourceHandle)
+}
+
+JNIEXPORT jlong JNICALL
+Java_io_glutenproject_vectorized_VanillaColumnarToNativeColumnarJniWrapper_nativeConvert( // NOLINT
+    JNIEnv* env,
+    jobject wrapper,
+    jlong c2cHandle,
+    jlong memoryAddress) {
+  JNI_METHOD_START
+  auto ctx = gluten::getRuntime(env, wrapper);
+
+  struct ArrowArray* cArray = reinterpret_cast<struct ArrowArray*>(memoryAddress);
+
+  auto converter = ctx->objectStore()->retrieve<ColumnarToColumnarConverter>(c2cHandle);
+  auto cb = converter->convert(cArray);
+  return ctx->objectStore()->save(cb);
+  JNI_METHOD_END(kInvalidResourceHandle)
+}
+
+JNIEXPORT void JNICALL Java_io_glutenproject_vectorized_VanillaColumnarToNativeColumnarJniWrapper_close( // NOLINT
+    JNIEnv* env,
+    jobject wrapper,
+    jlong c2cHandle) {
+  JNI_METHOD_START
+  auto ctx = gluten::getRuntime(env, wrapper);
+
+  ctx->objectStore()->release(c2cHandle);
+  JNI_METHOD_END()
+}
+
 JNIEXPORT jstring JNICALL Java_io_glutenproject_columnarbatch_ColumnarBatchJniWrapper_getType( // NOLINT
     JNIEnv* env,
     jobject wrapper,

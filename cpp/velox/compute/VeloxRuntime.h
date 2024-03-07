@@ -21,6 +21,7 @@
 #include "compute/Runtime.h"
 #include "memory/VeloxMemoryManager.h"
 #include "operators/serializer/VeloxColumnarBatchSerializer.h"
+#include "operators/serializer/VeloxColumnarToColumnarConverter.h"
 #include "operators/serializer/VeloxColumnarToRowConverter.h"
 #include "operators/writer/VeloxParquetDatasource.h"
 #include "shuffle/ShuffleReader.h"
@@ -80,6 +81,10 @@ class VeloxRuntime final : public Runtime {
       std::vector<int32_t> columnIndices) override;
 
   std::shared_ptr<RowToColumnarConverter> createRow2ColumnarConverter(
+      MemoryManager* memoryManager,
+      struct ArrowSchema* cSchema) override;
+
+  std::shared_ptr<ColumnarToColumnarConverter> createColumnar2ColumnarConverter(
       MemoryManager* memoryManager,
       struct ArrowSchema* cSchema) override;
 

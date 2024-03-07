@@ -132,4 +132,6 @@ trait BackendSettingsApi {
   def mergeTwoPhasesHashBaseAggregateIfNeed(): Boolean = false
 
   def shouldRewriteTypedImperativeAggregate(): Boolean = false
+
+  def supportVanillaColumnarToNativeColumnarExec(): Boolean = false
 }

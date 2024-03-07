@@ -735,4 +735,10 @@ class CHSparkPlanExecApi extends SparkPlanExecApi {
       case _ => super.postProcessPushDownFilter(extraFilters, sparkExecNode)
     }
   }
+
+  override def genVanillaColumnarToNativeColumnarExec(
+      child: SparkPlan): VanillaColumnarToNativeColumnarExecBase = {
+    throw new UnsupportedOperationException(
+      "VanillaColumnarToNativeColumnarExec is not supported in ch backend.")
+  }
 }
