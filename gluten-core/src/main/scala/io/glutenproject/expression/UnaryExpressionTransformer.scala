@@ -188,34 +188,6 @@ case class MakeDecimalTransformer(
   }
 }
 
-/**
- * User can specify a seed for this function. If lacked, spark will generate a random number as
- * seed. We also need to pass a unique partitionIndex provided by framework to native library for
- * each thread. Then, seed plus partitionIndex will be the actual seed for generator, similar to
- * vanilla spark. This is based on the fact that partitioning is deterministic and one partition is
- * corresponding to one task thread.
- */
-case class RandTransformer(
-    substraitExprName: String,
-    explicitSeed: ExpressionTransformer,
-    original: Rand)
-  extends ExpressionTransformer {
-
-  override def doTransform(args: java.lang.Object): ExpressionNode = {
-    if (!original.hideSeed) {
-      // TODO: for user-specified seed, we need to pass partition index to native engine.
-      throw new UnsupportedOperationException("User-specified seed is not supported.")
-    }
-    val functionMap = args.asInstanceOf[java.util.HashMap[String, java.lang.Long]]
-    val functionId = ExpressionBuilder.newScalarFunction(
-      functionMap,
-      ConverterUtils.makeFuncName(substraitExprName, Seq(original.child.dataType)))
-    val inputNodes = Lists.newArrayList[ExpressionNode]()
-    val typeNode = ConverterUtils.getTypeNode(original.dataType, original.nullable)
-    ExpressionBuilder.makeScalarFunction(functionId, inputNodes, typeNode)
-  }
-}
-
 case class GetArrayStructFieldsTransformer(
     substraitExprName: String,
     child: ExpressionTransformer,

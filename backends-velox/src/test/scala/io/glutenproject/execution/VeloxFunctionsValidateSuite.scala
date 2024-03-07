@@ -449,4 +449,15 @@ class VeloxFunctionsValidateSuite extends VeloxWholeStageTransformerSuite {
       checkOperatorMatch[ProjectExecTransformer]
     }
   }
+
+  test("rand with/without seed") {
+    // The result for rand() is nondeterministic. And with user-specified seed, result depends
+    // on implementation. So we don't compare result with vanilla Spark.
+    runQueryAndCompare(
+      "SELECT rand(), rand(1), rand(30) FROM lineitem limit 100",
+      compareResult = false) {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+  }
+
 }
