@@ -308,14 +308,15 @@ object MiscColumnarRules {
           val left = replaceWithTransformerPlan(plan.left)
           val right = replaceWithTransformerPlan(plan.right)
           logDebug(s"Columnar Processing for ${plan.getClass} is currently supported.")
-          SortMergeJoinExecTransformer(
-            plan.leftKeys,
-            plan.rightKeys,
-            plan.joinType,
-            plan.condition,
-            left,
-            right,
-            plan.isSkewJoin)
+          BackendsApiManager.getSparkPlanExecApiInstance
+            .genSortMergeJoinExecTransformer(
+              plan.leftKeys,
+              plan.rightKeys,
+              plan.joinType,
+              plan.condition,
+              left,
+              right,
+              plan.isSkewJoin)
         case plan: BroadcastExchangeExec =>
           val child = replaceWithTransformerPlan(plan.child)
           logDebug(s"Columnar Processing for ${plan.getClass} is currently supported.")

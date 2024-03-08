@@ -186,7 +186,7 @@ class GlutenClickHouseTPCDSParquetSortMergeJoinSuite extends GlutenClickHouseTPC
   }
 
   // TODO enable this after CH support nulls smallest in MergeJoinTransform
-  ignore("sort merge join: nulls smallest") {
+  test("sort merge join: nulls smallest") {
     withTable("myitem") {
       withSQLConf(
         "spark.sql.autoBroadcastJoinThreshold" -> "-1",

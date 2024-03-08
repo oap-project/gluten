@@ -17,11 +17,12 @@
 package io.glutenproject.execution
 
 import io.glutenproject.extension.ValidationResult
+import io.glutenproject.substrait.{JoinParams, SubstraitContext}
 import io.glutenproject.utils.CHJoinValidateUtil
 
-import org.apache.spark.sql.catalyst.expressions.{Expression, NamedExpression}
-import org.apache.spark.sql.catalyst.plans.JoinType
-import org.apache.spark.sql.execution.SparkPlan
+import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.catalyst.plans._
+import org.apache.spark.sql.execution._
 
 case class CHSortMergeJoinExecTransformer(
     leftKeys: Seq[Expression],
@@ -49,6 +50,59 @@ case class CHSortMergeJoinExecTransformer(
       return ValidationResult.notOk("ch join validate fail")
     }
     super.doValidateInternal()
+  }
+
+  override def doTransform(context: SubstraitContext): TransformContext = {
+    // ClickHouse MergeJoinTransform use nulls biggest and not configurable,
+    // While spark use nulls smallest.So need adjust here
+    def adjustNullsOrder(plan: SparkPlan): SortExecTransformer = {
+      assert(plan.isInstanceOf[SortExecTransformer])
+      val adjustedStreamdPlan = plan.asInstanceOf[SortExecTransformer]
+      SortExecTransformer(
+        adjustedStreamdPlan.sortOrder,
+        adjustedStreamdPlan.global,
+        adjustedStreamdPlan.child,
+        adjustedStreamdPlan.testSpillFrequency,
+        true)
+    }
+    val streamedPlanContext = adjustNullsOrder(streamedPlan).doTransform(context)
+    val (inputStreamedRelNode, inputStreamedOutput) =
+      (streamedPlanContext.root, streamedPlanContext.outputAttributes)
+
+    val bufferedPlanContext = adjustNullsOrder(bufferedPlan).doTransform(context)
+    val (inputBuildRelNode, inputBuildOutput) =
+      (bufferedPlanContext.root, bufferedPlanContext.outputAttributes)
+
+    // Get the operator id of this Join.
+    val operatorId = context.nextOperatorId(this.nodeName)
+
+    val joinParams = new JoinParams
+    if (JoinUtils.preProjectionNeeded(leftKeys)) {
+      joinParams.streamPreProjectionNeeded = true
+    }
+    if (JoinUtils.preProjectionNeeded(rightKeys)) {
+      joinParams.buildPreProjectionNeeded = true
+    }
+
+    val joinRel = JoinUtils.createJoinRel(
+      streamedKeys,
+      bufferedKeys,
+      condition,
+      substraitJoinType,
+      false,
+      joinType,
+      genJoinParameters(),
+      inputStreamedRelNode,
+      inputBuildRelNode,
+      inputStreamedOutput,
+      inputBuildOutput,
+      context,
+      operatorId
+    )
+
+    context.registerJoinParam(operatorId, joinParams)
+
+    JoinUtils.createTransformContext(false, output, joinRel, inputStreamedOutput, inputBuildOutput)
   }
   override protected def withNewChildrenInternal(
       newLeft: SparkPlan,
