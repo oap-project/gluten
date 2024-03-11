@@ -153,11 +153,18 @@ trait SparkPlanExecApi {
     GenericExpressionTransformer(substraitExprName, Seq(srcExpr, regexExpr, limitExpr), original)
   }
 
+  /**
+   * User can specify a seed for this function. If lacked, spark will generate a random number as
+   * seed. We also need to pass a unique partitionIndex provided by framework to native library for
+   * each thread. Then, seed plus partitionIndex will be the actual seed for generator, similar to
+   * vanilla spark. This is based on the fact that partitioning is deterministic and one partition
+   * is corresponding to one task thread.
+   */
   def genRandTransformer(
       substraitExprName: String,
       explicitSeed: ExpressionTransformer,
       original: Rand): ExpressionTransformer = {
-    RandTransformer(substraitExprName, explicitSeed, original)
+    GenericExpressionTransformer(substraitExprName, Seq(explicitSeed), original)
   }
 
   /** Generate an expression transformer to transform GetMapValue to Substrait. */

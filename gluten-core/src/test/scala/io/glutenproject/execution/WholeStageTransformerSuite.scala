@@ -260,11 +260,6 @@ abstract class WholeStageTransformerSuite
       customCheck: DataFrame => Unit,
       noFallBack: Boolean = true,
       cache: Boolean = false): DataFrame = {
-    var expected: Seq[Row] = null
-    withSQLConf(vanillaSparkConfs(): _*) {
-      val df = spark.sql(sqlStr)
-      expected = df.collect()
-    }
     // By default we will fallabck complex type scan but here we should allow
     // to test support of complex type
     spark.conf.set("spark.gluten.sql.complexType.scan.fallback.enabled", "false");
@@ -274,6 +269,11 @@ abstract class WholeStageTransformerSuite
     }
     try {
       if (compareResult) {
+        var expected: Seq[Row] = null
+        withSQLConf(vanillaSparkConfs(): _*) {
+          val df = spark.sql(sqlStr)
+          expected = df.collect()
+        }
         checkAnswer(df, expected)
       } else {
         df.collect()
