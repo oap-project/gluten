@@ -1065,39 +1065,41 @@ core::PlanNodePtr SubstraitToVeloxPlanConverter::toVeloxPlan(const ::substrait::
         kHiveConnectorId, "hive_table", filterPushdownEnabled, connector::hive::SubfieldFilters{}, nullptr);
   } else {
     // Flatten the conditions connected with 'and'.
-    std::vector<::substrait::Expression_ScalarFunction> scalarFunctions;
-    std::vector<::substrait::Expression_SingularOrList> singularOrLists;
-    std::vector<::substrait::Expression_IfThen> ifThens;
-    flattenConditions(readRel.filter(), scalarFunctions, singularOrLists, ifThens);
+    // std::vector<::substrait::Expression_ScalarFunction> scalarFunctions;
+    // std::vector<::substrait::Expression_SingularOrList> singularOrLists;
+    // std::vector<::substrait::Expression_IfThen> ifThens;
+    // flattenConditions(readRel.filter(), scalarFunctions, singularOrLists, ifThens);
 
-    // The vector's subscript stands for the column index.
-    std::vector<RangeRecorder> rangeRecorders(veloxTypeList.size());
+    // // The vector's subscript stands for the column index.
+    // std::vector<RangeRecorder> rangeRecorders(veloxTypeList.size());
 
-    // Separate the filters to be two parts. The subfield part can be
-    // pushed down.
-    std::vector<::substrait::Expression_ScalarFunction> subfieldFunctions;
-    std::vector<::substrait::Expression_ScalarFunction> remainingFunctions;
-    std::vector<::substrait::Expression_SingularOrList> subfieldOrLists;
-    std::vector<::substrait::Expression_SingularOrList> remainingOrLists;
+    // // Separate the filters to be two parts. The subfield part can be
+    // // pushed down.
+    // std::vector<::substrait::Expression_ScalarFunction> subfieldFunctions;
+    // std::vector<::substrait::Expression_ScalarFunction> remainingFunctions;
+    // std::vector<::substrait::Expression_SingularOrList> subfieldOrLists;
+    // std::vector<::substrait::Expression_SingularOrList> remainingOrLists;
 
-    separateFilters(
-        rangeRecorders,
-        scalarFunctions,
-        subfieldFunctions,
-        remainingFunctions,
-        singularOrLists,
-        subfieldOrLists,
-        remainingOrLists,
-        veloxTypeList,
-        splitInfo->format);
+    // separateFilters(
+    //     rangeRecorders,
+    //     scalarFunctions,
+    //     subfieldFunctions,
+    //     remainingFunctions,
+    //     singularOrLists,
+    //     subfieldOrLists,
+    //     remainingOrLists,
+    //     veloxTypeList,
+    //     splitInfo->format);
 
-    // Create subfield filters based on the constructed filter info map.
-    auto subfieldFilters = createSubfieldFilters(colNameList, veloxTypeList, subfieldFunctions, subfieldOrLists);
-    // Connect the remaining filters with 'and'.
-    auto remainingFilter = connectWithAnd(colNameList, veloxTypeList, remainingFunctions, remainingOrLists, ifThens);
+    // // Create subfield filters based on the constructed filter info map.
+    // auto subfieldFilters = createSubfieldFilters(colNameList, veloxTypeList, subfieldFunctions, subfieldOrLists);
+    // // Connect the remaining filters with 'and'.
+    // auto remainingFilter = connectWithAnd(colNameList, veloxTypeList, remainingFunctions, remainingOrLists, ifThens);
 
+    const auto inputType = ROW(std::move(colNameList), std::move(veloxTypeList));
+    const auto remainingFilter = exprConverter_->toVeloxExpr(readRel.filter(), inputType);
     tableHandle = std::make_shared<connector::hive::HiveTableHandle>(
-        kHiveConnectorId, "hive_table", filterPushdownEnabled, std::move(subfieldFilters), remainingFilter);
+        kHiveConnectorId, "hive_table", filterPushdownEnabled, connector::hive::SubfieldFilters{}, remainingFilter);
   }
 
   // Get assignments and out names.
