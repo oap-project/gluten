@@ -63,6 +63,7 @@ case class CHSortMergeJoinExecTransformer(
           ProjectExecTransformer(
             pList,
             SortExecTransformer(s.sortOrder, s.global, s.child, s.testSpillFrequency, true))
+        case _ => plan.asInstanceOf[TransformSupport]
       }
     }
     val streamedPlanContext = adjustNullsOrder(streamedPlan).doTransform(context)
