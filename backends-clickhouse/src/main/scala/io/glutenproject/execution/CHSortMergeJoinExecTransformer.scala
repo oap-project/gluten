@@ -58,20 +58,11 @@ case class CHSortMergeJoinExecTransformer(
     def adjustNullsOrder(plan: SparkPlan): TransformSupport = {
       plan match {
         case p: SortExecTransformer =>
-          SortExecTransformer(
-            p.sortOrder,
-            p.global,
-            p.child,
-            p.testSpillFrequency,
-            true)
+          SortExecTransformer(p.sortOrder, p.global, p.child, p.testSpillFrequency, true)
         case p @ ProjectExecTransformer(pList, s: SortExecTransformer) =>
-          ProjectExecTransformer(pList,
-            SortExecTransformer(
-              s.sortOrder,
-              s.global,
-              s.child,
-              s.testSpillFrequency,
-              true))
+          ProjectExecTransformer(
+            pList,
+            SortExecTransformer(s.sortOrder, s.global, s.child, s.testSpillFrequency, true))
       }
     }
     val streamedPlanContext = adjustNullsOrder(streamedPlan).doTransform(context)
