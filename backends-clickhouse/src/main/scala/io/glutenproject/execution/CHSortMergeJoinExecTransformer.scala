@@ -55,15 +55,24 @@ case class CHSortMergeJoinExecTransformer(
   override def doTransform(context: SubstraitContext): TransformContext = {
     // ClickHouse MergeJoinTransform use nulls biggest and not configurable,
     // While spark use nulls smallest.So need adjust here
-    def adjustNullsOrder(plan: SparkPlan): SortExecTransformer = {
-      assert(plan.isInstanceOf[SortExecTransformer])
-      val adjustedStreamdPlan = plan.asInstanceOf[SortExecTransformer]
-      SortExecTransformer(
-        adjustedStreamdPlan.sortOrder,
-        adjustedStreamdPlan.global,
-        adjustedStreamdPlan.child,
-        adjustedStreamdPlan.testSpillFrequency,
-        true)
+    def adjustNullsOrder(plan: SparkPlan): TransformSupport = {
+      plan match {
+        case p: SortExecTransformer =>
+          SortExecTransformer(
+            p.sortOrder,
+            p.global,
+            p.child,
+            p.testSpillFrequency,
+            true)
+        case p @ ProjectExecTransformer(pList, s: SortExecTransformer) =>
+          ProjectExecTransformer(pList,
+            SortExecTransformer(
+              s.sortOrder,
+              s.global,
+              s.child,
+              s.testSpillFrequency,
+              true))
+      }
     }
     val streamedPlanContext = adjustNullsOrder(streamedPlan).doTransform(context)
     val (inputStreamedRelNode, inputStreamedOutput) =
