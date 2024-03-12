@@ -23,13 +23,12 @@ import io.glutenproject.utils.SubstraitPlanPrinterUtil
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
-import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.vectorized.ColumnarBatch
 
 import io.substrait.proto.{NamedStruct, Type}
 
-import java.util.{ArrayList => JArrayList, List => JList, Locale}
+import java.util.{ArrayList => JArrayList, List => JList}
 
 import scala.collection.JavaConverters._
 
@@ -46,8 +45,7 @@ object ConverterUtils extends Logging {
   }
 
   def normalizeColName(name: String): String = {
-    val caseSensitive = SQLConf.get.caseSensitiveAnalysis
-    if (caseSensitive) name else name.toLowerCase(Locale.ROOT)
+    name
   }
 
   def getShortAttributeName(attr: Attribute): String = {

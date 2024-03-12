@@ -282,11 +282,8 @@ void WholeStageResultIterator::constructPartitionColumns(
     std::unordered_map<std::string, std::optional<std::string>>& partitionKeys,
     const std::unordered_map<std::string, std::string>& map) {
   for (const auto& partitionColumn : map) {
-    auto key = partitionColumn.first;
+    const auto key = partitionColumn.first;
     const auto value = partitionColumn.second;
-    if (!veloxCfg_->get<bool>(kCaseSensitive, false)) {
-      folly::toLowerAscii(key);
-    }
     if (value == kHiveDefaultPartition) {
       partitionKeys[key] = std::nullopt;
     } else {
@@ -520,9 +517,6 @@ std::unordered_map<std::string, std::string> WholeStageResultIterator::getQueryC
 
 std::shared_ptr<velox::Config> WholeStageResultIterator::createConnectorConfig() {
   std::unordered_map<std::string, std::string> configs = {};
-  // The semantics of reading as lower case is opposite with case-sensitive.
-  configs[velox::connector::hive::HiveConfig::kFileColumnNamesReadAsLowerCaseSession] =
-      veloxCfg_->get<bool>(kCaseSensitive, false) == false ? "true" : "false";
   configs[velox::connector::hive::HiveConfig::kPartitionPathAsLowerCaseSession] = "false";
   configs[velox::connector::hive::HiveConfig::kArrowBridgeTimestampUnit] = "6";
   configs[velox::connector::hive::HiveConfig::kMaxPartitionsPerWritersSession] =

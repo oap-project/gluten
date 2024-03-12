@@ -37,15 +37,13 @@ namespace gluten {
 class SubstraitParser {
  public:
   /// Used to parse Substrait NamedStruct.
-  static std::vector<facebook::velox::TypePtr> parseNamedStruct(
-      const ::substrait::NamedStruct& namedStruct,
-      bool asLowerCase = false);
+  static std::vector<facebook::velox::TypePtr> parseNamedStruct(const ::substrait::NamedStruct& namedStruct);
 
   /// Used to parse partition columns from Substrait NamedStruct.
   static std::vector<bool> parsePartitionColumns(const ::substrait::NamedStruct& namedStruct);
 
   /// Parse Substrait Type to Velox type.
-  static facebook::velox::TypePtr parseType(const ::substrait::Type& substraitType, bool asLowerCase = false);
+  static facebook::velox::TypePtr parseType(const ::substrait::Type& substraitType);
 
   /// Parse Substrait ReferenceSegment.
   static int32_t parseReferenceSegment(const ::substrait::Expression::ReferenceSegment& refSegment);

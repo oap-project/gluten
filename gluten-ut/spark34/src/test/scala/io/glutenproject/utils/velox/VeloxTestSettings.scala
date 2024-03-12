@@ -672,9 +672,6 @@ class VeloxTestSettings extends BackendTestSettings {
     .exclude("Migration from INT96 to TIMESTAMP_MICROS timestamp type")
     .exclude("SPARK-10365 timestamp written and read as INT64 - TIMESTAMP_MICROS")
     .exclude("SPARK-36182: read TimestampNTZ as TimestampLTZ")
-    // new added in spark-3.3 and need fix later, random failure may caused by memory free
-    .exclude("SPARK-39833: pushed filters with project without filter columns")
-    .exclude("SPARK-39833: pushed filters with count()")
     // Rewrite because the filter after datasource is not needed.
     .exclude(
       "SPARK-26677: negated null-safe equality comparison should not filter matched row groups")

@@ -23,7 +23,7 @@
 
 namespace gluten {
 
-TypePtr SubstraitParser::parseType(const ::substrait::Type& substraitType, bool asLowerCase) {
+TypePtr SubstraitParser::parseType(const ::substrait::Type& substraitType) {
   switch (substraitType.kind_case()) {
     case ::substrait::Type::KindCase::kBool:
       return BOOLEAN();
@@ -51,24 +51,21 @@ TypePtr SubstraitParser::parseType(const ::substrait::Type& substraitType, bool 
       std::vector<TypePtr> types;
       std::vector<std::string> names;
       for (int i = 0; i < structTypes.size(); i++) {
-        types.emplace_back(parseType(structTypes[i], asLowerCase));
-        std::string fieldName = nameProvided ? structNames[i] : "col_" + std::to_string(i);
-        if (asLowerCase) {
-          folly::toLowerAscii(fieldName);
-        }
+        types.emplace_back(parseType(structTypes[i]));
+        auto fieldName = nameProvided ? structNames[i] : "col_" + std::to_string(i);
         names.emplace_back(fieldName);
       }
       return ROW(std::move(names), std::move(types));
     }
     case ::substrait::Type::KindCase::kList: {
       const auto& fieldType = substraitType.list().type();
-      return ARRAY(parseType(fieldType, asLowerCase));
+      return ARRAY(parseType(fieldType));
     }
     case ::substrait::Type::KindCase::kMap: {
       const auto& sMap = substraitType.map();
       const auto& keyType = sMap.key();
       const auto& valueType = sMap.value();
-      return MAP(parseType(keyType, asLowerCase), parseType(valueType, asLowerCase));
+      return MAP(parseType(keyType), parseType(valueType));
     }
     case ::substrait::Type::KindCase::kUserDefined:
       // We only support UNKNOWN type to handle the null literal whose type is
@@ -90,7 +87,7 @@ TypePtr SubstraitParser::parseType(const ::substrait::Type& substraitType, bool 
   }
 }
 
-std::vector<TypePtr> SubstraitParser::parseNamedStruct(const ::substrait::NamedStruct& namedStruct, bool asLowerCase) {
+std::vector<TypePtr> SubstraitParser::parseNamedStruct(const ::substrait::NamedStruct& namedStruct) {
   // Note that "names" are not used.
 
   // Parse Struct.
@@ -99,7 +96,7 @@ std::vector<TypePtr> SubstraitParser::parseNamedStruct(const ::substrait::NamedS
   std::vector<TypePtr> typeList;
   typeList.reserve(substraitTypes.size());
   for (const auto& type : substraitTypes) {
-    typeList.emplace_back(parseType(type, asLowerCase));
+    typeList.emplace_back(parseType(type));
   }
   return typeList;
 }
