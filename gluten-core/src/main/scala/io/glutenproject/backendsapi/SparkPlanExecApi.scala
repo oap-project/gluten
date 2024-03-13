@@ -124,6 +124,17 @@ trait SparkPlanExecApi {
       right: SparkPlan,
       isNullAwareAntiJoin: Boolean = false): BroadcastHashJoinExecTransformer
 
+  /** Generate ShuffledHashJoinExecTransformer. */
+  def genSortMergeJoinExecTransformer(
+      leftKeys: Seq[Expression],
+      rightKeys: Seq[Expression],
+      joinType: JoinType,
+      condition: Option[Expression],
+      left: SparkPlan,
+      right: SparkPlan,
+      isSkewJoin: Boolean = false,
+      projectList: Seq[NamedExpression] = null): SortMergeJoinExecTransformerBase
+
   /** Generate CartesianProductExecTransformer. */
   def genCartesianProductExecTransformer(
       left: SparkPlan,

@@ -28,7 +28,6 @@ import org.apache.spark.api.python.EvalPythonExecTransformer
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{AttributeReference, Expression}
-import org.apache.spark.sql.catalyst.plans.FullOuter
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.catalyst.trees.TreeNodeTag
 import org.apache.spark.sql.execution._
@@ -618,19 +617,18 @@ case class AddTransformHintRule() extends Rule[SparkPlan] {
             transformer.doValidate().tagOnFallback(plan)
           }
         case plan: SortMergeJoinExec =>
-          if (!enableColumnarSortMergeJoin || plan.joinType == FullOuter) {
-            TransformHints.tagNotTransformable(
-              plan,
-              "columnar sort merge join is not enabled or join type is FullOuter")
+          if (!enableColumnarSortMergeJoin) {
+            TransformHints.tagNotTransformable(plan, "columnar sort merge join is not enabled")
           } else {
-            val transformer = SortMergeJoinExecTransformer(
-              plan.leftKeys,
-              plan.rightKeys,
-              plan.joinType,
-              plan.condition,
-              plan.left,
-              plan.right,
-              plan.isSkewJoin)
+            val transformer = BackendsApiManager.getSparkPlanExecApiInstance
+              .genSortMergeJoinExecTransformer(
+                plan.leftKeys,
+                plan.rightKeys,
+                plan.joinType,
+                plan.condition,
+                plan.left,
+                plan.right,
+                plan.isSkewJoin)
             transformer.doValidate().tagOnFallback(plan)
           }
         case plan: CartesianProductExec =>

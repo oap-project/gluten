@@ -18,6 +18,7 @@
 #include <IO/ReadBufferFromString.h>
 #include <IO/ReadHelpers.h>
 #include <Interpreters/CollectJoinOnKeysVisitor.h>
+#include <Interpreters/FullSortingMergeJoin.h>
 #include <Interpreters/GraceHashJoin.h>
 #include <Interpreters/HashJoin.h>
 #include <Interpreters/TableJoin.h>
@@ -42,8 +43,10 @@ namespace ErrorCodes
 
 struct JoinOptimizationInfo
 {
-    bool is_broadcast;
-    bool is_null_aware_anti_join;
+    bool is_broadcast = false;
+    bool is_smj = false;
+    bool is_null_aware_anti_join = false;
+    bool is_existence_join = false;
     std::string storage_join_key;
 };
 
@@ -53,20 +56,40 @@ JoinOptimizationInfo parseJoinOptimizationInfo(const substrait::JoinRel & join)
 {
     google::protobuf::StringValue optimization;
     optimization.ParseFromString(join.advanced_extension().optimization().value());
-    ReadBufferFromString in(optimization.value());
-    assertString("JoinParameters:", in);
-    assertString("isBHJ=", in);
     JoinOptimizationInfo info;
-    readBoolText(info.is_broadcast, in);
-    assertChar('\n', in);
-    if (info.is_broadcast)
+    if (optimization.value().contains("isBHJ="))
     {
-        assertString("isNullAwareAntiJoin=", in);
-        readBoolText(info.is_null_aware_anti_join, in);
+        ReadBufferFromString in(optimization.value());
+        assertString("JoinParameters:", in);
+        assertString("isBHJ=", in);
+        readBoolText(info.is_broadcast, in);
         assertChar('\n', in);
-        assertString("buildHashTableId=", in);
-        readString(info.storage_join_key, in);
+        if (info.is_broadcast)
+        {
+            assertString("isNullAwareAntiJoin=", in);
+            readBoolText(info.is_null_aware_anti_join, in);
+            assertChar('\n', in);
+            assertString("buildHashTableId=", in);
+            readString(info.storage_join_key, in);
+            assertChar('\n', in);
+        }
+    }
+    else
+    {
+        ReadBufferFromString in(optimization.value());
+        assertString("JoinParameters:", in);
+        assertString("isSMJ=", in);
+        readBoolText(info.is_smj, in);
         assertChar('\n', in);
+        if (info.is_smj)
+        {
+            assertString("isNullAwareAntiJoin=", in);
+            readBoolText(info.is_null_aware_anti_join, in);
+            assertChar('\n', in);
+            assertString("isExistenceJoin=", in);
+            readBoolText(info.is_existence_join, in);
+            assertChar('\n', in);
+        }
     }
     return info;
 }
@@ -101,6 +124,8 @@ std::pair<DB::JoinKind, DB::JoinStrictness> getJoinKindAndStrictness(substrait::
             return {DB::JoinKind::Left, DB::JoinStrictness::Anti};
         case substrait::JoinRel_JoinType_JOIN_TYPE_LEFT:
             return {DB::JoinKind::Left, DB::JoinStrictness::All};
+        case substrait::JoinRel_JoinType_JOIN_TYPE_RIGHT:
+            return {DB::JoinKind::Right, DB::JoinStrictness::All};
         case substrait::JoinRel_JoinType_JOIN_TYPE_OUTER:
             return {DB::JoinKind::Full, DB::JoinStrictness::All};
         default:
@@ -189,12 +214,28 @@ DB::QueryPlanPtr JoinRelParser::parseJoin(const substrait::JoinRel & join, DB::Q
         auto broadcast_hash_join = storage_join->getJoinLocked(table_join, context);
         QueryPlanStepPtr join_step = std::make_unique<FilledJoinStep>(left->getCurrentDataStream(), broadcast_hash_join, 8192);
 
-        join_step->setStepDescription("JOIN");
+        join_step->setStepDescription("STORAGE_JOIN");
         steps.emplace_back(join_step.get());
         left->addStep(std::move(join_step));
         query_plan = std::move(left);
         /// hold right plan for profile
         extra_plan_holder.emplace_back(std::move(right));
+    }
+    else if (join_opt_info.is_smj)
+    {
+        JoinPtr smj_join = std::make_shared<FullSortingMergeJoin>(table_join, right->getCurrentDataStream().header.cloneEmpty());
+        MultiEnum<DB::JoinAlgorithm> join_algorithm = context->getSettingsRef().join_algorithm;
+        QueryPlanStepPtr join_step
+                 = std::make_unique<DB::JoinStep>(left->getCurrentDataStream(), right->getCurrentDataStream(), smj_join, 8192, 1, false);
+
+        join_step->setStepDescription("SORT_MERGE_JOIN");
+        steps.emplace_back(join_step.get());
+        std::vector<QueryPlanPtr> plans;
+        plans.emplace_back(std::move(left));
+        plans.emplace_back(std::move(right));
+
+        query_plan = std::make_unique<QueryPlan>();
+        query_plan->unitePlans(std::move(join_step), {std::move(plans)});
     }
     else
     {
@@ -225,7 +266,7 @@ DB::QueryPlanPtr JoinRelParser::parseJoin(const substrait::JoinRel & join, DB::Q
         QueryPlanStepPtr join_step
             = std::make_unique<DB::JoinStep>(left->getCurrentDataStream(), right->getCurrentDataStream(), hash_join, 8192, 1, false);
 
-        join_step->setStepDescription("JOIN");
+        join_step->setStepDescription("HASH_JOIN");
         steps.emplace_back(join_step.get());
         std::vector<QueryPlanPtr> plans;
         plans.emplace_back(std::move(left));

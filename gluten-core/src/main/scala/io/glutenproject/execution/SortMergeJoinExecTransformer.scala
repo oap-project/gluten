@@ -27,13 +27,17 @@ import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.plans._
 import org.apache.spark.sql.catalyst.plans.physical._
 import org.apache.spark.sql.execution._
+import org.apache.spark.sql.execution.joins.BaseJoinExec
 import org.apache.spark.sql.vectorized.ColumnarBatch
 
 import com.google.protobuf.{Any, StringValue}
 import io.substrait.proto.JoinRel
 
-/** Performs a sort merge join of two child relations. */
-case class SortMergeJoinExecTransformer(
+trait MergeJoinLikeExecTransformer
+  extends BaseJoinExec
+  with TransformSupport
+  with ColumnarShuffledJoin {}
+abstract class SortMergeJoinExecTransformerBase(
     leftKeys: Seq[Expression],
     rightKeys: Seq[Expression],
     joinType: JoinType,
@@ -42,9 +46,7 @@ case class SortMergeJoinExecTransformer(
     right: SparkPlan,
     isSkewJoin: Boolean = false,
     projectList: Seq[NamedExpression] = null)
-  extends BinaryExecNode
-  with TransformSupport {
-
+  extends MergeJoinLikeExecTransformer {
   // Note: "metrics" is made transient to avoid sending driver-side metrics to tasks.
   @transient override lazy val metrics =
     BackendsApiManager.getMetricsApiInstance.genSortMergeJoinTransformerMetrics(sparkContext)
@@ -282,6 +284,38 @@ case class SortMergeJoinExecTransformer(
     context.registerJoinParam(operatorId, joinParams)
 
     JoinUtils.createTransformContext(false, output, joinRel, inputStreamedOutput, inputBuildOutput)
+  }
+
+}
+
+/** Performs a sort merge join of two child relations. */
+case class SortMergeJoinExecTransformer(
+    leftKeys: Seq[Expression],
+    rightKeys: Seq[Expression],
+    joinType: JoinType,
+    condition: Option[Expression],
+    left: SparkPlan,
+    right: SparkPlan,
+    isSkewJoin: Boolean = false,
+    projectList: Seq[NamedExpression] = null)
+  extends SortMergeJoinExecTransformerBase(
+    leftKeys,
+    rightKeys,
+    joinType,
+    condition,
+    left,
+    right,
+    isSkewJoin,
+    projectList) {
+
+  override protected def doValidateInternal(): ValidationResult = {
+    val substraitContext = new SubstraitContext
+    // Firstly, need to check if the Substrait plan for this operator can be successfully generated.
+    if (substraitJoinType == JoinRel.JoinType.JOIN_TYPE_OUTER) {
+      return ValidationResult
+        .notOk(s"Found unsupported join type of $joinType for velox smj: $substraitJoinType")
+    }
+    super.doValidateInternal()
   }
 
   override protected def withNewChildrenInternal(

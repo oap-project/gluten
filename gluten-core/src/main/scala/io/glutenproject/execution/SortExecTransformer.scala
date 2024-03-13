@@ -37,7 +37,8 @@ case class SortExecTransformer(
     sortOrder: Seq[SortOrder],
     global: Boolean,
     child: SparkPlan,
-    testSpillFrequency: Int = 0)
+    testSpillFrequency: Int = 0,
+    nullsBiggest: Boolean = false)
   extends UnaryTransformSupport {
 
   // Note: "metrics" is made transient to avoid sending driver-side metrics to tasks.
@@ -72,7 +73,7 @@ case class SortExecTransformer(
           .doTransform(args)
         builder.setExpr(exprNode.toProtobuf)
 
-        builder.setDirectionValue(SortExecTransformer.transformSortDirection(order))
+        builder.setDirectionValue(SortExecTransformer.transformSortDirection(order, nullsBiggest))
         builder.build()
     }
     if (!validation) {
@@ -121,8 +122,13 @@ case class SortExecTransformer(
 }
 
 object SortExecTransformer {
-  def transformSortDirection(order: SortOrder): Int = {
-    transformSortDirection(order.direction.sql, order.nullOrdering.sql)
+  def transformSortDirection(order: SortOrder, nullsBiggest: Boolean = false): Int = {
+    val (direction, nullOrder) = (order.direction.sql, order.nullOrdering.sql) match {
+      // special case for sort merge join's null order
+      case ("ASC", "NULLS FIRST") if nullsBiggest => ("ASC", "NULLS LAST")
+      case _ => (order.direction.sql, order.nullOrdering.sql)
+    }
+    transformSortDirection(direction, nullOrder)
   }
 
   def transformSortDirection(direction: String, nullOrdering: String): Int = {
