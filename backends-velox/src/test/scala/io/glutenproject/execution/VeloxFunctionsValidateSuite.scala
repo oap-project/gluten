@@ -425,6 +425,36 @@ class VeloxFunctionsValidateSuite extends VeloxWholeStageTransformerSuite {
     }
   }
 
+  test("Test map_from_entries function") {
+    withTempPath {
+      // Test cases with primitive-type keys and values
+      path =>
+        Seq(
+          Seq((1, "10"), (2, "20"), (3, null)),
+          Seq((1, "10"), null, (2, "20")),
+          Seq.empty,
+          null
+        ).toDF("a")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read
+          .parquet(path.getCanonicalPath)
+          .createOrReplaceTempView("test")
+        val iExpected =
+          Seq(Row(Map(1 -> "10", 2 -> "20", 3 -> null)), Row(null), Row(Map.empty), Row(null))
+
+        def testPrimitiveType(): Unit = {
+          val df = spark.sql("select map_from_entries(a) from test")
+          df.explain();
+          checkAnswer(df, iExpected)
+        }
+
+        // Test with local relation, the Project will be evaluated without codegen
+        testPrimitiveType()
+    }
+  }
+
   test("Test isnan function") {
     runQueryAndCompare(
       "SELECT isnan(l_orderkey), isnan(cast('NaN' as double)), isnan(0.0F/0.0F)" +

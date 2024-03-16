@@ -223,6 +223,7 @@ object ExpressionMappings {
     Sig[MapValues](MAP_VALUES),
     Sig[MapFromArrays](MAP_FROM_ARRAYS),
     Sig[MapEntries](MAP_ENTRIES),
+    Sig[MapFromEntries](MAP_FROM_ENTRIES),
     Sig[StringToMap](STR_TO_MAP),
     // Struct functions
     Sig[GetStructField](GET_STRUCT_FIELD),
