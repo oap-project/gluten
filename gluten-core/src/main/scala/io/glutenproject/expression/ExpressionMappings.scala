@@ -270,7 +270,8 @@ object ExpressionMappings {
     Sig[CovSample](COVAR_SAMP),
     Sig[Last](LAST),
     Sig[First](FIRST),
-    Sig[Skewness](SKEWNESS)
+    Sig[Skewness](SKEWNESS),
+    Sig[ApproximatePercentile](APPROX_PERCENTILE)
   )
 
   /** Mapping Spark window expression to Substrait function name */

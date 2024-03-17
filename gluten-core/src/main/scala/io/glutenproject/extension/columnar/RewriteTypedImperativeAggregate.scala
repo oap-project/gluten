@@ -24,6 +24,7 @@ import org.apache.spark.sql.catalyst.expressions.aggregate._
 import org.apache.spark.sql.catalyst.rules.Rule
 import org.apache.spark.sql.execution.SparkPlan
 import org.apache.spark.sql.execution.aggregate.BaseAggregateExec
+import org.apache.spark.sql.types._
 
 object RewriteTypedImperativeAggregate extends Rule[SparkPlan] with PullOutProjectHelper {
   private lazy val shouldRewriteTypedImperativeAggregate =
@@ -37,6 +38,38 @@ object RewriteTypedImperativeAggregate extends Rule[SparkPlan] with PullOutProje
           case _ => false
         }
       case _ => false
+    }
+  }
+
+  def shouldRewriteForPercentileLikeExpr(ae: AggregateExpression): Boolean = {
+    ae.aggregateFunction match {
+      case _: ApproximatePercentile =>
+        ae.mode match {
+          case Partial | PartialMerge => true
+          case _ => false
+        }
+      case _ => false
+    }
+  }
+
+  def getPercentileLikeInterminateDataType(aggFunc: AggregateFunction): StructType = {
+    aggFunc match {
+      case a: ApproximatePercentile =>
+        val childType = a.child.dataType
+        StructType(
+          Array(
+            StructField("col1", ArrayType(DoubleType)),
+            StructField("col2", BooleanType, false),
+            StructField("col3", DoubleType, false),
+            StructField("col4", IntegerType, false),
+            StructField("col5", LongType, false),
+            StructField("col6", childType, false),
+            StructField("col7", childType, false),
+            StructField("col8", ArrayType(childType)),
+            StructField("col9", ArrayType(IntegerType))
+          ))
+      case f =>
+        throw new IllegalArgumentException(s"Unsupported aggregate function $f")
     }
   }
 
@@ -58,6 +91,28 @@ object RewriteTypedImperativeAggregate extends Rule[SparkPlan] with PullOutProje
               .map {
                 ae =>
                   attr.copy(dataType = ae.aggregateFunction.dataType)(
+                    exprId = attr.exprId,
+                    qualifier = attr.qualifier
+                  )
+              }
+              .getOrElse(attr)
+          case other => other
+        }
+        copyBaseAggregateExec(agg)(newResultExpressions = newResultExpressions)
+
+      case agg: BaseAggregateExec
+          if agg.aggregateExpressions.exists(shouldRewriteForPercentileLikeExpr) =>
+        val exprMap = agg.aggregateExpressions
+          .filter(shouldRewriteForPercentileLikeExpr)
+          .map(ae => ae.aggregateFunction.inputAggBufferAttributes.head -> ae)
+          .toMap
+        val newResultExpressions = agg.resultExpressions.map {
+          case attr: AttributeReference =>
+            exprMap
+              .get(attr)
+              .map {
+                ae =>
+                  attr.copy(dataType = getPercentileLikeInterminateDataType(ae.aggregateFunction))(
                     exprId = attr.exprId,
                     qualifier = attr.qualifier
                   )

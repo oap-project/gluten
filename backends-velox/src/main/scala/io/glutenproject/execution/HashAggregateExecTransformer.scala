@@ -22,7 +22,7 @@ import io.glutenproject.expression.ConverterUtils.FunctionConfig
 import io.glutenproject.extension.columnar.RewriteTypedImperativeAggregate
 import io.glutenproject.substrait.`type`.{TypeBuilder, TypeNode}
 import io.glutenproject.substrait.{AggregationParams, SubstraitContext}
-import io.glutenproject.substrait.expression.{AggregateFunctionNode, ExpressionBuilder, ExpressionNode, ScalarFunctionNode}
+import io.glutenproject.substrait.expression.{AggregateFunctionNode, DoubleLiteralNode, ExpressionBuilder, ExpressionNode, IntLiteralNode, ScalarFunctionNode}
 import io.glutenproject.substrait.extensions.{AdvancedExtensionNode, ExtensionBuilder}
 import io.glutenproject.substrait.rel.{RelBuilder, RelNode}
 import io.glutenproject.utils.VeloxIntermediateData
@@ -71,7 +71,7 @@ abstract class HashAggregateExecTransformer(
       aggFunc: AggregateFunction,
       mode: AggregateMode): Boolean = {
     aggFunc match {
-      case _: HLLAdapter =>
+      case _: HLLAdapter | _: ApproximatePercentile =>
         mode match {
           case Partial | Final => true
           case _ => false
@@ -254,6 +254,55 @@ abstract class HashAggregateExecTransformer(
             aggregateNodeList.add(partialNode)
           case Final =>
             // For Final mode output type is long.
+            val aggFunctionNode = ExpressionBuilder.makeAggregateFunction(
+              VeloxAggregateFunctionsBuilder.create(args, aggregateFunction, aggregateMode),
+              childrenNodeList,
+              modeKeyWord,
+              ConverterUtils.getTypeNode(aggregateFunction.dataType, aggregateFunction.nullable)
+            )
+            aggregateNodeList.add(aggFunctionNode)
+          case other =>
+            throw new UnsupportedOperationException(s"$other is not supported.")
+        }
+      case p: ApproximatePercentile =>
+        aggregateMode match {
+          case Partial =>
+            // The datatype of ApproximatePercentile's third child are different
+            // between Spark and Velox.
+            // In Spark, the `accuracy` parameter is a
+            // positive numeric literal, the `1.0/accuracy` is the relative error
+            // of the approximation.
+            // While in Velox, the `accuracy` parameter is the relative error itself.
+            if (childrenNodeList.size() != 3) {
+              throw new IllegalArgumentException(
+                s"Expected three children for " +
+                  s"ApproximatePercentile, but got ${childrenNodeList.size()}")
+            }
+            val accuracyChild = childrenNodeList.get(2)
+            if (!accuracyChild.isInstanceOf[IntLiteralNode]) {
+              throw new IllegalArgumentException(
+                s"Expected a Integer Literal " +
+                  s"for ApproximatePercentile's accuracy, but got $accuracyChild")
+            }
+            val accuracy = accuracyChild.asInstanceOf[IntLiteralNode].getValue
+            val newAccuracyNode = new DoubleLiteralNode(1.0 / accuracy)
+            val newChildrenNodeList = new JArrayList[ExpressionNode]()
+            newChildrenNodeList.add(childrenNodeList.get(0))
+            newChildrenNodeList.add(childrenNodeList.get(1))
+            newChildrenNodeList.add(newAccuracyNode)
+
+            // For Partial mode output type is struct
+            val outputType =
+              RewriteTypedImperativeAggregate.getPercentileLikeInterminateDataType(p)
+            val partialNode = ExpressionBuilder.makeAggregateFunction(
+              VeloxAggregateFunctionsBuilder.create(args, aggregateFunction, aggregateMode),
+              newChildrenNodeList,
+              modeKeyWord,
+              ConverterUtils.getTypeNode(outputType, p.nullable)
+            )
+            aggregateNodeList.add(partialNode)
+          case Final =>
+            // For final mode output type is as the original type.
             val aggFunctionNode = ExpressionBuilder.makeAggregateFunction(
               VeloxAggregateFunctionsBuilder.create(args, aggregateFunction, aggregateMode),
               childrenNodeList,
@@ -826,5 +875,13 @@ case class HashAggregateExecPullOutHelper(
         aggBufferAttr.copy(dataType = ae.aggregateFunction.dataType)(
           aggBufferAttr.exprId,
           aggBufferAttr.qualifier))
+    case ae: AggregateExpression
+        if RewriteTypedImperativeAggregate.shouldRewriteForPercentileLikeExpr(ae) =>
+      val aggBufferAttr = ae.aggregateFunction.inputAggBufferAttributes.head
+      val newAggBufferDataType = RewriteTypedImperativeAggregate
+        .getPercentileLikeInterminateDataType(ae.aggregateFunction)
+      Seq(
+        aggBufferAttr
+          .copy(dataType = newAggBufferDataType)(aggBufferAttr.exprId, aggBufferAttr.qualifier))
   }
 }

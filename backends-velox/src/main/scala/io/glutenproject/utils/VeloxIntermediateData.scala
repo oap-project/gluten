@@ -17,6 +17,7 @@
 package io.glutenproject.utils
 
 import io.glutenproject.expression.ConverterUtils
+import io.glutenproject.extension.columnar.RewriteTypedImperativeAggregate
 import io.glutenproject.substrait.`type`.{TypeBuilder, TypeNode}
 
 import org.apache.spark.sql.catalyst.expressions.aggregate._
@@ -81,7 +82,20 @@ object VeloxIntermediateData {
    */
   def getInputTypes(aggregateFunc: AggregateFunction, forMergeCompanion: Boolean): Seq[DataType] = {
     if (!forMergeCompanion) {
-      return aggregateFunc.children.map(_.dataType)
+      aggregateFunc match {
+        case p: ApproximatePercentile =>
+          p.children.map(_.dataType) match {
+            case Seq(childType,  percentageType, accuracyType) =>
+              // The datatype of ApproximatePercentile's third child
+              // are different between Spark and Velox.
+              return Seq(childType, percentageType, DoubleType)
+            case s =>
+              throw new IllegalArgumentException(s"Expected three children for " +
+                s"ApproximatePercentile, but got $s")
+          }
+        case _ =>
+          return aggregateFunc.children.map(_.dataType)
+      }
     }
     aggregateFunc match {
       case _ @Type(veloxDataTypes: Seq[DataType]) =>
@@ -89,6 +103,8 @@ object VeloxIntermediateData {
       case _: CollectList | _: CollectSet =>
         // CollectList and CollectSet should use data type of agg function.
         Seq(aggregateFunc.dataType)
+      case p: ApproximatePercentile =>
+        Seq(RewriteTypedImperativeAggregate.getPercentileLikeInterminateDataType(p))
       case _ =>
         // Not use StructType for single column agg intermediate data
         aggregateFunc.aggBufferAttributes.map(_.dataType)
