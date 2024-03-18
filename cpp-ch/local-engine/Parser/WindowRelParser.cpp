@@ -83,7 +83,7 @@ WindowRelParser::parse(DB::QueryPlanPtr current_plan_, const substrait::Rel & re
     for (auto & it : window_descriptions)
     {
         auto & win = it.second;
-        
+
         auto window_step = std::make_unique<DB::WindowStep>(current_plan->getCurrentDataStream(), win, win.window_functions, false);
         window_step->setStepDescription("Window step for window '" + win.window_name + "'");
         steps.emplace_back(window_step.get());
@@ -328,13 +328,14 @@ void WindowRelParser::tryAddProjectionBeforeWindow()
     for (auto & win_info : win_infos )
     {
         auto arg_nodes = win_info.function_parser->parseFunctionArguments(win_info.parser_func_info, actions_dag);
+        // This may remove elements from arg_nodes, because some of them are converted to CH func parameters.
+        win_info.params = win_info.function_parser->parseFunctionParameters(win_info.parser_func_info, arg_nodes);
         for (auto & arg_node : arg_nodes)
         {
             win_info.arg_column_names.emplace_back(arg_node->result_name);
             win_info.arg_column_types.emplace_back(arg_node->result_type);
             actions_dag->addOrReplaceInOutputs(*arg_node);
-        } 
-        win_info.params = win_info.function_parser->parseFunctionParameters(win_info.parser_func_info, arg_nodes);       
+        }
     }
 
     if (actions_dag->dumpDAG() != dag_footprint)

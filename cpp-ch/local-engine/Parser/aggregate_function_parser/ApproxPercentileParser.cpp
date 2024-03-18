@@ -81,7 +81,8 @@ String ApproxPercentileParser::getCHFunctionName(DB::DataTypes & types) const
 DB::Array ApproxPercentileParser::parseFunctionParameters(
     const CommonFunctionInfo & func_info, DB::ActionsDAG::NodeRawConstPtrs & arg_nodes) const
 {
-    if (func_info.phase == substrait::AGGREGATION_PHASE_INITIAL_TO_INTERMEDIATE || func_info.phase == substrait::AGGREGATION_PHASE_INITIAL_TO_RESULT)
+    if (func_info.phase == substrait::AGGREGATION_PHASE_INITIAL_TO_INTERMEDIATE
+        || func_info.phase == substrait::AGGREGATION_PHASE_INITIAL_TO_RESULT || func_info.phase == substrait::AGGREGATION_PHASE_UNSPECIFIED)
     {
         Array params;
         const auto & arguments = func_info.arguments;
