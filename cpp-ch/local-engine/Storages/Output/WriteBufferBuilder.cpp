@@ -88,7 +88,13 @@ public:
             throw DB::Exception(DB::ErrorCodes::BAD_ARGUMENTS, "Cannot create dir for {} because {}", dir, std::string(hdfsGetLastError()));
 
         DB::WriteSettings write_settings;
-        return std::make_unique<DB::WriteBufferFromHDFS>(new_file_uri, context->getConfigRef(), 0, write_settings);
+        return std::make_unique<DB::WriteBufferFromHDFS>(
+                new_file_uri,
+                context->getConfigRef(),
+               	0,
+               	write_settings,
+                DB::DBMS_DEFAULT_BUFFER_SIZE,
+               	O_WRONLY | O_APPEND);
     }
 };
 #endif
