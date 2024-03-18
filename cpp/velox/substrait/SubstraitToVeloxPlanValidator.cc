@@ -991,7 +991,6 @@ bool SubstraitToVeloxPlanValidator::validateAggRelFunctionType(const ::substrait
     std::vector<TypePtr> types;
     bool isDecimal = false;
     try {
-    std::cout << "####debug### function spec: " << funcSpec << std::endl;
       types = SubstraitParser::sigToTypes(funcSpec);
       for (const auto& type : types) {
         if (!isDecimal && type->isDecimal()) {
@@ -1013,16 +1012,6 @@ bool SubstraitToVeloxPlanValidator::validateAggRelFunctionType(const ::substrait
 
     bool resolved = false;
     for (const auto& signature : signaturesOpt.value()) {
-      const auto& formalArgs = signature->argumentTypes();
-    auto formalArgsCnt = formalArgs.size();
-    std::cout << "####debug### function signature: " << signature->toString() << ". base function name: " << baseFuncName << ", function name: " << funcName << std::endl;
-    std::cout << "###debug### signature argument args: " << formalArgsCnt << std::endl;
-    for (auto i = 0; i < formalArgsCnt; ++i) {
-      std::cout << "###debug### << signature args " << formalArgs[i].toString() << std::endl;
-    }
-    for (auto i = 0; i < types.size(); i++) {
-      std::cout << "###debug### << acture types args " << types[i]->toString() << std::endl;
-    }
       exec::SignatureBinder binder(*signature, types);
       if (binder.tryBind()) {
         auto resolveType = binder.tryResolveType(
