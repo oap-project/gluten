@@ -13,7 +13,7 @@ Please init vcpkg env first:
 
 Vcpkg already maintains a lot of libraries.
 You can find them by vcpkg cli.
-(NOTE: Please always use cli beacause [packages on vcpkg.io](https://vcpkg.io/en/packages.html) is outdate).
+(NOTE: Please always use cli because [packages on vcpkg.io](https://vcpkg.io/en/packages.html) is outdate).
 
 ```
 $ ./.vcpkg/vcpkg search folly
@@ -28,7 +28,7 @@ folly[zlib]                               Support zlib for compression
 folly[zstd]                               Support zstd for compression
 ```
 
-`[...]` means additional features. Then add depend into [vcpkg.json](./vcpkg.json).
+`[...]` means additional features. Then add the dependency into [vcpkg.json](./vcpkg.json).
 
 ``` json
 {
@@ -144,7 +144,7 @@ See [vcpkg.json reference](https://learn.microsoft.com/en-us/vcpkg/reference/vcp
 `portfile.cmake` is a cmake script describing how to build and install the package.
 A typical portfile has 3 stages:
 
-**Download and perpare source**:
+**Download and prepare source**:
 
 ``` cmake
 # Download from Github
