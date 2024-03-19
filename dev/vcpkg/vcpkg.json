@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "builtin-baseline": "a7b6122f6b6504d16d96117336a0562693579933",
+  "builtin-baseline": "fba75d09065fcc76a25dcf386b1d00d33f5175af",
   "dependencies": ["jemalloc"],
-  "default-features": ["velox", "velox-s3", "velox-gcs", "velox-hdfs", "velox-abfs"],
+  "default-features": ["velox", "velox-s3", "velox-gcs", "velox-hdfs", "velox-abfs", "duckdb"],
   "features": {
     "velox": {
       "description": "Velox backend",
@@ -45,6 +45,7 @@
         "boost-uuid",
         "gtest",
         "xsimd",
+        "simdjson",
         "xxhash",
         "protobuf",
         "benchmark",
@@ -92,6 +93,12 @@
         "azure-storage-files-datalake-cpp"
       ]
     },
+    "duckdb": {
+      "description": "DUCKDB",
+      "dependencies": [
+        "duckdb"
+      ]
+    },
     "hbm": {
       "description": "HBM",
       "dependencies": [
@@ -109,6 +116,8 @@
     }
   },
   "overrides": [
-    { "name": "fmt", "version": "10.1.1" }
+    { "name": "fmt", "version": "10.1.1" },
+    { "name": "xsimd", "version": "10.0.0" },
+    { "name": "simdjson", "version": "3.2.0" }
   ]
 }
