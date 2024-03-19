@@ -44,6 +44,7 @@ class VeloxFunctionsValidateSuite extends VeloxWholeStageTransformerSuite {
       .set("spark.unsafe.exceptionOnMemoryLeak", "true")
       .set("spark.sql.autoBroadcastJoinThreshold", "-1")
       .set("spark.sql.sources.useV1SourceList", "avro")
+      .set("spark.sql.legacy.parquet.nanosAsLong", "false")
       .set(
         "spark.sql.optimizer.excludedRules",
         ConstantFolding.ruleName + "," +

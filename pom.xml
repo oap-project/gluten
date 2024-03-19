@@ -123,7 +123,7 @@
       <properties>
         <sparkbundle.version>3.3</sparkbundle.version>
         <sparkshim.artifactId>spark-sql-columnar-shims-spark33</sparkshim.artifactId>
-        <spark.version>3.3.1</spark.version>
+        <spark.version>3.3.4</spark.version>
         <delta.version>2.2.0</delta.version>
         <delta.binary.version>22</delta.binary.version>
       </properties>
