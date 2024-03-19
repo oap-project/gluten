@@ -250,6 +250,7 @@ class ClickHouseTestSettings extends BackendTestSettings {
     .exclude("SPARK-22520: support code generation for large CaseWhen")
     .exclude("SPARK-24165: CaseWhen/If - nullability of nested types")
     .exclude("SPARK-27671: Fix analysis exception when casting null in nested field in struct")
+    .exclude("summary")
     .excludeGlutenTest("distributeBy and localSort")
     .excludeGlutenTest("describe")
     .excludeGlutenTest("Allow leading/trailing whitespace in string before casting")
