@@ -292,10 +292,6 @@ bool SubstraitToVeloxPlanValidator::validateCast(
     case TypeKind::VARBINARY:
       LOG_VALIDATION_MSG("Invalid input type in casting: ARRAY/MAP/ROW/VARBINARY.");
       return false;
-    case TypeKind::TIMESTAMP: {
-      LOG_VALIDATION_MSG("Casting from TIMESTAMP is not supported or has incorrect result.");
-      return false;
-    }
     default: {
     }
   }
