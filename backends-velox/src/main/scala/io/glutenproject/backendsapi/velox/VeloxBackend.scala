@@ -80,6 +80,9 @@ object BackendSettings extends BackendSettingsApi {
       if (unsupportedDataTypeReason.isEmpty) {
         ValidationResult.ok
       } else {
+        // scalastyle:off println
+        println(s"${unsupportedDataTypeReason.mkString(", ")}")
+        // scalastyle:on println
         ValidationResult.notOk(
           s"Found unsupported data type in $format: ${unsupportedDataTypeReason.mkString(", ")}.")
       }
