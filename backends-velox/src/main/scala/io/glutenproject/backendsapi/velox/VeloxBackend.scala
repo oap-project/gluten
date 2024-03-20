@@ -325,7 +325,8 @@ object BackendSettings extends BackendSettingsApi {
           windowExpression.windowFunction match {
             case _: RowNumber | _: Rank | _: CumeDist | _: DenseRank | _: PercentRank |
                 _: NthValue | _: NTile | _: Lag | _: Lead =>
-            case aggrExpr: AggregateExpression if !aggrExpr.isInstanceOf[ApproximatePercentile] =>
+            case aggrExpr: AggregateExpression
+                if !aggrExpr.aggregateFunction.isInstanceOf[ApproximatePercentile] =>
             case _ =>
               allSupported = false
           }
