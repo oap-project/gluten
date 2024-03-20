@@ -12,7 +12,7 @@ VCPKG_TRIPLET=x64-linux-avx
 cd "$SCRIPT_ROOT"
 
 if [ ! -d "$VCPKG_ROOT" ] || [ -z "$(ls "$VCPKG_ROOT")" ]; then
-    git clone https://github.com/microsoft/vcpkg.git --branch 2024.02.14 "$VCPKG_ROOT"
+    git clone https://github.com/microsoft/vcpkg.git --branch 2023.10.19 "$VCPKG_ROOT"
 fi
 [ -f "$VCPKG" ] || "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
 
