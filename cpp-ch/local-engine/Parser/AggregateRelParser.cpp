@@ -322,7 +322,7 @@ void AggregateRelParser::addCompleteModeAggregatedStep()
 {
     AggregateDescriptions aggregate_descriptions;
     buildAggregateDescriptions(aggregate_descriptions);
-    auto settings = getContext()->getSettingsRef();
+    const auto & settings = getContext()->getSettingsRef();
     bool enable_streaming_aggregating = getContext()->getConfigRef().getBool("enable_streaming_aggregating", true);
     if (enable_streaming_aggregating)
     {
@@ -400,7 +400,7 @@ void AggregateRelParser::addAggregatingStep()
 {
     AggregateDescriptions aggregate_descriptions;
     buildAggregateDescriptions(aggregate_descriptions);
-    auto settings = getContext()->getSettingsRef();
+    const auto & settings = getContext()->getSettingsRef();
     bool enable_streaming_aggregating = getContext()->getConfigRef().getBool("enable_streaming_aggregating", true);
 
     if (enable_streaming_aggregating)
