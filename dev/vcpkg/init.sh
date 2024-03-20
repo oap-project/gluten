@@ -4,7 +4,7 @@ set -e
 
 exec 3>&1 >&2
 
-SCRIPT_ROOT="$(realpath "$(dirname "$0")")"
+SCRIPT_ROOT="/opt/"
 VCPKG_ROOT="$SCRIPT_ROOT/.vcpkg"
 VCPKG="$SCRIPT_ROOT/.vcpkg/vcpkg"
 VCPKG_TRIPLET=x64-linux-avx
