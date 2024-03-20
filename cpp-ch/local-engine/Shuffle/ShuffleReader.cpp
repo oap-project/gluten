@@ -19,9 +19,7 @@
 #include <Core/Block.h>
 #include <IO/ReadBuffer.h>
 #include <jni/jni_common.h>
-#include <Common/DebugUtils.h>
 #include <Common/JNIUtils.h>
-#include <Common/Stopwatch.h>
 
 using namespace DB;
 

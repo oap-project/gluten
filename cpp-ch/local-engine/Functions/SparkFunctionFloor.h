@@ -14,13 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <Functions/FunctionsRound.h>
-#include <Functions/FunctionFactory.h>
+
+#pragma once
+
 #include <Columns/ColumnNullable.h>
 #include <Columns/ColumnVector.h>
 #include <DataTypes/IDataType.h>
-#include <DataTypes/DataTypesNumber.h>
-#include <bit>
+#include <Functions/FunctionFactory.h>
+#include <Functions/FunctionsRound.h>
 
 using namespace DB;
 
@@ -132,15 +133,16 @@ private:
     static_assert(!is_decimal<T>);
     using Op = FloatRoundingComputation<T, RoundingMode::Floor, scale_mode>;
     using Data = std::array<T, Op::data_count>;
+
 public:
     static void apply(const PaddedPODArray<T> & in, size_t scale, PaddedPODArray<T> & out, PaddedPODArray<UInt8> & null_map)
     {
         auto mm_scale = Op::prepare(scale);
         const size_t data_count = std::tuple_size<Data>();
-        const T* end_in = in.data() + in.size();
-        const T* limit = in.data() + in.size() / data_count * data_count;
-        const T* __restrict p_in = in.data();
-        T* __restrict p_out = out.data();
+        const T * end_in = in.data() + in.size();
+        const T * limit = in.data() + in.size() / data_count * data_count;
+        const T * __restrict p_in = in.data();
+        T * __restrict p_out = out.data();
         while (p_in < limit)
         {
             Op::compute(p_in, mm_scale, p_out);
@@ -171,7 +173,6 @@ public:
                 checkAndSetNullable(out[i], null_map[i]);
         }
     }
-
 };
 
 class SparkFunctionFloor : public DB::FunctionFloor
@@ -189,11 +190,12 @@ public:
         return makeNullable(result_type);
     }
 
-    DB::ColumnPtr executeImpl(const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type, size_t input_rows) const override
+    DB::ColumnPtr
+    executeImpl(const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type, size_t input_rows) const override
     {
         const ColumnWithTypeAndName & first_arg = arguments[0];
         Scale scale_arg = getScaleArg(arguments);
-        switch(first_arg.type->getTypeId())
+        switch (first_arg.type->getTypeId())
         {
             case TypeIndex::Float32:
                 return executeInternal<Float32>(first_arg.column, scale_arg);
@@ -206,7 +208,7 @@ public:
         }
     }
 
-    template<typename T>
+    template <typename T>
     static ColumnPtr executeInternal(const ColumnPtr & col_arg, const Scale & scale_arg)
     {
         const auto * col = checkAndGetColumn<ColumnVector<T>>(col_arg.get());

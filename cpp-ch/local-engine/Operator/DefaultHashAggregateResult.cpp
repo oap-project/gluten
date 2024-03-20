@@ -15,22 +15,17 @@
  * limitations under the License.
  */
 #include "DefaultHashAggregateResult.h"
-#include <memory>
 #include <Columns/ColumnNullable.h>
-#include <Columns/ColumnsNumber.h>
 #include <Core/ColumnWithTypeAndName.h>
-#include <Core/ColumnsWithTypeAndName.h>
 #include <DataTypes/DataTypeNullable.h>
-#include <DataTypes/DataTypesNumber.h>
 #include <Operator/ExpandTransorm.h>
 #include <Processors/Chunk.h>
 #include <Processors/IProcessor.h>
 #include <Processors/Transforms/AggregatingTransform.h>
 #include <QueryPipeline/Pipe.h>
 #include <QueryPipeline/QueryPipelineBuilder.h>
-#include <Poco/Logger.h>
 #include <Common/CHUtil.h>
-#include <Common/logger_useful.h>
+
 
 namespace local_engine
 {
@@ -48,7 +43,7 @@ static DB::ITransformingStep::Traits getTraits()
 }
 
 /// A more special case, the aggregate functions is also empty.
-/// We add a fake block to downstream. 
+/// We add a fake block to downstream.
 DB::Block adjustOutputHeader(const DB::Block & original_block)
 {
     if (original_block)
@@ -59,7 +54,10 @@ DB::Block adjustOutputHeader(const DB::Block & original_block)
 class DefaultHashAggrgateResultTransform : public DB::IProcessor
 {
 public:
-    explicit DefaultHashAggrgateResultTransform(const DB::Block & input_) : DB::IProcessor({input_}, {adjustOutputHeader(input_)}), header(input_) { }
+    explicit DefaultHashAggrgateResultTransform(const DB::Block & input_)
+        : DB::IProcessor({input_}, {adjustOutputHeader(input_)}), header(input_)
+    {
+    }
     ~DefaultHashAggrgateResultTransform() override = default;
     void work() override
     {
@@ -133,9 +131,10 @@ public:
             return Status::Ready;
         }
         return Status::NeedData;
-    }    
+    }
 
     String getName() const override { return "DefaultHashAggrgateResultTransform"; }
+
 private:
     DB::Block header;
     bool has_input = false;
@@ -149,7 +148,8 @@ DefaultHashAggregateResultStep::DefaultHashAggregateResultStep(const DB::DataStr
 {
 }
 
-void DefaultHashAggregateResultStep::transformPipeline(DB::QueryPipelineBuilder & pipeline, const DB::BuildQueryPipelineSettings & /*settings*/)
+void DefaultHashAggregateResultStep::transformPipeline(
+    DB::QueryPipelineBuilder & pipeline, const DB::BuildQueryPipelineSettings & /*settings*/)
 {
     auto num_streams = pipeline.getNumStreams();
     pipeline.resize(1);

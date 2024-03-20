@@ -16,7 +16,6 @@
  */
 #pragma once
 #include <Core/Block.h>
-#include <Parser/ExpandField.h>
 #include <Processors/QueryPlan/IQueryPlanStep.h>
 #include <Processors/QueryPlan/ITransformingStep.h>
 namespace local_engine

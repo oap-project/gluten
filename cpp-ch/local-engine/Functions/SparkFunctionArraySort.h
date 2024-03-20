@@ -17,15 +17,14 @@
 #pragma once
 
 #include <Functions/array/FunctionArrayMapped.h>
-#include <base/sort.h>
 
 namespace DB
 {
 
 namespace ErrorCodes
 {
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
-    extern const int LOGICAL_ERROR;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int LOGICAL_ERROR;
 }
 
 
@@ -43,14 +42,10 @@ struct SparkArraySortImpl
         return std::make_shared<DataTypeArray>(array_element);
     }
 
-    static void checkArguments(
-        const String & name,
-        const ColumnWithTypeAndName * fixed_arguments)
+    static void checkArguments(const String & name, const ColumnWithTypeAndName * fixed_arguments)
     {
         if (!fixed_arguments)
-            throw Exception(
-                ErrorCodes::LOGICAL_ERROR,
-                "Expected fixed arguments to get the limit for partial array sort");
+            throw Exception(ErrorCodes::LOGICAL_ERROR, "Expected fixed arguments to get the limit for partial array sort");
 
         WhichDataType which(fixed_arguments[0].type.get());
         if (!which.isUInt() && !which.isInt())
@@ -61,10 +56,8 @@ struct SparkArraySortImpl
                 name);
     }
 
-    static ColumnPtr execute(
-        const ColumnArray & array,
-        ColumnPtr mapped,
-        const ColumnWithTypeAndName * fixed_arguments [[maybe_unused]] = nullptr);
+    static ColumnPtr
+    execute(const ColumnArray & array, ColumnPtr mapped, const ColumnWithTypeAndName * fixed_arguments [[maybe_unused]] = nullptr);
 };
 
 struct NameArraySort

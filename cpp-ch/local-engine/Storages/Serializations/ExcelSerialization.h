@@ -19,13 +19,11 @@
 #include <DataTypes/Serializations/ISerialization.h>
 #include <base/extended_types.h>
 #include <Common/DateLUTImpl.h>
-
-
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int ATTEMPT_TO_READ_AFTER_EOF;
+extern const int ATTEMPT_TO_READ_AFTER_EOF;
 }
 }
 
@@ -37,7 +35,7 @@ using namespace DB;
 class ExcelSerialization final : public DB::ISerialization
 {
 public:
-    explicit ExcelSerialization(const SerializationPtr & nested_, String escape_) : nested_ptr(nested_), escape(escape_){}
+    explicit ExcelSerialization(const SerializationPtr & nested_, String escape_) : nested_ptr(nested_), escape(escape_) { }
 
     void serializeBinary(const Field &, WriteBuffer &, const FormatSettings &) const override
     {

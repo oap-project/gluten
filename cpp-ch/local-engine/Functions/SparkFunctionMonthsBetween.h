@@ -17,15 +17,13 @@
 #pragma once
 #include <Columns/IColumn.h>
 #include <Core/ColumnsWithTypeAndName.h>
-#include <DataTypes/DataTypeDate.h>
-#include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/IDataType.h>
 #include <Functions/IFunction.h>
 #include <Interpreters/Context.h>
 
 namespace local_engine
 {
-class SparkFunctionMonthsBetween: public DB::IFunction
+class SparkFunctionMonthsBetween : public DB::IFunction
 {
 public:
     static constexpr auto name = "sparkMonthsBetween";

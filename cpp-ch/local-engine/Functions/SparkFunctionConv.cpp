@@ -17,20 +17,18 @@
 #include "SparkFunctionConv.h"
 #include <string>
 #include <DataTypes/DataTypeNullable.h>
+#include <DataTypes/IDataType.h>
 #include <Functions/FunctionFactory.h>
-#include <Poco/Logger.h>
-#include <Poco/Types.h>
+#include <base/types.h>
 #include <Common/Exception.h>
 #include <Common/logger_useful.h>
-#include <DataTypes/IDataType.h>
-#include <base/types.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -40,37 +38,35 @@ namespace local_engine
 DB::DataTypePtr SparkFunctionConv::getReturnTypeImpl(const DB::DataTypes & arguments) const
 {
     if (arguments.size() != 3)
-        throw DB::Exception(DB::ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH,
+        throw DB::Exception(
+            DB::ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH,
             "Number of arguments for function {} doesn't match: passed {}, should be 3.",
-            getName(), arguments.size());
+            getName(),
+            arguments.size());
 
     if (!isInteger(arguments[1]))
-        throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
-            "Second argument for function {} must be Int", getName());
+        throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Second argument for function {} must be Int", getName());
     if (!isInteger(arguments[2]))
-        throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
-            "Third argument for function {} must be Int", getName());
+        throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Third argument for function {} must be Int", getName());
 
     auto arg0_type = DB::removeNullable(arguments[0]);
     return std::make_shared<DB::DataTypeNullable>(arg0_type);
 }
 
 /// Taken from mysql-server sql/item_strfunc.cc
-static unsigned long long my_strntoull_8bit(const char *nptr,
-                                     size_t l, int base, const char **endptr,
-                                     int *err)
+static unsigned long long my_strntoull_8bit(const char * nptr, size_t l, int base, const char ** endptr, int * err)
 {
     int negative;
     unsigned long long cutoff = 0;
     unsigned cutlim = 0;
     unsigned long long i = 0;
-    const char *save = nullptr;
+    const char * save = nullptr;
     int overflow = 0;
 
     *err = 0; /* Initialize error indicator */
 
-    const char *s = nptr;
-    const char *e = nptr + l;
+    const char * s = nptr;
+    const char * e = nptr + l;
 
     for (; s < e && std::isspace(*s); s++)
         ;
@@ -85,10 +81,13 @@ static unsigned long long my_strntoull_8bit(const char *nptr,
     {
         negative = 1;
         ++s;
-    } else if (*s == '+') {
+    }
+    else if (*s == '+')
+    {
         negative = 0;
         ++s;
-    } else
+    }
+    else
         negative = 0;
 
     save = s;
@@ -98,7 +97,8 @@ static unsigned long long my_strntoull_8bit(const char *nptr,
 
     overflow = 0;
     i = 0;
-    for (; s != e; s++) {
+    for (; s != e; s++)
+    {
         uint8_t c = *s;
 
         if (c >= '0' && c <= '9')
@@ -109,7 +109,8 @@ static unsigned long long my_strntoull_8bit(const char *nptr,
             c = c - 'a' + 10;
         else
             break;
-        if (c >= base) break;
+        if (c >= base)
+            break;
         if (i > cutoff || (i == cutoff && c > cutlim))
             overflow = 1;
         else
@@ -119,9 +120,11 @@ static unsigned long long my_strntoull_8bit(const char *nptr,
         }
     }
 
-    if (s == save) goto noconv;
+    if (s == save)
+        goto noconv;
 
-    if (endptr != nullptr) *endptr = s;
+    if (endptr != nullptr)
+        *endptr = s;
 
     if (overflow)
     {
@@ -132,7 +135,8 @@ static unsigned long long my_strntoull_8bit(const char *nptr,
     return negative ? -i : i;
 
 noconv:
-    if (endptr != nullptr) *endptr = nptr;
+    if (endptr != nullptr)
+        *endptr = nptr;
     return 0L;
 }
 
@@ -141,12 +145,13 @@ static char * ll2str(int64_t val, char * dst, int radix, bool upcase)
     constexpr std::array<const char, 37> dig_vec_upper{"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"};
     constexpr std::array<const char, 37> dig_vec_lower{"0123456789abcdefghijklmnopqrstuvwxyz"};
     char buffer[65];
-    const char *const dig_vec = upcase ? dig_vec_upper.data() : dig_vec_lower.data();
+    const char * const dig_vec = upcase ? dig_vec_upper.data() : dig_vec_lower.data();
     auto uval = static_cast<uint64_t>(val);
 
     if (radix < 0)
     {
-        if (radix < -36 || radix > -2) return nullptr;
+        if (radix < -36 || radix > -2)
+            return nullptr;
         if (val < 0)
         {
             *dst++ = '-';
@@ -160,7 +165,7 @@ static char * ll2str(int64_t val, char * dst, int radix, bool upcase)
         return nullptr;
     }
 
-    char *p = std::end(buffer);
+    char * p = std::end(buffer);
     do
     {
         *--p = dig_vec[uval % radix];

@@ -17,7 +17,6 @@
 #pragma once
 
 #include <Core/Block.h>
-#include <Core/ColumnWithTypeAndName.h>
 #include <Core/SortDescription.h>
 #include <DataTypes/DataTypeFactory.h>
 #include <DataTypes/Serializations/ISerialization.h>
@@ -25,14 +24,10 @@
 #include <Parser/CHColumnToSparkRow.h>
 #include <Parser/RelMetric.h>
 #include <Processors/Executors/PullingPipelineExecutor.h>
-#include <Processors/Formats/Impl/CHColumnToArrowColumn.h>
 #include <Processors/QueryPlan/ISourceStep.h>
 #include <Processors/QueryPlan/QueryPlan.h>
-#include <QueryPipeline/Pipe.h>
 #include <Storages/CustomStorageMergeTree.h>
-#include <Storages/IStorage.h>
 #include <Storages/SourceFromJavaIter.h>
-#include <arrow/ipc/writer.h>
 #include <base/types.h>
 #include <substrait/plan.pb.h>
 #include <Common/BlockIterator.h>
@@ -286,15 +281,16 @@ public:
         materialize_inputs.emplace_back(materialize_input);
     }
 
-    void addSplitInfo(std::string & split_info)
-    {
-        split_infos.emplace_back(std::move(split_info));
-    }
+    void addSplitInfo(std::string & split_info) { split_infos.emplace_back(std::move(split_info)); }
 
     int nextSplitInfoIndex()
     {
         if (split_info_index >= split_infos.size())
-            throw Exception(ErrorCodes::LOGICAL_ERROR, "split info index out of range, split_info_index: {}, split_infos.size(): {}", split_info_index, split_infos.size());
+            throw Exception(
+                ErrorCodes::LOGICAL_ERROR,
+                "split info index out of range, split_info_index: {}, split_infos.size(): {}",
+                split_info_index,
+                split_infos.size());
         return split_info_index++;
     }
 

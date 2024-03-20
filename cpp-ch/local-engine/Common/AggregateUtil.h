@@ -16,7 +16,6 @@
  */
 #pragma once
 #include <Interpreters/Aggregator.h>
-#include <Processors/Transforms/AggregatingTransform.h>
 
 namespace DB
 {
@@ -25,7 +24,8 @@ class GlutenAggregatorUtil
 {
 public:
     static Int32 getBucketsNum(AggregatedDataVariants & data_variants);
-    static std::optional<Block> safeConvertOneBucketToBlock(Aggregator & aggregator, AggregatedDataVariants & variants, Arena * arena, bool final, Int32 bucket);
+    static std::optional<Block>
+    safeConvertOneBucketToBlock(Aggregator & aggregator, AggregatedDataVariants & variants, Arena * arena, bool final, Int32 bucket);
     static void safeReleaseOneBucket(AggregatedDataVariants & variants, Int32 bucket);
 };
 }
@@ -41,6 +41,7 @@ public:
     ~AggregateDataBlockConverter() = default;
     bool hasNext();
     DB::Block next();
+
 private:
     DB::Aggregator & aggregator;
     DB::AggregatedDataVariantsPtr data_variants;

@@ -19,17 +19,15 @@
 #include <format>
 #include <memory>
 #include <string>
-#include <fcntl.h>
 #include <Compression/CompressionFactory.h>
-#include <Storages/IO/AggregateSerializationUtils.h>
-#include <IO/WriteBuffer.h>
 #include <IO/ReadBufferFromFile.h>
+#include <IO/WriteBuffer.h>
 #include <IO/WriteHelpers.h>
 #include <Parser/SerializedPlanParser.h>
+#include <Storages/IO/AggregateSerializationUtils.h>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <Poco/StringTokenizer.h>
 #include <Common/Stopwatch.h>
-#include <Common/DebugUtils.h>
 
 namespace local_engine
 {
@@ -37,9 +35,7 @@ namespace local_engine
 void ShuffleSplitter::split(DB::Block & block)
 {
     if (block.rows() == 0)
-    {
         return;
-    }
     initOutputIfNeeded(block);
     computeAndCountPartitionId(block);
     Stopwatch split_time_watch;
@@ -85,17 +81,13 @@ void ShuffleSplitter::initOutputIfNeeded(Block & block)
         {
             output_header = block.cloneEmpty();
             for (size_t i = 0; i < block.columns(); ++i)
-            {
                 output_columns_indicies.push_back(i);
-            }
         }
         else
         {
             ColumnsWithTypeAndName cols;
             for (const auto & index : output_columns_indicies)
-            {
                 cols.push_back(block.getByPosition(index));
-            }
             output_header = DB::Block(cols);
         }
     }
@@ -106,9 +98,7 @@ void ShuffleSplitter::splitBlockByPartition(DB::Block & block)
     Stopwatch split_time_watch;
     DB::Block out_block;
     for (size_t col = 0; col < output_header.columns(); ++col)
-    {
         out_block.insert(block.getByPosition(output_columns_indicies[col]));
-    }
     for (size_t col = 0; col < output_header.columns(); ++col)
     {
         for (size_t j = 0; j < partition_info.partition_num; ++j)
@@ -126,9 +116,7 @@ void ShuffleSplitter::splitBlockByPartition(DB::Block & block)
     {
         auto & buffer = partition_buffer[i];
         if (buffer->size() >= options.split_size)
-        {
             spillPartition(i);
-        }
     }
 }
 
@@ -159,14 +147,11 @@ void ShuffleSplitter::spillPartition(size_t partition_id)
     if (!partition_outputs[partition_id])
     {
         partition_write_buffers[partition_id] = getPartitionWriteBuffer(partition_id);
-        partition_outputs[partition_id]
-            = std::make_unique<NativeWriter>(*partition_write_buffers[partition_id], output_header);
+        partition_outputs[partition_id] = std::make_unique<NativeWriter>(*partition_write_buffers[partition_id], output_header);
     }
     DB::Block result = partition_buffer[partition_id]->releaseColumns();
     if (result.rows() > 0)
-    {
         partition_outputs[partition_id]->write(result);
-    }
     split_result.total_spill_time += watch.elapsedNanoseconds();
     split_result.total_bytes_spilled += result.bytes();
 }
@@ -278,16 +263,10 @@ void ColumnsBuffer::add(DB::Block & block, int start, int end)
 
     assert(!accumulated_columns.empty());
     for (size_t i = 0; i < block.columns(); ++i)
-    {
         if (!accumulated_columns[i]->onlyNull())
-        {
             accumulated_columns[i]->insertRangeFrom(*block.getByPosition(i).column, start, end - start);
-        }
         else
-        {
             accumulated_columns[i]->insertMany(DB::Field(), end - start);
-        }
-    }
 }
 
 void ColumnsBuffer::appendSelective(
@@ -352,9 +331,7 @@ RoundRobinSplitter::RoundRobinSplitter(const SplitOptions & options_) : ShuffleS
 {
     Poco::StringTokenizer output_column_tokenizer(options_.out_exprs, ",");
     for (auto iter = output_column_tokenizer.begin(); iter != output_column_tokenizer.end(); ++iter)
-    {
         output_columns_indicies.push_back(std::stoi(*iter));
-    }
     selector_builder = std::make_unique<RoundRobinSelectorBuilder>(options.partition_num);
 }
 
@@ -375,15 +352,11 @@ HashSplitter::HashSplitter(SplitOptions options_) : ShuffleSplitter(options_)
     Poco::StringTokenizer exprs_list(options_.hash_exprs, ",");
     std::vector<size_t> hash_fields;
     for (auto iter = exprs_list.begin(); iter != exprs_list.end(); ++iter)
-    {
         hash_fields.push_back(std::stoi(*iter));
-    }
 
     Poco::StringTokenizer output_column_tokenizer(options_.out_exprs, ",");
     for (auto iter = output_column_tokenizer.begin(); iter != output_column_tokenizer.end(); ++iter)
-    {
         output_columns_indicies.push_back(std::stoi(*iter));
-    }
 
     selector_builder = std::make_unique<HashSelectorBuilder>(options.partition_num, hash_fields, options_.hash_algorithm);
 }
@@ -409,9 +382,7 @@ RangeSplitter::RangeSplitter(const SplitOptions & options_) : ShuffleSplitter(op
 {
     Poco::StringTokenizer output_column_tokenizer(options_.out_exprs, ",");
     for (auto iter = output_column_tokenizer.begin(); iter != output_column_tokenizer.end(); ++iter)
-    {
         output_columns_indicies.push_back(std::stoi(*iter));
-    }
     selector_builder = std::make_unique<RangeSelectorBuilder>(options.hash_exprs, options.partition_num);
 }
 

@@ -14,18 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "ExcelBoolReader.h"
 #include <Columns/ColumnsNumber.h>
 #include <IO/PeekableReadBuffer.h>
 #include <IO/ReadHelpers.h>
-
-#include "ExcelBoolReader.h"
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int CANNOT_PARSE_BOOL;
-    extern const int ILLEGAL_COLUMN;
+extern const int CANNOT_PARSE_BOOL;
+extern const int ILLEGAL_COLUMN;
 }
 }
 
@@ -98,9 +97,7 @@ bool tryDeserializeAllVariants(ColumnUInt8 * column, ReadBuffer & istr)
         if (checkCharCaseInsensitive('n', istr))
             column->insert(true);
         else if (checkStringCaseInsensitive("ff", istr))
-        {
             column->insert(false);
-        }
         else
             return false;
     }

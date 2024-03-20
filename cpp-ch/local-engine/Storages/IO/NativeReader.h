@@ -16,7 +16,6 @@
  */
 #pragma once
 
-#include <Common/PODArray.h>
 #include <Core/Block.h>
 #include <Core/Defines.h>
 #include <DataTypes/DataTypeAggregateFunction.h>
@@ -34,14 +33,13 @@ public:
         std::string name;
         DB::SerializationPtr serializer = nullptr;
         size_t avg_value_size_hint = 0;
-        
+
         // for aggregate data
         size_t aggregate_state_size = 0;
         size_t aggregate_state_align = 0;
         DB::AggregateFunctionPtr aggregate_function = nullptr;
 
         std::function<void(DB::ReadBuffer &, DB::ColumnPtr &, size_t, ColumnParseUtil &)> parse;
-
     };
 
     NativeReader(

@@ -20,28 +20,24 @@
 #include <memory>
 #include <type_traits>
 #include <AggregateFunctions/AggregateFunctionFactory.h>
+#include <AggregateFunctions/IAggregateFunction.h>
 #include <Columns/ColumnAggregateFunction.h>
-#include <Columns/ColumnArray.h>
 #include <Columns/ColumnConst.h>
+#include <Columns/ColumnNullable.h>
 #include <Columns/ColumnString.h>
 #include <Columns/ColumnVector.h>
 #include <Columns/ColumnsNumber.h>
+#include <Columns/IColumn.h>
+#include <Core/TypeId.h>
 #include <DataTypes/DataTypeAggregateFunction.h>
-#include <DataTypes/DataTypeArray.h>
 #include <DataTypes/DataTypesNumber.h>
+#include <DataTypes/IDataType.h>
 #include <Functions/FunctionHelpers.h>
 #include <Functions/IFunction.h>
 #include <IO/ReadBufferFromMemory.h>
 #include <Interpreters/castColumn.h>
-#include <Common/assert_cast.h>
+#include <base/types.h>
 #include <Common/typeid_cast.h>
-#include "AggregateFunctions/IAggregateFunction.h"
-#include "Columns/ColumnNullable.h"
-#include "Columns/IColumn.h"
-#include "Core/TypeId.h"
-#include "Core/Types.h"
-#include "DataTypes/IDataType.h"
-#include "base/types.h"
 
 
 #include <AggregateFunctions/AggregateFunctionGroupBloomFilter.h>
@@ -173,7 +169,11 @@ private:
                 AggregateFunctionProperties properties;
                 auto action = NullsAction::EMPTY;
                 agg_func = AggregateFunctionFactory::instance().get(
-                    "groupBloomFilter", action, DataTypes{std::make_shared<DataTypeNullable>(std::make_shared<DataTypeInt64>())}, {}, properties);
+                    "groupBloomFilter",
+                    action,
+                    DataTypes{std::make_shared<DataTypeNullable>(std::make_shared<DataTypeInt64>())},
+                    {},
+                    properties);
             }
             // Gluten serialized the AggregateFunction into a String.
             if (allocated_bytes_for_bloom_filter_state == nullptr)

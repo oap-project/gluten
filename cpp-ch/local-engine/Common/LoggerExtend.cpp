@@ -21,7 +21,6 @@
 #include <Poco/ConsoleChannel.h>
 #include <Poco/FormattingChannel.h>
 #include <Poco/PatternFormatter.h>
-#include <Poco/SimpleFileChannel.h>
 
 using Poco::AsyncChannel;
 using Poco::AutoPtr;

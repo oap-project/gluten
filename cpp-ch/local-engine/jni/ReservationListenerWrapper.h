@@ -17,7 +17,6 @@
 #pragma once
 #include <memory>
 #include <jni.h>
-#include <stdint.h>
 
 namespace local_engine
 {

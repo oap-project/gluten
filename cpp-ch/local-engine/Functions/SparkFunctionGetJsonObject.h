@@ -16,8 +16,8 @@
  */
 #pragma once
 #include <memory>
-#include <string_view>
 #include <stack>
+#include <string_view>
 #include <Columns/ColumnNullable.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/DataTypeString.h>
@@ -25,16 +25,12 @@
 #include <DataTypes/IDataType.h>
 #include <Functions/FunctionSQLJSON.h>
 #include <Functions/IFunction.h>
-#include <Functions/JSONPath/ASTs/ASTJSONPath.h>
 #include <Functions/JSONPath/Generator/GeneratorJSONPath.h>
 #include <Functions/JSONPath/Parsers/ParserJSONPath.h>
 #include <Interpreters/Context.h>
-#include <Parsers/IAST.h>
 #include <Parsers/IParser.h>
-#include <Parsers/Lexer.h>
 #include <Parsers/TokenIterator.h>
 #include <base/range.h>
-#include <Poco/Logger.h>
 #include <Poco/StringTokenizer.h>
 #include <Common/Exception.h>
 #include <Common/JSONParsers/DummyJSONParser.h>
@@ -45,11 +41,11 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int LOGICAL_ERROR;
-    extern const int TOO_FEW_ARGUMENTS_FOR_FUNCTION;
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
-    extern const int ILLEGAL_COLUMN;
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int LOGICAL_ERROR;
+extern const int TOO_FEW_ARGUMENTS_FOR_FUNCTION;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int ILLEGAL_COLUMN;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
 }
 }
 namespace local_engine
@@ -105,9 +101,7 @@ public:
             current_element = root;
         }
         if (!success)
-        {
             return false;
-        }
         DB::ColumnNullable & nullable_col_str = assert_cast<DB::ColumnNullable &>(dest);
         DB::ColumnString * col_str = assert_cast<DB::ColumnString *>(&nullable_col_str.getNestedColumn());
         JSONStringSerializer serializer(*col_str);
@@ -135,9 +129,7 @@ public:
             {
                 nullable_col_str.getNullMapData().push_back(0);
                 if (flag)
-                {
                     serializer.addRawData(comma, 2);
-                }
                 serializer.addElement(element);
                 flag = true;
             }
@@ -273,18 +265,14 @@ private:
                 DB::ParserJSONPath path_parser;
                 DB::Expected expected;
                 if (!path_parser.parse(token_iterator, json_path_ast, expected))
-                {
                     path_parsed = false;
-                }
                 json_path_asts.push_back(json_path_ast);
             }
             if (!path_parsed)
             {
                 for (size_t i = 0; i < first_column.column->size(); ++i)
-                {
                     for (size_t j = 0; j < tuple_columns.size(); ++j)
                         tuple_columns[j]->insertDefault();
-                }
                 return DB::ColumnTuple::create(std::move(tuple_columns));
             }
         }
@@ -355,17 +343,13 @@ private:
                 {
                     generator_json_paths[j]->reinitialize();
                     if (!impl.insertResultToColumn(*tuple_columns[j], document, *generator_json_paths[j], context))
-                    {
                         tuple_columns[j]->insertDefault();
-                    }
                 }
             }
             else
             {
                 for (size_t j = 0; j < tuple_size; ++j)
-                {
                     tuple_columns[j]->insertDefault();
-                }
             }
         }
 

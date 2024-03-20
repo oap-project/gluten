@@ -14,18 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <Parser/FunctionParser.h>
-#include <Common/CHUtil.h>
 #include <Core/Field.h>
 #include <DataTypes/IDataType.h>
-#include <DataTypes/DataTypeArray.h>
+#include <Parser/FunctionParser.h>
+#include <Common/CHUtil.h>
 
 namespace DB
 {
 
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
+extern const int BAD_ARGUMENTS;
 }
 }
 
@@ -38,16 +37,15 @@ public:
     explicit BaseFunctionParserArrayMaxAndMin(SerializedPlanParser * plan_parser_) : FunctionParser(plan_parser_) { }
     ~BaseFunctionParserArrayMaxAndMin() override = default;
 
-    const ActionsDAG::Node * parse(
-        const substrait::Expression_ScalarFunction & substrait_func,
-        ActionsDAGPtr & actions_dag) const override
+    const ActionsDAG::Node * parse(const substrait::Expression_ScalarFunction & substrait_func, ActionsDAGPtr & actions_dag) const override
     {
         auto parsed_args = parseFunctionArguments(substrait_func, "", actions_dag);
         if (parsed_args.size() != 1)
             throw Exception(ErrorCodes::BAD_ARGUMENTS, "Function {} requires exactly one arguments", getName());
 
         const auto * arr_arg = parsed_args[0];
-        const auto * func_const_node = addColumnToActionsDAG(actions_dag, std::make_shared<DataTypeString>(), getCHFunctionName(substrait_func));
+        const auto * func_const_node
+            = addColumnToActionsDAG(actions_dag, std::make_shared<DataTypeString>(), getCHFunctionName(substrait_func));
 
         auto is_arr_nullable = arr_arg->result_type->isNullable();
         if (!is_arr_nullable)

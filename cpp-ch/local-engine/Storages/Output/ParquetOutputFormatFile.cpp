@@ -18,16 +18,14 @@
 
 #if USE_PARQUET
 
-#    include <memory>
-#    include <string>
-#    include <utility>
-
-#    include <Formats/FormatFactory.h>
-#    include <Formats/FormatSettings.h>
-#    include <Processors/Formats/Impl/ArrowBufferedStreams.h>
-#    include <Processors/Formats/Impl/CHColumnToArrowColumn.h>
-#    include <Processors/Formats/Impl/ParquetBlockOutputFormat.h>
-#    include <parquet/arrow/writer.h>
+#include <memory>
+#include <string>
+#include <Formats/FormatFactory.h>
+#include <Formats/FormatSettings.h>
+#include <Processors/Formats/Impl/ArrowBufferedStreams.h>
+#include <Processors/Formats/Impl/CHColumnToArrowColumn.h>
+#include <Processors/Formats/Impl/ParquetBlockOutputFormat.h>
+#include <parquet/arrow/writer.h>
 
 namespace local_engine
 {

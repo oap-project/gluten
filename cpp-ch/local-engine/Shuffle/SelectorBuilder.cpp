@@ -21,21 +21,14 @@
 #include <Columns/ColumnArray.h>
 #include <Columns/ColumnMap.h>
 #include <Columns/ColumnNullable.h>
-#include <Columns/ColumnTuple.h>
 #include <DataTypes/DataTypeArray.h>
-#include <DataTypes/DataTypeMap.h>
-#include <DataTypes/DataTypeTuple.h>
 #include <DataTypes/DataTypesDecimal.h>
 #include <Functions/FunctionFactory.h>
 #include <Parser/SerializedPlanParser.h>
 #include <Parser/TypeParser.h>
 #include <Processors/QueryPlan/Optimizations/QueryPlanOptimizationSettings.h>
-#include <Processors/QueryPlan/QueryPlan.h>
-#include <Poco/Base64Decoder.h>
-#include <Poco/JSON/JSON.h>
 #include <Poco/JSON/Parser.h>
 #include <Poco/MemoryStream.h>
-#include <Poco/StreamCopier.h>
 #include <Common/CHUtil.h>
 #include <Common/Exception.h>
 
@@ -116,42 +109,34 @@ PartitionInfo HashSelectorBuilder::build(DB::Block & block)
         for (size_t i = 0; i < rows; i++)
             partition_ids.emplace_back(0);
     }
+    else if (hash_function_name == "sparkMurmurHash3_32")
+    {
+        /// sparkMurmurHash3_32 returns are all not null.
+        auto parts_num_int32 = static_cast<Int32>(parts_num);
+        for (size_t i = 0; i < rows; i++)
+        {
+            // cast to int32 to be the same as the data type of the vanilla spark
+            auto hash_int32 = static_cast<Int32>(hash_column->get64(i));
+            auto res = hash_int32 % parts_num_int32;
+            if (res < 0)
+                res += parts_num_int32;
+            partition_ids.emplace_back(static_cast<UInt64>(res));
+        }
+    }
+    else if (hash_column->isNullable())
+    {
+        const auto * null_col = typeid_cast<const ColumnNullable *>(hash_column->getPtr().get());
+        auto & null_map = null_col->getNullMapData();
+        for (size_t i = 0; i < rows; ++i)
+        {
+            auto hash_value = static_cast<UInt64>(hash_column->get64(i)) & static_cast<UInt64>(static_cast<Int64>(null_map[i]) - 1);
+            partition_ids.emplace_back(static_cast<UInt64>(hash_value % parts_num));
+        }
+    }
     else
     {
-        if (hash_function_name == "sparkMurmurHash3_32")
-        {
-            /// sparkMurmurHash3_32 returns are all not null.
-            auto parts_num_int32 = static_cast<Int32>(parts_num);
-            for (size_t i = 0; i < rows; i++)
-            {
-                // cast to int32 to be the same as the data type of the vanilla spark
-                auto hash_int32 = static_cast<Int32>(hash_column->get64(i));
-                auto res = hash_int32 % parts_num_int32;
-                if (res < 0)
-                {
-                    res += parts_num_int32;
-                }
-                partition_ids.emplace_back(static_cast<UInt64>(res));
-            }
-        }
-        else
-        {
-            if (hash_column->isNullable())
-            {
-                const auto * null_col = typeid_cast<const ColumnNullable *>(hash_column->getPtr().get());
-                auto & null_map = null_col->getNullMapData();
-                for (size_t i = 0; i < rows; ++i)
-                {
-                    auto hash_value = static_cast<UInt64>(hash_column->get64(i)) & static_cast<UInt64>(static_cast<Int64>(null_map[i]) - 1);
-                    partition_ids.emplace_back(static_cast<UInt64>(hash_value % parts_num));
-                }
-            }
-            else
-            {
-                for (size_t i = 0; i < rows; i++)
-                    partition_ids.emplace_back(static_cast<UInt64>(hash_column->get64(i) % parts_num));
-            }
-        }
+        for (size_t i = 0; i < rows; i++)
+            partition_ids.emplace_back(static_cast<UInt64>(hash_column->get64(i) % parts_num));
     }
     return PartitionInfo::fromSelector(std::move(partition_ids), parts_num);
 }

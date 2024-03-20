@@ -17,8 +17,6 @@
 #include <Interpreters/Context.h>
 #include <Parser/SerializedPlanParser.h>
 
-#include <filesystem>
-
 using namespace DB;
 
 #ifdef __cplusplus

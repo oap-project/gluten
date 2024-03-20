@@ -14,21 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "FunctionParser.h"
+
 #include <Core/Field.h>
 #include <DataTypes/IDataType.h>
 #include <Functions/FunctionFactory.h>
 #include <Parser/TypeParser.h>
 #include <Common/CHUtil.h>
 
-#include "FunctionParser.h"
-
 namespace DB
 {
 
 namespace ErrorCodes
 {
-    extern const int UNKNOWN_FUNCTION;
-    extern const int NOT_IMPLEMENTED;
+extern const int UNKNOWN_FUNCTION;
+extern const int NOT_IMPLEMENTED;
 }
 }
 
@@ -58,7 +58,6 @@ ActionsDAG::NodeRawConstPtrs FunctionParser::parseFunctionArguments(
         plan_parser->parseFunctionArgument(actions_dag, parsed_args, ch_func_name, arg);
     return parsed_args;
 }
-
 
 
 const ActionsDAG::Node *
@@ -96,9 +95,7 @@ FunctionParserPtr FunctionParserFactory::get(const String & name, SerializedPlan
 {
     auto res = tryGet(name, plan_parser);
     if (!res)
-    {
         throw Exception(ErrorCodes::UNKNOWN_FUNCTION, "Unknown function parser {}", name);
-    }
 
     return res;
 }

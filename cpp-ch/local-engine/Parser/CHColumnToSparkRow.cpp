@@ -17,17 +17,13 @@
 #include "CHColumnToSparkRow.h"
 #include <Columns/ColumnArray.h>
 #include <Columns/ColumnConst.h>
-#include <Columns/ColumnDecimal.h>
 #include <Columns/ColumnMap.h>
 #include <Columns/ColumnNullable.h>
 #include <Columns/ColumnString.h>
 #include <Columns/IColumn.h>
-#include <Core/Types.h>
 #include <DataTypes/DataTypeArray.h>
-#include <DataTypes/DataTypeLowCardinality.h>
 #include <DataTypes/DataTypeMap.h>
 #include <DataTypes/DataTypeNullable.h>
-#include <DataTypes/DataTypeString.h>
 #include <DataTypes/DataTypeTuple.h>
 #include <DataTypes/DataTypesDecimal.h>
 #include <DataTypes/ObjectUtils.h>
@@ -37,8 +33,8 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int LOGICAL_ERROR;
-    extern const int UNKNOWN_TYPE;
+extern const int LOGICAL_ERROR;
+extern const int UNKNOWN_TYPE;
 }
 }
 
@@ -279,19 +275,15 @@ static void writeValue(
     const auto type_without_nullable{removeNullable(col.type)};
     const auto is_nullable = isColumnNullable(*col.column);
     if (BackingDataLengthCalculator::isFixedLengthDataType(type_without_nullable))
-    {
         if (is_nullable)
             writeFixedLengthNullableValue(buffer_address, field_offset, col, col_index, num_rows, offsets, masks);
         else
             writeFixedLengthNonNullableValue(buffer_address, field_offset, col, num_rows, offsets, masks);
-    }
     else if (BackingDataLengthCalculator::isVariableLengthDataType(type_without_nullable))
-    {
         if (is_nullable)
             writeVariableLengthNullableValue(buffer_address, field_offset, col, col_index, num_rows, offsets, buffer_cursor, masks);
         else
             writeVariableLengthNonNullableValue(buffer_address, field_offset, col, num_rows, offsets, buffer_cursor, masks);
-    }
     else
         throw Exception(ErrorCodes::UNKNOWN_TYPE, "Doesn't support type {} for writeValue", col.type->getName());
 }
@@ -686,27 +678,25 @@ int64_t VariableLengthDataWriter::writeArray(size_t row_idx, const DB::Array & a
             const auto & elem = array[i];
             if (elem.isNull())
                 bitSet(buffer_address + offset + start + 8, i);
-            else
+            else if (writer.getWhichDataType().isFloat32())
             {
-                if (writer.getWhichDataType().isFloat32())
-                {
-                    // We can not use get<char>() directly here to process Float32 field,
-                    // because it will get 8 byte data, but Float32 is 4 byte, which will cause error conversion.
-                    auto v = static_cast<Float32>(elem.get<Float32>());
-                    writer.unsafeWrite(
-                        reinterpret_cast<const char *>(&v), buffer_address + offset + start + 8 + len_null_bitmap + i * elem_size);
-                }
-                else if (writer.getWhichDataType().isFloat64())
-                {
-                    // Fix 'Invalid Field get from type Float64 to type Int64' in debug build.
-                    auto v = elem.get<Float64>();
-                    writer.unsafeWrite(reinterpret_cast<const char *>(&v), buffer_address + offset + start + 8 + len_null_bitmap + i * elem_size);
-                }
-                else
-                    writer.unsafeWrite(
-                        reinterpret_cast<const char *>(&elem.get<char>()),
-                        buffer_address + offset + start + 8 + len_null_bitmap + i * elem_size);
+                // We can not use get<char>() directly here to process Float32 field,
+                // because it will get 8 byte data, but Float32 is 4 byte, which will cause error conversion.
+                auto v = static_cast<Float32>(elem.get<Float32>());
+                writer.unsafeWrite(
+                    reinterpret_cast<const char *>(&v), buffer_address + offset + start + 8 + len_null_bitmap + i * elem_size);
             }
+            else if (writer.getWhichDataType().isFloat64())
+            {
+                // Fix 'Invalid Field get from type Float64 to type Int64' in debug build.
+                auto v = elem.get<Float64>();
+                writer.unsafeWrite(
+                    reinterpret_cast<const char *>(&v), buffer_address + offset + start + 8 + len_null_bitmap + i * elem_size);
+            }
+            else
+                writer.unsafeWrite(
+                    reinterpret_cast<const char *>(&elem.get<char>()),
+                    buffer_address + offset + start + 8 + len_null_bitmap + i * elem_size);
         }
     }
     else

@@ -16,7 +16,6 @@
  */
 #pragma once
 #include <filesystem>
-#include <Columns/IColumn.h>
 #include <Core/Block.h>
 #include <Core/ColumnWithTypeAndName.h>
 #include <Core/NamesAndTypes.h>
@@ -25,10 +24,8 @@
 #include <Interpreters/ActionsDAG.h>
 #include <Interpreters/Context.h>
 #include <Processors/Chunk.h>
-#include <Storages/IStorage.h>
 #include <base/types.h>
 #include <Common/CurrentThread.h>
-#include <Common/logger_useful.h>
 
 namespace local_engine
 {

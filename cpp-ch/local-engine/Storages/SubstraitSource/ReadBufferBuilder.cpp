@@ -34,9 +34,9 @@
 #include <Storages/SubstraitSource/SubstraitFileSource.h>
 #include <aws/core/client/DefaultRetryStrategy.h>
 
+#include <IO/ReadSettings.h>
 #include <sys/stat.h>
 #include <Poco/URI.h>
-#include "IO/ReadSettings.h"
 
 #include <hdfs/hdfs.h>
 #include <Poco/Logger.h>
@@ -49,9 +49,6 @@
 #include <Interpreters/Cache/FileCacheFactory.h>
 #include <Interpreters/Cache/FileCacheSettings.h>
 
-#include <aws/s3/model/CopyObjectRequest.h>
-#include <aws/s3/model/DeleteObjectsRequest.h>
-#include <aws/s3/model/ListObjectsV2Request.h>
 #include <Common/CHUtil.h>
 
 #include <shared_mutex>
@@ -62,11 +59,11 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
-    extern const int CANNOT_OPEN_FILE;
-    extern const int UNKNOWN_FILE_SIZE;
-    extern const int CANNOT_SEEK_THROUGH_FILE;
-    extern const int CANNOT_READ_FROM_FILE_DESCRIPTOR;
+extern const int BAD_ARGUMENTS;
+extern const int CANNOT_OPEN_FILE;
+extern const int UNKNOWN_FILE_SIZE;
+extern const int CANNOT_SEEK_THROUGH_FILE;
+extern const int CANNOT_READ_FROM_FILE_DESCRIPTOR;
 }
 }
 
@@ -114,9 +111,7 @@ std::pair<size_t, size_t> adjustFileReadPosition(DB::ReadBufferFromFileBase & bu
                 ++buf.position();
 
                 if (!buf.eof() && *buf.position() == '\n')
-                {
                     ++buf.position();
-                }
 
                 return buf.getPosition();
             }
@@ -360,6 +355,7 @@ public:
         result.second = get_next_line_pos(fs.get(), fin, read_end_pos, hdfs_file_size);
         return result;
     }
+
 private:
     DB::ContextPtr context;
 };
@@ -401,29 +397,26 @@ public:
     {
         Poco::URI file_uri(file_info.uri_file());
         // file uri looks like: s3a://my-dev-bucket/tpch100/part/0001.parquet
-        const std::string& bucket = file_uri.getHost();
+        const std::string & bucket = file_uri.getHost();
         const auto client = getClient(bucket);
         std::string key = file_uri.getPath().substr(1);
-        DB::S3::ObjectInfo object_info =  DB::S3::getObjectInfo(*client, bucket, key, "");
+        DB::S3::ObjectInfo object_info = DB::S3::getObjectInfo(*client, bucket, key, "");
         size_t object_size = object_info.size;
         Int64 object_modified_time = object_info.last_modification_time;
 
         if (new_settings.enable_filesystem_cache)
         {
-
             auto file_cache_key = DB::FileCacheKey(key);
             auto last_cache_time = files_cache_time_map.get(file_cache_key);
             // quick check
             if (last_cache_time != std::nullopt && last_cache_time.has_value())
             {
-                if (last_cache_time.value() < object_modified_time*1000l) //second to milli second
-                {
-                    files_cache_time_map.update_cache_time(file_cache_key, key, object_modified_time*1000l, file_cache);
-                }
+                if (last_cache_time.value() < object_modified_time * 1000l) //second to milli second
+                    files_cache_time_map.update_cache_time(file_cache_key, key, object_modified_time * 1000l, file_cache);
             }
             else
             {
-                files_cache_time_map.update_cache_time(file_cache_key, key, object_modified_time*1000l, file_cache);
+                files_cache_time_map.update_cache_time(file_cache_key, key, object_modified_time * 1000l, file_cache);
             }
         }
 
@@ -439,13 +432,18 @@ public:
                 new_settings,
                 /* use_external_buffer */ true,
                 /* offset */ 0,
-                /* read_until_position */0,
+                /* read_until_position */ 0,
                 restricted_seek);
         };
 
         DB::StoredObjects stored_objects{DB::StoredObject{key, "", object_size}};
         auto s3_impl = std::make_unique<DB::ReadBufferFromRemoteFSGather>(
-            std::move(read_buffer_creator), stored_objects, "s3:" + bucket + "/", new_settings, /* cache_log */ nullptr, /* use_external_buffer */ true);
+            std::move(read_buffer_creator),
+            stored_objects,
+            "s3:" + bucket + "/",
+            new_settings,
+            /* cache_log */ nullptr,
+            /* use_external_buffer */ true);
 
         auto & pool_reader = context->getThreadPoolReader(DB::FilesystemReaderType::ASYNCHRONOUS_REMOTE_FS_READER);
         auto async_reader
@@ -522,13 +520,9 @@ private:
     void cacheClient(const std::string & bucket_name, const bool is_per_bucket, std::shared_ptr<DB::S3::Client> client)
     {
         if (is_per_bucket)
-        {
             per_bucket_clients.insert(bucket_name, client);
-        }
         else
-        {
             per_bucket_clients.insert(SHARED_CLIENT_KEY, client);
-        }
     }
 
     std::shared_ptr<DB::S3::Client> getClient(const std::string & bucket_name)
@@ -548,9 +542,7 @@ private:
         {
             auto client = per_bucket_clients.get(bucket_name);
             if (client.has_value())
-            {
                 return client.get();
-            }
         }
 
         if (!is_per_bucket && "true" != getSetting(settings, bucket_name, BackendInitializerUtil::HADOOP_S3_CLIENT_CACHE_IGNORE))
@@ -619,18 +611,17 @@ private:
             auto new_client = DB::S3::ClientFactory::instance().create(
                 client_configuration,
                 client_settings,
-                ak,     // access_key_id
-                sk,     // secret_access_key
-                "",     // server_side_encryption_customer_key_base64
-                {},     // sse_kms_config
-                {},     // headers
+                ak, // access_key_id
+                sk, // secret_access_key
+                "", // server_side_encryption_customer_key_base64
+                {}, // sse_kms_config
+                {}, // headers
                 DB::S3::CredentialsConfiguration{
                     .use_environment_credentials = true,
                     .use_insecure_imds_request = false,
                     .role_arn = getSetting(settings, bucket_name, BackendInitializerUtil::HADOOP_S3_ASSUMED_ROLE),
                     .session_name = getSetting(settings, bucket_name, BackendInitializerUtil::HADOOP_S3_ASSUMED_SESSION_NAME),
-                    .external_id = getSetting(settings, bucket_name, BackendInitializerUtil::HADOOP_S3_ASSUMED_EXTERNAL_ID)
-                });
+                    .external_id = getSetting(settings, bucket_name, BackendInitializerUtil::HADOOP_S3_ASSUMED_EXTERNAL_ID)});
 
             //TODO: support online change config for cached per_bucket_clients
             std::shared_ptr<DB::S3::Client> ret = std::move(new_client);
@@ -642,14 +633,12 @@ private:
             auto new_client = DB::S3::ClientFactory::instance().create(
                 client_configuration,
                 client_settings,
-                ak,     // access_key_id
-                sk,     // secret_access_key
-                "",     // server_side_encryption_customer_key_base64
-                {},     // sse_kms_config
-                {},     // headers
-                DB::S3::CredentialsConfiguration{
-                    .use_environment_credentials = true,
-                    .use_insecure_imds_request = false});
+                ak, // access_key_id
+                sk, // secret_access_key
+                "", // server_side_encryption_customer_key_base64
+                {}, // sse_kms_config
+                {}, // headers
+                DB::S3::CredentialsConfiguration{.use_environment_credentials = true, .use_insecure_imds_request = false});
 
             std::shared_ptr<DB::S3::Client> ret = std::move(new_client);
             cacheClient(bucket_name, is_per_bucket, ret);
@@ -742,8 +731,6 @@ void ReadBufferBuilderFactory::registerCleaner(Cleaner cleaner)
 void ReadBufferBuilderFactory::clean()
 {
     for (auto c : cleaners)
-    {
         c();
-    }
 }
 }

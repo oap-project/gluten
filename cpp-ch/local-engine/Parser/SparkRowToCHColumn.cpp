@@ -19,7 +19,6 @@
 #include <Columns/ColumnNullable.h>
 #include <Columns/ColumnString.h>
 #include <Columns/ColumnVector.h>
-#include <Core/ColumnsWithTypeAndName.h>
 #include <DataTypes/DataTypeArray.h>
 #include <DataTypes/DataTypeDateTime64.h>
 #include <DataTypes/DataTypeMap.h>
@@ -34,8 +33,8 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int UNKNOWN_TYPE;
-    extern const int LOGICAL_ERROR;
+extern const int UNKNOWN_TYPE;
+extern const int LOGICAL_ERROR;
 }
 }
 
@@ -165,10 +164,8 @@ Field VariableLengthDataReader::readDecimal(const char * buffer, size_t length) 
 
     char decimal128_fix_data[sizeof(Decimal128)] = {};
 
-    if (Int8 (buffer[0]) < 0)
-    {
+    if (Int8(buffer[0]) < 0)
         memset(decimal128_fix_data, int('\xff'), sizeof(Decimal128));
-    }
 
     memcpy(decimal128_fix_data + sizeof(Decimal128) - length, buffer, length); // padding
     String buf(decimal128_fix_data, sizeof(Decimal128));

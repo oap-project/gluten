@@ -18,7 +18,6 @@
 #include <Parser/AggregateFunctionParser.h>
 #include <Parser/RelParser.h>
 #include <Poco/Logger.h>
-#include <Common/logger_useful.h>
 
 
 namespace local_engine

@@ -18,12 +18,11 @@
 #include <config.h>
 
 #if USE_ORC
-#    include <memory>
-#    include <IO/ReadBuffer.h>
-#    include <Interpreters/Context.h>
-#    include <Processors/Formats/Impl/ArrowColumnToCHColumn.h>
-#    include <Storages/SubstraitSource/FormatFile.h>
-#    include <base/types.h>
+#include <IO/ReadBuffer.h>
+#include <Interpreters/Context.h>
+#include <Processors/Formats/Impl/ArrowColumnToCHColumn.h>
+#include <Storages/SubstraitSource/FormatFile.h>
+#include <base/types.h>
 
 
 namespace local_engine

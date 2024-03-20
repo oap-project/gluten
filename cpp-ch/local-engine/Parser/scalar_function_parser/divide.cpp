@@ -15,17 +15,16 @@
  * limitations under the License.
  */
 
-#include <memory>
-#include <Parser/FunctionParser.h>
-#include <DataTypes/IDataType.h>
 #include <DataTypes/DataTypeNullable.h>
+#include <DataTypes/IDataType.h>
+#include <Parser/FunctionParser.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int BAD_ARGUMENTS;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -42,9 +41,7 @@ public:
 
     String getName() const override { return name; }
 
-    const ActionsDAG::Node * parse(
-    const substrait::Expression_ScalarFunction & substrait_func,
-    ActionsDAGPtr & actions_dag) const override
+    const ActionsDAG::Node * parse(const substrait::Expression_ScalarFunction & substrait_func, ActionsDAGPtr & actions_dag) const override
     {
         /// Parse divide(left, right) as if (right == 0) null else left / right
         auto parsed_args = parseFunctionArguments(substrait_func, "", actions_dag);
@@ -56,10 +53,10 @@ public:
 
         const auto * left_arg = new_args[0];
         const auto * right_arg = new_args[1];
-        
+
         if (isDecimal(removeNullable(left_arg->result_type)) || isDecimal(removeNullable(right_arg->result_type)))
             return toFunctionNode(actions_dag, "sparkDivideDecimal", {left_arg, right_arg});
-        
+
         const auto * divide_node = toFunctionNode(actions_dag, "divide", {left_arg, right_arg});
         DataTypePtr result_type = divide_node->result_type;
 

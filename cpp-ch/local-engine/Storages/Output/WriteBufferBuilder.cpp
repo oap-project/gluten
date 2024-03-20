@@ -17,13 +17,11 @@
 #include <memory>
 #include <IO/WriteSettings.h>
 #include <Interpreters/Cache/FileCache.h>
-#include <Interpreters/Cache/FileCacheSettings.h>
 #include <Interpreters/Context_fwd.h>
 #include <Storages/HDFS/HDFSCommon.h>
 #include <Storages/HDFS/WriteBufferFromHDFS.h>
 #include <Storages/Output/WriteBufferBuilder.h>
 #include <hdfs/hdfs.h>
-#include <Poco/Logger.h>
 #include <Poco/URI.h>
 #include <Common/CHUtil.h>
 
@@ -31,7 +29,7 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
+extern const int BAD_ARGUMENTS;
 }
 }
 

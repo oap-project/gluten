@@ -15,18 +15,15 @@
  * limitations under the License.
  */
 #include "ExcelReadHelpers.h"
-
-
 #include <IO/PeekableReadBuffer.h>
 #include <IO/ReadBuffer.h>
-#include <Common/Exception.h>
-
+#include <IO/parseDateTimeBestEffort.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int CANNOT_PARSE_DATETIME;
+extern const int CANNOT_PARSE_DATETIME;
 }
 }
 
@@ -169,7 +166,6 @@ bool readDatetime64TextWithExcel(
 
         /// Read digits, up to 'scale' positions.
         for (size_t i = 0; i < scale; ++i)
-        {
             if (!buf.eof() && isNumericASCII(*buf.position()))
             {
                 fractional *= 10;
@@ -178,7 +174,6 @@ bool readDatetime64TextWithExcel(
             }
             else
                 fractional *= 10;
-        }
     }
 
     if (!buf.eof() && buf.position() + 3 <= buf.buffer().end())

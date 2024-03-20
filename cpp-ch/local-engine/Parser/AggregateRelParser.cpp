@@ -18,9 +18,7 @@
 #include <memory>
 #include <AggregateFunctions/Combinators/AggregateFunctionIf.h>
 #include <DataTypes/DataTypeAggregateFunction.h>
-#include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/DataTypeTuple.h>
-#include <DataTypes/IDataType.h>
 #include <Functions/FunctionFactory.h>
 #include <Functions/FunctionHelpers.h>
 #include <Operator/DefaultHashAggregateResult.h>
@@ -31,17 +29,15 @@
 #include <Processors/QueryPlan/ExpressionStep.h>
 #include <Processors/QueryPlan/MergingAggregatedStep.h>
 #include <Common/CHUtil.h>
-#include "Common/PODArray.h"
-#include <Common/StringUtils/StringUtils.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int LOGICAL_ERROR;
-    extern const int BAD_ARGUMENTS;
-    extern const int UNKNOWN_TYPE;
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int LOGICAL_ERROR;
+extern const int BAD_ARGUMENTS;
+extern const int UNKNOWN_TYPE;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
 }
 }
 namespace local_engine
@@ -132,9 +128,7 @@ void AggregateRelParser::setup(DB::QueryPlanPtr query_plan, const substrait::Rel
         agg_info.signature_function_name = *parseSignatureFunctionName(measure.measure().function_reference());
         auto function_parser = AggregateFunctionParserFactory::instance().get(agg_info.signature_function_name, getPlanParser());
         if (!function_parser)
-        {
             throw Exception(DB::ErrorCodes::BAD_ARGUMENTS, "Unsupported aggregate function: {}", agg_info.signature_function_name);
-        }
         /// Put function_parser, parser_func_info and function_name into agg_info for reducing repeated builds.
         agg_info.function_parser = function_parser;
         agg_info.parser_func_info = AggregateFunctionParser::CommonFunctionInfo(measure);
@@ -146,16 +140,10 @@ void AggregateRelParser::setup(DB::QueryPlanPtr query_plan, const substrait::Rel
     if (aggregate_rel->groupings_size() == 1)
     {
         for (const auto & expr : aggregate_rel->groupings(0).grouping_expressions())
-        {
             if (expr.has_selection() && expr.selection().has_direct_reference())
-            {
                 grouping_keys.push_back(input_header.getByPosition(expr.selection().direct_reference().struct_field().field()).name);
-            }
             else
-            {
                 throw Exception(ErrorCodes::BAD_ARGUMENTS, "unsupported group expression: {}", expr.DebugString());
-            }
-        }
     }
     else if (aggregate_rel->groupings_size() != 0)
     {
@@ -225,7 +213,8 @@ void AggregateRelParser::buildAggregateDescriptions(AggregateDescriptions & desc
             // If the function is a state function, we don't need to apply `PartialMerge`.
             // In INITIAL_TO_INTERMEDIATE or INITIAL_TO_RESULT phase, we do arguments -> xxState.
             // In INTERMEDIATE_TO_RESULT phase, we do xxState -> xxState.
-            if (agg_info.parser_func_info.phase == substrait::AggregationPhase::AGGREGATION_PHASE_INITIAL_TO_INTERMEDIATE || agg_info.parser_func_info.phase == substrait::AggregationPhase::AGGREGATION_PHASE_INITIAL_TO_RESULT)
+            if (agg_info.parser_func_info.phase == substrait::AggregationPhase::AGGREGATION_PHASE_INITIAL_TO_INTERMEDIATE
+                || agg_info.parser_func_info.phase == substrait::AggregationPhase::AGGREGATION_PHASE_INITIAL_TO_RESULT)
             {
                 description.function = getAggregateFunction(agg_info.function_name, agg_info.arg_column_types, properties, agg_info.params);
             }
@@ -322,7 +311,7 @@ void AggregateRelParser::addCompleteModeAggregatedStep()
             /*only_merge*/ false,
             settings.optimize_group_by_constant_keys,
             settings.min_hit_rate_to_use_consecutive_keys_optimization,
-            /*StatsCollectingParams*/{});
+            /*StatsCollectingParams*/ {});
         auto merging_step = std::make_unique<GraceMergingAggregatedStep>(getContext(), plan->getCurrentDataStream(), params, true);
         steps.emplace_back(merging_step.get());
         plan->addStep(std::move(merging_step));
@@ -349,7 +338,7 @@ void AggregateRelParser::addCompleteModeAggregatedStep()
             /*only_merge*/ false,
             settings.optimize_group_by_constant_keys,
             settings.min_hit_rate_to_use_consecutive_keys_optimization,
-            /*StatsCollectingParams*/{});
+            /*StatsCollectingParams*/ {});
 
         auto aggregating_step = std::make_unique<AggregatingStep>(
             plan->getCurrentDataStream(),
@@ -407,7 +396,7 @@ void AggregateRelParser::addAggregatingStep()
             /*only_merge*/ false,
             settings.optimize_group_by_constant_keys,
             settings.min_hit_rate_to_use_consecutive_keys_optimization,
-            /*StatsCollectingParams*/{});
+            /*StatsCollectingParams*/ {});
         auto aggregating_step = std::make_unique<StreamingAggregatingStep>(getContext(), plan->getCurrentDataStream(), params);
         steps.emplace_back(aggregating_step.get());
         plan->addStep(std::move(aggregating_step));
@@ -434,7 +423,7 @@ void AggregateRelParser::addAggregatingStep()
             /*only_merge*/ false,
             settings.optimize_group_by_constant_keys,
             settings.min_hit_rate_to_use_consecutive_keys_optimization,
-            /*StatsCollectingParams*/{});
+            /*StatsCollectingParams*/ {});
 
         auto aggregating_step = std::make_unique<AggregatingStep>(
             plan->getCurrentDataStream(),
@@ -469,12 +458,8 @@ void AggregateRelParser::addPostProjection()
         for (const auto & agg_info : aggregates)
         {
             for (const auto * input_node : project_actions_dag->getInputs())
-            {
                 if (input_node->result_name == agg_info.measure_column_name)
-                {
                     agg_info.function_parser->convertNodeTypeIfNeeded(agg_info.parser_func_info, input_node, project_actions_dag, false);
-                }
-            }
         }
     }
     else if (has_complete_stage)
@@ -483,12 +468,8 @@ void AggregateRelParser::addPostProjection()
         for (const auto & agg_info : aggregates)
         {
             for (const auto * output_node : project_actions_dag->getOutputs())
-            {
                 if (output_node->result_name == agg_info.measure_column_name)
-                {
                     agg_info.function_parser->convertNodeTypeIfNeeded(agg_info.parser_func_info, output_node, project_actions_dag, true);
-                }
-            }
         }
     }
     if (project_actions_dag->dumpDAG() != dag_footprint)

@@ -21,11 +21,9 @@
 #include <Interpreters/ActionsDAG.h>
 #include <Parser/SerializedPlanParser.h>
 #include <base/types.h>
-#include <boost/noncopyable.hpp>
 #include <substrait/algebra.pb.h>
 #include <Poco/Logger.h>
 #include <Common/IFactoryWithAliases.h>
-#include <Common/logger_useful.h>
 
 namespace local_engine
 {
@@ -77,10 +75,7 @@ public:
         }
     };
 
-    AggregateFunctionParser(SerializedPlanParser * plan_parser_)
-        : plan_parser(plan_parser_)
-    {
-    }
+    AggregateFunctionParser(SerializedPlanParser * plan_parser_) : plan_parser(plan_parser_) { }
 
     virtual ~AggregateFunctionParser() = default;
 
@@ -112,7 +107,8 @@ public:
     virtual const DB::ActionsDAG::Node * convertNodeTypeIfNeeded(
         const CommonFunctionInfo & func_info,
         const DB::ActionsDAG::Node * func_node,
-        DB::ActionsDAGPtr & actions_dag, bool withNullability) const;
+        DB::ActionsDAGPtr & actions_dag,
+        bool withNullability) const;
 
     /// Parameters are only used in aggregate functions at present. e.g. percentiles(0.5)(x).
     /// 0.5 is the parameter of percentiles function.

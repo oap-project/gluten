@@ -22,16 +22,14 @@
 #include <Parser/ExpandField.h>
 #include <Parser/RelParser.h>
 #include <Parser/SerializedPlanParser.h>
-#include <Processors/QueryPlan/ExpressionStep.h>
 #include <Processors/QueryPlan/QueryPlan.h>
-#include <Poco/Logger.h>
 #include <Common/logger_useful.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int LOGICAL_ERROR;
+extern const int LOGICAL_ERROR;
 }
 }
 namespace local_engine
@@ -43,13 +41,10 @@ ExpandRelParser::ExpandRelParser(SerializedPlanParser * plan_parser_) : RelParse
 void updateType(DB::DataTypePtr & type, const DB::DataTypePtr & new_type)
 {
     if (type == nullptr || (!type->isNullable() && new_type->isNullable()))
-    {
         type = new_type;
-    }
 }
 
-DB::QueryPlanPtr
-ExpandRelParser::parse(DB::QueryPlanPtr query_plan, const substrait::Rel & rel, std::list<const substrait::Rel *> &)
+DB::QueryPlanPtr ExpandRelParser::parse(DB::QueryPlanPtr query_plan, const substrait::Rel & rel, std::list<const substrait::Rel *> &)
 {
     const auto & expand_rel = rel.expand();
     const auto & header = query_plan->getCurrentDataStream().header;
@@ -121,10 +116,8 @@ ExpandRelParser::parse(DB::QueryPlanPtr query_plan, const substrait::Rel & rel, 
     }
 
     for (int i = 0; i < names.size(); ++i)
-    {
         if (names[i].empty())
             names[i] = getUniqueName("expand_" + std::to_string(i));
-    }
 
     ExpandField expand_field(names, types, expand_kinds, expand_fields);
     auto expand_step = std::make_unique<ExpandStep>(query_plan->getCurrentDataStream(), std::move(expand_field));

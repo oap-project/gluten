@@ -17,12 +17,11 @@
 #pragma once
 #include <Columns/IColumn.h>
 #include <Core/ColumnsWithTypeAndName.h>
-#include <DataTypes/DataTypeDate.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/IDataType.h>
 #include <Functions/IFunction.h>
 #include <Interpreters/Context.h>
-#include <memory>
+
 namespace local_engine
 {
 class SparkFunctionNextDay : public DB::IFunction
@@ -45,14 +44,12 @@ public:
         const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type, size_t /*input_rows_count*/) const override;
 
     static Int8 getDayOfWeek(const String & abbr);
+
 private:
     DB::ColumnPtr executeConst(const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type) const;
     DB::ColumnPtr executeGeneral(const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type) const;
 
 
-    static DB::DataTypePtr getNestedResultType(DB::DataTypePtr from_arg_type)
-    {
-        return DB::removeNullable(from_arg_type);
-    }
+    static DB::DataTypePtr getNestedResultType(DB::DataTypePtr from_arg_type) { return DB::removeNullable(from_arg_type); }
 };
 }

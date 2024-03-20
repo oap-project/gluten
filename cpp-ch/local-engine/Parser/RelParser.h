@@ -17,7 +17,6 @@
 #pragma once
 #include <map>
 #include <optional>
-#include <unordered_map>
 #include <AggregateFunctions/AggregateFunctionFactory.h>
 #include <AggregateFunctions/IAggregateFunction.h>
 #include <Core/Field.h>
@@ -26,7 +25,6 @@
 #include <Parser/SerializedPlanParser.h>
 #include <Processors/QueryPlan/QueryPlan.h>
 #include <base/types.h>
-#include <google/protobuf/repeated_field.h>
 #include <substrait/extensions/extensions.pb.h>
 #include <substrait/plan.pb.h>
 namespace local_engine
@@ -84,8 +82,10 @@ protected:
         return plan_parser->toFunctionNode(action_dag, function, args);
     }
 
-    static std::map<std::string, std::string> parseFormattedRelAdvancedOptimization(const substrait::extensions::AdvancedExtension &advanced_extension);
-    static std::string getStringConfig(const std::map<std::string, std::string> & configs, const std::string & key, const std::string & default_value = "");
+    static std::map<std::string, std::string>
+    parseFormattedRelAdvancedOptimization(const substrait::extensions::AdvancedExtension & advanced_extension);
+    static std::string
+    getStringConfig(const std::map<std::string, std::string> & configs, const std::string & key, const std::string & default_value = "");
 
 private:
     SerializedPlanParser * plan_parser;

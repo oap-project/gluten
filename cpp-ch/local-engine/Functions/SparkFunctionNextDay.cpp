@@ -17,6 +17,7 @@
 #include "SparkFunctionNextDay.h"
 #include <unordered_map>
 #include <Columns/ColumnNullable.h>
+#include <DataTypes/DataTypeDate.h>
 #include <DataTypes/DataTypeDate32.h>
 #include <DataTypes/DataTypeDateTime.h>
 #include <DataTypes/DataTypeDateTime64.h>
@@ -24,18 +25,17 @@
 #include <Functions/DateTimeTransforms.h>
 #include <Functions/FunctionFactory.h>
 #include <Functions/TransformDateTime64.h>
-#include <Poco/Logger.h>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <Common/DateLUT.h>
 #include <Common/Exception.h>
 #include <Common/logger_useful.h>
-#include <boost/algorithm/string/case_conv.hpp>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
-    extern const int NOT_IMPLEMENTED;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int NOT_IMPLEMENTED;
 }
 }
 
@@ -45,9 +45,8 @@ DB::DataTypePtr SparkFunctionNextDay::getReturnTypeImpl(const DB::ColumnsWithTyp
 {
     if (arguments.size() != 2)
     {
-        throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
-            "Function {} requires exactly 2 arguments, {} provided",
-            getName(), arguments.size());
+        throw DB::Exception(
+            DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Function {} requires exactly 2 arguments, {} provided", getName(), arguments.size());
     }
     auto arg0_type = DB::removeNullable(arguments[0].type);
     auto arg0_which_type = DB::WhichDataType(arg0_type);
@@ -63,9 +62,11 @@ DB::DataTypePtr SparkFunctionNextDay::getReturnTypeImpl(const DB::ColumnsWithTyp
     auto arg1_type = DB::removeNullable(arguments[1].type);
     if (!DB::WhichDataType(arg1_type).isString())
     {
-        throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
+        throw DB::Exception(
+            DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
             "Illegal type {} of argument[1] of function {}",
-            arguments[1].type->getName(), getName());
+            arguments[1].type->getName(),
+            getName());
     }
 
     return DB::makeNullableSafe(arg0_type);
@@ -75,13 +76,9 @@ DB::ColumnPtr SparkFunctionNextDay::executeImpl(
     const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type, size_t /*input_rows_count*/) const
 {
     if (DB::isColumnConst(*arguments[1].column))
-    {
         return executeConst(arguments, result_type);
-    }
     else
-    {
         return executeGeneral(arguments, result_type);
-    }
 }
 
 struct NextDayConstTransformer
@@ -124,12 +121,12 @@ template <typename DateType>
 class NextDayConstImpl
 {
 public:
-    template<typename Transformer>
+    template <typename Transformer>
     static void execute(const DB::IColumn & src_col, UInt16 next_weekday, DB::IColumn * dst_col, Transformer transformer = {})
     {
         const auto & time_zone = DateLUT::instance();
         size_t rows = src_col.size();
-        for(size_t i = 0; i < rows; ++i)
+        for (size_t i = 0; i < rows; ++i)
         {
             DB::Field from_day_value;
             src_col.get(i, from_day_value);
@@ -147,7 +144,7 @@ public:
         }
     }
 
-    template<typename Transformer>
+    template <typename Transformer>
     static void execute(const DB::IColumn & src_col, const DB::IColumn & weekday_col, DB::IColumn * dst_col, Transformer transformer = {})
     {
         size_t rows = src_col.size();
@@ -193,24 +190,21 @@ DB::ColumnPtr SparkFunctionNextDay::executeConst(const DB::ColumnsWithTypeAndNam
         auto null_map_col = DB::DataTypeUInt8().createColumnConst(from_date_col->size(), 1)->convertToFullColumnIfConst();
         return DB::ColumnNullable::create(default_date_col, null_map_col);
     }
-   
+
     auto to_date_col = result_type->createColumn();
     to_date_col->reserve(from_date_col->size());
     DB::WhichDataType ty_which(nested_result_type);
     if (ty_which.isDate())
     {
-        NextDayConstImpl<DB::DataTypeDate>::execute(
-            *from_date_col, next_week_day, to_date_col.get(), NextDayConstTransformer{});
+        NextDayConstImpl<DB::DataTypeDate>::execute(*from_date_col, next_week_day, to_date_col.get(), NextDayConstTransformer{});
     }
     else if (ty_which.isDate32())
     {
-        NextDayConstImpl<DB::DataTypeDate32>::execute(
-            *from_date_col, next_week_day, to_date_col.get(), NextDayConstTransformer{});
+        NextDayConstImpl<DB::DataTypeDate32>::execute(*from_date_col, next_week_day, to_date_col.get(), NextDayConstTransformer{});
     }
     else if (ty_which.isDateTime())
     {
-        NextDayConstImpl<DB::DataTypeDateTime>::execute(
-            *from_date_col, next_week_day, to_date_col.get(), NextDayConstTransformer{});
+        NextDayConstImpl<DB::DataTypeDateTime>::execute(*from_date_col, next_week_day, to_date_col.get(), NextDayConstTransformer{});
     }
     else if (ty_which.isDateTime64())
     {
@@ -234,18 +228,15 @@ DB::ColumnPtr SparkFunctionNextDay::executeGeneral(const DB::ColumnsWithTypeAndN
     DB::WhichDataType ty_which(nested_result_type);
     if (ty_which.isDate())
     {
-        NextDayConstImpl<DB::DataTypeDate>::execute(
-            *from_date_col, *weekday_col, to_date_col.get(), NextDayConstTransformer{});
+        NextDayConstImpl<DB::DataTypeDate>::execute(*from_date_col, *weekday_col, to_date_col.get(), NextDayConstTransformer{});
     }
     else if (ty_which.isDate32())
     {
-        NextDayConstImpl<DB::DataTypeDate32>::execute(
-            *from_date_col, *weekday_col, to_date_col.get(), NextDayConstTransformer{});
+        NextDayConstImpl<DB::DataTypeDate32>::execute(*from_date_col, *weekday_col, to_date_col.get(), NextDayConstTransformer{});
     }
     else if (ty_which.isDateTime())
     {
-        NextDayConstImpl<DB::DataTypeDateTime>::execute(
-            *from_date_col, *weekday_col, to_date_col.get(), NextDayConstTransformer{});
+        NextDayConstImpl<DB::DataTypeDateTime>::execute(*from_date_col, *weekday_col, to_date_col.get(), NextDayConstTransformer{});
     }
     else if (ty_which.isDateTime64())
     {
@@ -264,29 +255,10 @@ Int8 SparkFunctionNextDay::getDayOfWeek(const String & abbr)
     String lower_abbr = abbr;
     boost::to_lower(lower_abbr);
     // week mode must be 0
-    static const std::unordered_map<String, Int8> abbr2day = {
-        {"mo", 1},
-        {"mon", 1},
-        {"monday", 1},
-        {"tu", 2},
-        {"tue", 2},
-        {"tuesday", 2},
-        {"we", 3},
-        {"wed", 3},
-        {"wednesday", 3},
-        {"th", 4},
-        {"thu", 4},
-        {"thursday", 4},
-        {"fr", 5},
-        {"fri", 5},
-        {"friday", 5},
-        {"sa", 6},
-        {"sat", 6},
-        {"saturday", 6},
-        {"su", 7},
-        {"sun", 7},
-        {"sunday", 7}
-    };
+    static const std::unordered_map<String, Int8> abbr2day
+        = {{"mo", 1},     {"mon", 1},       {"monday", 1}, {"tu", 2},       {"tue", 2},      {"tuesday", 2}, {"we", 3},
+           {"wed", 3},    {"wednesday", 3}, {"th", 4},     {"thu", 4},      {"thursday", 4}, {"fr", 5},      {"fri", 5},
+           {"friday", 5}, {"sa", 6},        {"sat", 6},    {"saturday", 6}, {"su", 7},       {"sun", 7},     {"sunday", 7}};
     auto it = abbr2day.find(lower_abbr);
     if (it != abbr2day.end()) [[likely]]
         return it->second;

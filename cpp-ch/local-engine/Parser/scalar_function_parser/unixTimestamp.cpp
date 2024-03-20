@@ -16,16 +16,14 @@
  */
 
 #include <Parser/FunctionParser.h>
-#include <DataTypes/DataTypesNumber.h>
-
 
 namespace DB
 {
 
 namespace ErrorCodes
 {
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
 }
 }
 
@@ -36,16 +34,14 @@ namespace local_engine
 class FunctionParserUnixTimestamp : public FunctionParser
 {
 public:
-    explicit FunctionParserUnixTimestamp(SerializedPlanParser * plan_parser_) : FunctionParser(plan_parser_) {}
+    explicit FunctionParserUnixTimestamp(SerializedPlanParser * plan_parser_) : FunctionParser(plan_parser_) { }
     ~FunctionParserUnixTimestamp() override = default;
 
     static constexpr auto name = "unix_timestamp";
 
     String getName() const override { return name; }
 
-    const ActionsDAG::Node * parse(
-        const substrait::Expression_ScalarFunction & substrait_func,
-        ActionsDAGPtr & actions_dag) const override
+    const ActionsDAG::Node * parse(const substrait::Expression_ScalarFunction & substrait_func, ActionsDAGPtr & actions_dag) const override
     {
         /*
         spark function: unix_timestamp(expr, fmt)

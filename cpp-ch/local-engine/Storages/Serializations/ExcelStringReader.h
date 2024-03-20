@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 #pragma once
-
-
 #include <Columns/ColumnString.h>
 #include <Columns/IColumn.h>
 #include <Formats/FormatSettings.h>

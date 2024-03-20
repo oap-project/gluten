@@ -16,19 +16,11 @@
  */
 #pragma once
 
-#include <Columns/IColumn.h>
 #include <Core/Block.h>
-#include <Core/ColumnsWithTypeAndName.h>
-#include <Core/Field.h>
 #include <Interpreters/Context.h>
 #include <Parser/SerializedPlanParser.h>
-#include <Processors/Chunk.h>
 #include <Processors/Executors/PushingPipelineExecutor.h>
-#include <Processors/ISource.h>
 #include <Storages/Output/OutputFormatFile.h>
-#include <Storages/Output/WriteBufferBuilder.h>
-#include <Storages/SourceFromJavaIter.h>
-#include <base/types.h>
 
 namespace local_engine
 {
@@ -65,6 +57,6 @@ private:
     std::unique_ptr<DB::PushingPipelineExecutor> writer;
 };
 
-FileWriterWrapper *
-createFileWriterWrapper(const std::string & file_uri, const std::vector<std::string> & preferred_column_names, const std::string & format_hint);
+FileWriterWrapper * createFileWriterWrapper(
+    const std::string & file_uri, const std::vector<std::string> & preferred_column_names, const std::string & format_hint);
 }

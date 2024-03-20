@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 #include "BroadCastJoinBuilder.h"
-#include <Compression/CompressedReadBuffer.h>
 #include <Interpreters/TableJoin.h>
 #include <Join/StorageJoinFromReadBuffer.h>
 #include <Parser/JoinRelParser.h>

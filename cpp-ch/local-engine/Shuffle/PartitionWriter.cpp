@@ -16,28 +16,27 @@
  */
 #include "PartitionWriter.h"
 #include <filesystem>
+#include <format>
 #include <memory>
-#include <ostream>
 #include <vector>
-#include <Storages/IO/CompressedWriteBuffer.h>
-#include <boost/algorithm/string/case_conv.hpp>
-#include <Shuffle/CachedShuffleWriter.h>
 #include <IO/ReadBufferFromFile.h>
 #include <IO/WriteBufferFromFile.h>
-#include <Common/Stopwatch.h>
-#include <Common/ThreadPool.h>
+#include <IO/WriteBufferFromString.h>
+#include <Shuffle/CachedShuffleWriter.h>
+#include <Storages/IO/CompressedWriteBuffer.h>
+#include <Storages/IO/NativeWriter.h>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <Common/CHUtil.h>
 #include <Common/Exception.h>
-#include <IO/WriteBufferFromString.h>
-#include <format>
-#include <Storages/IO/NativeWriter.h>
+#include <Common/Stopwatch.h>
+#include <Common/ThreadPool.h>
 
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int LOGICAL_ERROR;
+extern const int LOGICAL_ERROR;
 }
 }
 
@@ -52,7 +51,7 @@ void PartitionWriter::write(const PartitionInfo & partition_info, DB::Block & bl
         throw Exception(ErrorCodes::LOGICAL_ERROR, "PartitionWriter::write is invoked with evicting_or_writing being occupied");
 
     evicting_or_writing = true;
-    SCOPE_EXIT({evicting_or_writing = false;});
+    SCOPE_EXIT({ evicting_or_writing = false; });
 
     Stopwatch watch;
     size_t current_cached_bytes = bytes();
@@ -116,9 +115,7 @@ void PartitionWriter::write(const PartitionInfo & partition_info, DB::Block & bl
 
     /// Only works for local partition writer
     if (!supportsEvictSinglePartition() && options->spill_threshold && current_cached_bytes >= options->spill_threshold)
-    {
         unsafeEvictPartitions(false, options->flush_block_buffer_before_evict);
-    }
 
     shuffle_writer->split_result.total_split_time += watch.elapsedNanoseconds();
 }
@@ -191,7 +188,7 @@ size_t LocalPartitionWriter::unsafeEvictPartitions(bool for_memory_spill, bool f
     return res;
 }
 
-std::vector<UInt64> LocalPartitionWriter::mergeSpills(WriteBuffer& data_file)
+std::vector<UInt64> LocalPartitionWriter::mergeSpills(WriteBuffer & data_file)
 {
     auto codec = DB::CompressionCodecFactory::instance().get(boost::to_upper_copy(shuffle_writer->options.compress_method), {});
     CompressedWriteBuffer compressed_output(data_file, codec, shuffle_writer->options.io_buffer_size);
@@ -244,13 +241,12 @@ std::vector<UInt64> LocalPartitionWriter::mergeSpills(WriteBuffer& data_file)
     shuffle_writer->split_result.total_write_time += write_time_watch.elapsedNanoseconds();
     shuffle_writer->split_result.total_compress_time += compressed_output.getCompressTime();
     shuffle_writer->split_result.total_io_time += compressed_output.getWriteTime();
-    shuffle_writer->split_result.total_serialize_time = shuffle_writer->split_result.total_serialize_time - shuffle_writer->split_result.total_io_time - shuffle_writer->split_result.total_compress_time;
+    shuffle_writer->split_result.total_serialize_time = shuffle_writer->split_result.total_serialize_time
+        - shuffle_writer->split_result.total_io_time - shuffle_writer->split_result.total_compress_time;
     shuffle_writer->split_result.total_io_time += merge_io_time;
 
     for (const auto & spill : spill_infos)
-    {
         std::filesystem::remove(spill.spilled_file);
-    }
 
     return partition_length;
 }
@@ -300,7 +296,7 @@ size_t PartitionWriter::evictPartitions(bool for_memory_spill, bool flush_block_
         return 0;
 
     evicting_or_writing = true;
-    SCOPE_EXIT({evicting_or_writing = false;});
+    SCOPE_EXIT({ evicting_or_writing = false; });
     return unsafeEvictPartitions(for_memory_spill, flush_block_buffer);
 }
 
@@ -310,7 +306,7 @@ void PartitionWriter::stop()
         throw Exception(ErrorCodes::LOGICAL_ERROR, "PartitionWriter::stop is invoked with evicting_or_writing being occupied");
 
     evicting_or_writing = true;
-    SCOPE_EXIT({evicting_or_writing = false;});
+    SCOPE_EXIT({ evicting_or_writing = false; });
     return unsafeStop();
 }
 
@@ -336,9 +332,7 @@ size_t CelebornPartitionWriter::unsafeEvictPartitions(bool for_memory_spill, boo
 {
     size_t res = 0;
     for (size_t partition_id = 0; partition_id < options->partition_num; ++partition_id)
-    {
         res += unsafeEvictSinglePartition(for_memory_spill, flush_block_buffer, partition_id);
-    }
     return res;
 }
 
@@ -413,9 +407,7 @@ void CelebornPartitionWriter::unsafeStop()
     unsafeEvictPartitions(false, true);
 
     for (const auto & length : shuffle_writer->split_result.partition_lengths)
-    {
         shuffle_writer->split_result.total_bytes_written += length;
-    }
 }
 
 void Partition::addBlock(DB::Block block)
@@ -445,4 +437,3 @@ size_t Partition::spill(NativeWriter & writer)
 }
 
 }
-

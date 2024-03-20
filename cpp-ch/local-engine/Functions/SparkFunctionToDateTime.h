@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 #pragma once
-#include <Common/LocalDate.h>
-#include <Common/DateLUT.h>
-#include <Common/DateLUTImpl.h>
-#include <Columns/ColumnsDateTime.h>
+
 #include <Columns/ColumnNullable.h>
+#include <Columns/ColumnsDateTime.h>
 #include <Columns/ColumnsNumber.h>
 #include <DataTypes/DataTypeDateTime64.h>
 #include <Functions/FunctionFactory.h>
 #include <Functions/FunctionHelpers.h>
 #include <Functions/extractTimeZoneFromFunctionArguments.h>
 #include <IO/ReadBufferFromMemory.h>
-#include <IO/parseDateTimeBestEffort.h>
 #include <IO/ReadHelpers.h>
+#include <IO/parseDateTimeBestEffort.h>
+#include <Common/DateLUT.h>
+#include <Common/DateLUTImpl.h>
 
 using namespace DB;
 
@@ -35,9 +35,9 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
-    extern const int ILLEGAL_COLUMN;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int ILLEGAL_COLUMN;
 }
 }
 
@@ -57,14 +57,12 @@ public:
     String getName() const override { return name; }
 
     bool checkDateTimeFormat(DB::ReadBuffer & buf, size_t buf_size, UInt8 & can_be_parsed) const
-    {        
+    {
         auto checkNumbericASCII = [&](DB::ReadBuffer & rb, size_t start, size_t length) -> bool
         {
             for (size_t i = start; i < start + length; ++i)
-            {
                 if (!isNumericASCII(*(rb.position() + i)))
                     return false;
-            }
             return true;
         };
         auto checkDelimiter = [&](DB::ReadBuffer & rb, size_t pos, char delim) -> bool
@@ -74,10 +72,8 @@ public:
             else
                 return true;
         };
-        if ((buf_size == 10 || buf_size == 11)
-            && checkNumbericASCII(buf, 0, 4) && checkDelimiter(buf, 4, '-')
-            && checkNumbericASCII(buf, 5, 2) && checkDelimiter(buf, 7, '-')
-            && checkNumbericASCII(buf, 8, 2))
+        if ((buf_size == 10 || buf_size == 11) && checkNumbericASCII(buf, 0, 4) && checkDelimiter(buf, 4, '-')
+            && checkNumbericASCII(buf, 5, 2) && checkDelimiter(buf, 7, '-') && checkNumbericASCII(buf, 8, 2))
         {
             if (buf_size == 10)
                 return true;
@@ -85,13 +81,12 @@ public:
                 can_be_parsed = 0;
             return false;
         }
-        else if ((buf_size == 19 || buf_size == 20) 
-            && (checkNumbericASCII(buf, 0, 4) && checkDelimiter(buf, 4, '-')
-            && checkNumbericASCII(buf, 5, 2) && checkDelimiter(buf, 7, '-')
-            && checkNumbericASCII(buf, 8, 2) && checkDelimiter(buf, 10, ' ')
-            && checkNumbericASCII(buf, 11, 2) && checkDelimiter(buf, 13, ':')
-            && checkNumbericASCII(buf, 14, 2) && checkDelimiter(buf, 16, ':')
-            && checkNumbericASCII(buf, 17, 2)))
+        else if (
+            (buf_size == 19 || buf_size == 20)
+            && (checkNumbericASCII(buf, 0, 4) && checkDelimiter(buf, 4, '-') && checkNumbericASCII(buf, 5, 2) && checkDelimiter(buf, 7, '-')
+                && checkNumbericASCII(buf, 8, 2) && checkDelimiter(buf, 10, ' ') && checkNumbericASCII(buf, 11, 2)
+                && checkDelimiter(buf, 13, ':') && checkNumbericASCII(buf, 14, 2) && checkDelimiter(buf, 16, ':')
+                && checkNumbericASCII(buf, 17, 2)))
         {
             if (buf_size == 19)
                 return true;
@@ -108,10 +103,8 @@ public:
         else if (buf_size > 20)
         {
             for (size_t i = 20; i < buf_size; ++i)
-            {
                 if (!isNumericASCII(*(buf.position() + i)))
                     return false;
-            }
         }
         return true;
     }
@@ -119,10 +112,8 @@ public:
     inline UInt32 extractDecimalScale(const ColumnWithTypeAndName & named_column) const
     {
         const auto * arg_type = named_column.type.get();
-        bool ok = checkAndGetDataType<DataTypeUInt64>(arg_type)
-            || checkAndGetDataType<DataTypeUInt32>(arg_type)
-            || checkAndGetDataType<DataTypeUInt16>(arg_type)
-            || checkAndGetDataType<DataTypeUInt8>(arg_type);
+        bool ok = checkAndGetDataType<DataTypeUInt64>(arg_type) || checkAndGetDataType<DataTypeUInt32>(arg_type)
+            || checkAndGetDataType<DataTypeUInt16>(arg_type) || checkAndGetDataType<DataTypeUInt8>(arg_type);
         if (!ok)
             throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Illegal type of toDecimal() scale {}", named_column.type->getName());
 
@@ -140,17 +131,18 @@ public:
         return makeNullable(std::make_shared<DataTypeDateTime64>(scale, timezone));
     }
 
-    DB::ColumnPtr executeImpl(const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type, size_t input_rows) const override
+    DB::ColumnPtr
+    executeImpl(const DB::ColumnsWithTypeAndName & arguments, const DB::DataTypePtr & result_type, size_t input_rows) const override
     {
-         if (arguments.size() != 1 && arguments.size() != 2)
+        if (arguments.size() != 1 && arguments.size() != 2)
             throw DB::Exception(DB::ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH, "Function {}'s arguments number must be 1 or 2.", name);
-        
+
         if (!result_type->isNullable())
             throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Function {}'s return type must be nullable", name);
-        
+
         if (!isDateTime64(removeNullable(result_type)))
             throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Function {}'s return type must be datetime.", name);
-        
+
         size_t size = arguments[0].column->size();
         const DB::DataTypeDateTime64 * datetime_64_type = checkAndGetDataType<DB::DataTypeDateTime64>(removeNullable(result_type).get());
         UInt32 scale = datetime_64_type->getScale();
@@ -160,7 +152,11 @@ public:
         return DB::ColumnNullable::create(std::move(data_col), std::move(null_map_col));
     }
 
-    void executeInternal(const DB::ColumnPtr & src, const UInt32 & scale, PaddedPODArray<DB::DateTime64> & dst_data, PaddedPODArray<UInt8> & null_map_data) const
+    void executeInternal(
+        const DB::ColumnPtr & src,
+        const UInt32 & scale,
+        PaddedPODArray<DB::DateTime64> & dst_data,
+        PaddedPODArray<UInt8> & null_map_data) const
     {
         const DateLUTImpl * local_time_zone = &DateLUT::instance();
         const DateLUTImpl * utc_time_zone = &DateLUT::instance("UTC");
@@ -168,10 +164,8 @@ public:
         {
             const StringRef data = src->getDataAt(i);
             DB::ReadBufferFromMemory buf(data.data, data.size);
-            while(!buf.eof() && *buf.position() == ' ')
-            {
-                    buf.position() ++;
-            }
+            while (!buf.eof() && *buf.position() == ' ')
+                buf.position()++;
             UInt8 can_be_parsed = 1;
             if (checkDateTimeFormat(buf, buf.buffer().end() - buf.position(), can_be_parsed) && can_be_parsed)
             {

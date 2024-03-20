@@ -16,14 +16,13 @@
  */
 
 #include <Parser/FunctionParser.h>
-#include <DataTypes/IDataType.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int BAD_ARGUMENTS;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -40,9 +39,7 @@ public:
 
     String getName() const override { return name; }
 
-    const ActionsDAG::Node * parse(
-    const substrait::Expression_ScalarFunction & substrait_func,
-    ActionsDAGPtr & actions_dag) const override
+    const ActionsDAG::Node * parse(const substrait::Expression_ScalarFunction & substrait_func, ActionsDAGPtr & actions_dag) const override
     {
         /// Parse decode(bin, charset) as convertCharset(bin, charset, 'UTF-8')
         auto parsed_args = parseFunctionArguments(substrait_func, "", actions_dag);

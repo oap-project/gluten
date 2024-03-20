@@ -26,6 +26,7 @@
 #include <Columns/ColumnsNumber.h>
 #include <DataTypes/DataTypeDecimalBase.h>
 #include <DataTypes/DataTypeNullable.h>
+#include <DataTypes/DataTypesDecimal.h>
 #include <IO/ReadBufferFromString.h>
 #include <IO/ReadHelpers.h>
 #include <QueryPipeline/Pipe.h>
@@ -35,7 +36,6 @@
 #include <Common/Exception.h>
 #include <Common/StringUtils.h>
 #include <Common/typeid_cast.h>
-#include "DataTypes/DataTypesDecimal.h"
 
 namespace DB
 {

@@ -15,13 +15,10 @@
  * limitations under the License.
  */
 #pragma once
-#include <set>
-#include <vector>
-#include <Core/Block.h>
 #include <Parser/ExpandField.h>
 #include <Processors/Chunk.h>
 #include <Processors/IProcessor.h>
-#include <Processors/Port.h>
+
 namespace local_engine
 {
 // For handling substrait expand node.

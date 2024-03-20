@@ -16,28 +16,24 @@
  */
 #include "SparkFunctionMonthsBetween.h"
 #include <string>
-#include <DataTypes/DataTypeDate32.h>
-#include <DataTypes/DataTypeDateTime.h>
+#include <Core/Field.h>
 #include <DataTypes/DataTypeDateTime64.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <Functions/DateTimeTransforms.h>
 #include <Functions/FunctionFactory.h>
-#include <Functions/TransformDateTime64.h>
-#include <Poco/Logger.h>
+#include <base/Decimal.h>
+#include <base/types.h>
 #include <Common/DateLUT.h>
 #include <Common/Exception.h>
 #include <Common/logger_useful.h>
-#include "Core/Field.h"
-#include "base/Decimal.h"
-#include "base/types.h"
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
-    extern const int NOT_IMPLEMENTED;
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int NOT_IMPLEMENTED;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -47,25 +43,24 @@ using namespace DB;
 DB::DataTypePtr SparkFunctionMonthsBetween::getReturnTypeImpl(const DB::DataTypes & arguments) const
 {
     if (arguments.size() != 3 && arguments.size() != 4)
-        throw Exception(ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH,
+        throw Exception(
+            ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH,
             "Number of arguments for function {} doesn't match: passed {}, should be 3 or 4",
-            getName(), arguments.size());
+            getName(),
+            arguments.size());
 
     if (!isDate(arguments[0]) && !isDate32(arguments[0]) && !isDateTime(arguments[0]) && !isDateTime64(arguments[0]))
-        throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
-            "First argument for function {} must be Date, Date32, DateTime or DateTime64",
-            getName()
-            );
+        throw Exception(
+            ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "First argument for function {} must be Date, Date32, DateTime or DateTime64", getName());
 
     if (!isDate(arguments[1]) && !isDate32(arguments[1]) && !isDateTime(arguments[1]) && !isDateTime64(arguments[1]))
-        throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
+        throw Exception(
+            ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
             "Second argument for function {} must be Date, Date32, DateTime or DateTime64",
             getName());
 
     if (arguments.size() == 4 && !isString(arguments[3]))
-        throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
-            "Fourth argument for function {} (timezone) must be String",
-            getName());
+        throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Fourth argument for function {} (timezone) must be String", getName());
 
     return DB::makeNullableSafe(std::make_shared<DataTypeFloat64>());
 }
@@ -98,10 +93,10 @@ Float64 monthsBetween(DateTime64 x, DateTime64 y, const DateLUTImpl & timezone, 
         return roundTo8IfNeed(round, month_diff);
 
     int day_diff = static_cast<int>(x_day) - y_day;
-    auto x_seconds_in_day= x - timezone.makeDate(x_year, x_month, x_day);
-    auto y_seconds_in_day= y - timezone.makeDate(y_year, y_month, y_day);
+    auto x_seconds_in_day = x - timezone.makeDate(x_year, x_month, x_day);
+    auto y_seconds_in_day = y - timezone.makeDate(y_year, y_month, y_day);
     auto seconds_diff = x_seconds_in_day - y_seconds_in_day;
-    auto res = static_cast<Float64>(day_diff * 86400 + seconds_diff)/2678400.0 + month_diff;
+    auto res = static_cast<Float64>(day_diff * 86400 + seconds_diff) / 2678400.0 + month_diff;
     return roundTo8IfNeed(round, res);
 }
 

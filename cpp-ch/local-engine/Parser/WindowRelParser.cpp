@@ -15,17 +15,14 @@
  * limitations under the License.
  */
 #include "WindowRelParser.h"
-#include <exception>
 #include <memory>
 #include <valarray>
+#include <AggregateFunctions/AggregateFunctionFactory.h>
 #include <Core/Block.h>
 #include <Core/ColumnWithTypeAndName.h>
-#include <Core/ColumnsWithTypeAndName.h>
 #include <Core/Names.h>
 #include <Core/SortDescription.h>
-#include <DataTypes/DataTypesNumber.h>
 #include <DataTypes/IDataType.h>
-#include <AggregateFunctions/AggregateFunctionFactory.h>
 #include <IO/WriteBufferFromString.h>
 #include <Interpreters/ActionsDAG.h>
 #include <Interpreters/WindowDescription.h>
@@ -34,7 +31,6 @@
 #include <Parser/TypeParser.h>
 #include <Processors/QueryPlan/ExpressionStep.h>
 #include <Processors/QueryPlan/WindowStep.h>
-#include <base/sort.h>
 #include <base/types.h>
 #include <google/protobuf/util/json_util.h>
 #include <Common/CHUtil.h>
@@ -45,9 +41,9 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int UNKNOWN_TYPE;
-    extern const int LOGICAL_ERROR;
-    extern const int BAD_ARGUMENTS;
+extern const int UNKNOWN_TYPE;
+extern const int LOGICAL_ERROR;
+extern const int BAD_ARGUMENTS;
 }
 }
 namespace local_engine
@@ -83,7 +79,7 @@ WindowRelParser::parse(DB::QueryPlanPtr current_plan_, const substrait::Rel & re
     for (auto & it : window_descriptions)
     {
         auto & win = it.second;
-        
+
         auto window_step = std::make_unique<DB::WindowStep>(current_plan->getCurrentDataStream(), win, win.window_functions, false);
         window_step->setStepDescription("Window step for window '" + win.window_name + "'");
         steps.emplace_back(window_step.get());
@@ -95,8 +91,7 @@ WindowRelParser::parse(DB::QueryPlanPtr current_plan_, const substrait::Rel & re
     return std::move(current_plan);
 }
 
-DB::WindowDescription
-WindowRelParser::parseWindowDescription(const WindowInfo & win_info)
+DB::WindowDescription WindowRelParser::parseWindowDescription(const WindowInfo & win_info)
 {
     DB::WindowDescription win_descr;
     win_descr.frame = parseWindowFrame(win_info);
@@ -182,17 +177,11 @@ WindowRelParser::parseWindowFrameType(const std::string & function_name, const s
         frame_type = window_function.window_type();
 
     if (frame_type == substrait::ROWS)
-    {
         return DB::WindowFrame::FrameType::ROWS;
-    }
     else if (frame_type == substrait::RANGE)
-    {
         return DB::WindowFrame::FrameType::RANGE;
-    }
     else
-    {
         throw DB::Exception(DB::ErrorCodes::UNKNOWN_TYPE, "Unknow window frame type:{}", frame_type);
-    }
 }
 
 void WindowRelParser::parseBoundType(
@@ -211,13 +200,9 @@ void WindowRelParser::parseBoundType(
         bound_type = DB::WindowFrame::BoundaryType::Offset;
         preceding_direction = preceding.offset() >= 0;
         if (preceding.offset() < 0)
-        {
             offset = 0 - preceding.offset();
-        }
         else
-        {
             offset = preceding.offset();
-        }
     }
     else if (bound.has_following())
     {
@@ -225,13 +210,9 @@ void WindowRelParser::parseBoundType(
         bound_type = DB::WindowFrame::BoundaryType::Offset;
         preceding_direction = following.offset() < 0;
         if (following.offset() < 0)
-        {
             offset = 0 - following.offset();
-        }
         else
-        {
             offset = following.offset();
-        }
     }
     else if (bound.has_current_row())
     {
@@ -325,7 +306,7 @@ void WindowRelParser::tryAddProjectionBeforeWindow()
     ActionsDAGPtr actions_dag = std::make_shared<ActionsDAG>(header.getColumnsWithTypeAndName());
     auto dag_footprint = actions_dag->dumpDAG();
 
-    for (auto & win_info : win_infos )
+    for (auto & win_info : win_infos)
     {
         auto arg_nodes = win_info.function_parser->parseFunctionArguments(win_info.parser_func_info, actions_dag);
         for (auto & arg_node : arg_nodes)
@@ -333,8 +314,8 @@ void WindowRelParser::tryAddProjectionBeforeWindow()
             win_info.arg_column_names.emplace_back(arg_node->result_name);
             win_info.arg_column_types.emplace_back(arg_node->result_type);
             actions_dag->addOrReplaceInOutputs(*arg_node);
-        } 
-        win_info.params = win_info.function_parser->parseFunctionParameters(win_info.parser_func_info, arg_nodes);       
+        }
+        win_info.params = win_info.function_parser->parseFunctionParameters(win_info.parser_func_info, arg_nodes);
     }
 
     if (actions_dag->dumpDAG() != dag_footprint)
@@ -373,9 +354,7 @@ void WindowRelParser::tryAddProjectionAfterWindow()
     if (!DB::blocksHaveEqualStructure(output_header, current_header))
     {
         ActionsDAGPtr convert_action = ActionsDAG::makeConvertingActions(
-            current_header.getColumnsWithTypeAndName(),
-            output_header.getColumnsWithTypeAndName(),
-            DB::ActionsDAG::MatchColumnsMode::Name);
+            current_header.getColumnsWithTypeAndName(), output_header.getColumnsWithTypeAndName(), DB::ActionsDAG::MatchColumnsMode::Name);
         QueryPlanStepPtr convert_step = std::make_unique<DB::ExpressionStep>(current_plan->getCurrentDataStream(), convert_action);
         convert_step->setStepDescription("Convert window Output");
         steps.emplace_back(convert_step.get());

@@ -15,19 +15,12 @@
  * limitations under the License.
  */
 #include "ExpandStep.h"
-#include <memory>
-#include <Columns/ColumnNullable.h>
-#include <Columns/ColumnsNumber.h>
 #include <Core/ColumnWithTypeAndName.h>
 #include <Core/ColumnsWithTypeAndName.h>
-#include <DataTypes/DataTypeNullable.h>
-#include <DataTypes/DataTypesNumber.h>
 #include <Operator/ExpandTransorm.h>
 #include <Processors/IProcessor.h>
 #include <QueryPipeline/Pipe.h>
 #include <QueryPipeline/QueryPipelineBuilder.h>
-#include <Poco/Logger.h>
-#include <Common/logger_useful.h>
 
 namespace local_engine
 {
@@ -52,7 +45,7 @@ ExpandStep::ExpandStep(const DB::DataStream & input_stream_, const ExpandField &
     output_header = getOutputStream().header;
 }
 
-DB::Block ExpandStep::buildOutputHeader(const DB::Block & , const ExpandField & project_set_exprs_)
+DB::Block ExpandStep::buildOutputHeader(const DB::Block &, const ExpandField & project_set_exprs_)
 {
     DB::ColumnsWithTypeAndName cols;
     const auto & types = project_set_exprs_.getTypes();

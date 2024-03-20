@@ -14,33 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "Common/CHUtil.h"
 #include "ExcelTextFormatFile.h"
-
-
 #include <memory>
 #include <string>
-#include <utility>
-
 #include <Columns/ColumnNullable.h>
 #include <DataTypes/DataTypeDecimalBase.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/Serializations/SerializationNullable.h>
 #include <Formats/FormatSettings.h>
 #include <IO/PeekableReadBuffer.h>
-#include <IO/SeekableReadBuffer.h>
 #include <Processors/Formats/IRowInputFormat.h>
 #include <Storages/HDFS/ReadBufferFromHDFS.h>
 #include <Storages/Serializations/ExcelDecimalSerialization.h>
 #include <Storages/Serializations/ExcelSerialization.h>
 #include <Storages/Serializations/ExcelStringReader.h>
+#include <Common/CHUtil.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int NOT_IMPLEMENTED;
-    extern const int INCORRECT_DATA;
+extern const int NOT_IMPLEMENTED;
+extern const int INCORRECT_DATA;
 }
 }
 
@@ -73,9 +68,7 @@ FormatFile::InputFormatPtr ExcelTextFormatFile::createInputFormat(const DB::Bloc
     DB::Names column_names;
     column_names.reserve(file_info.schema().names_size());
     for (const auto & item : file_info.schema().names())
-    {
         column_names.push_back(item);
-    }
 
     std::shared_ptr<local_engine::ExcelRowInputFormat> txt_input_format = std::make_shared<local_engine::ExcelRowInputFormat>(
         header, buffer, params, format_settings, column_names, file_info.text().escape());
@@ -317,8 +310,8 @@ void ExcelTextFormatReader::skipField()
 void ExcelTextFormatReader::preSkipNullValue()
 {
     /// null_representation is empty and value is "" or '' in spark return null
-    if(((format_settings.csv.allow_single_quotes && *buf->position() == '\'')
-            || (format_settings.csv.allow_double_quotes && *buf->position() == '\"')))
+    if (((format_settings.csv.allow_single_quotes && *buf->position() == '\'')
+         || (format_settings.csv.allow_double_quotes && *buf->position() == '\"')))
     {
         PeekableReadBufferCheckpoint checkpoint{*buf, false};
         char maybe_quote = *buf->position();
@@ -404,9 +397,7 @@ void ExcelTextFormatReader::skipEndOfLine(DB::ReadBuffer & readBuffer)
 inline void ExcelTextFormatReader::skipWhitespacesAndTabs(ReadBuffer & readBuffer, bool allow_whitespace_or_tab_as_delimiter)
 {
     if (allow_whitespace_or_tab_as_delimiter)
-    {
         return;
-    }
     /// Skip `whitespace` symbols allowed readBuffer CSV.
     while (!readBuffer.eof() && (*readBuffer.position() == ' ' || *readBuffer.position() == '\t'))
         ++readBuffer.position();

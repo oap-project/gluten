@@ -18,7 +18,6 @@
 #include <functional>
 #include <memory>
 #include <IO/ReadBuffer.h>
-#include <Interpreters/Context.h>
 #include <Interpreters/Context_fwd.h>
 #include <boost/core/noncopyable.hpp>
 #include <substrait/plan.pb.h>
@@ -36,7 +35,8 @@ public:
     build(const substrait::ReadRel::LocalFiles::FileOrFiles & file_info, bool set_read_util_position = false) = 0;
 
     /// build a new read buffer, consider compression method
-    std::unique_ptr<DB::ReadBuffer> buildWithCompressionWrapper(const substrait::ReadRel::LocalFiles::FileOrFiles & file_info, bool set_read_util_position = false)
+    std::unique_ptr<DB::ReadBuffer>
+    buildWithCompressionWrapper(const substrait::ReadRel::LocalFiles::FileOrFiles & file_info, bool set_read_util_position = false)
     {
         auto in = build(file_info, set_read_util_position);
 

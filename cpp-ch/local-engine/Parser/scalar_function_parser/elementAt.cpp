@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-#include <Parser/scalar_function_parser/arrayElement.h>
-#include <DataTypes/DataTypeMap.h>
 #include <DataTypes/IDataType.h>
+#include <Parser/scalar_function_parser/arrayElement.h>
 
 namespace local_engine
 {

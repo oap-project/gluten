@@ -17,12 +17,9 @@
 #pragma once
 
 #include <exception>
-#include <mutex>
 #include <jni.h>
-#include <IO/WriteBufferFromString.h>
 #include <boost/core/noncopyable.hpp>
 #include <boost/stacktrace.hpp>
-#include <jni/jni_common.h>
 #include <Common/Exception.h>
 
 #include <sstream>

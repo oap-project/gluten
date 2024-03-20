@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
+
 #include <unordered_map>
 #include <Core/Block.h>
 #include <Interpreters/Aggregator.h>
 #include <Interpreters/Context.h>
 #include <Processors/Chunk.h>
 #include <Processors/IProcessor.h>
-#include <Processors/Port.h>
 #include <Processors/QueryPlan/IQueryPlanStep.h>
 #include <Processors/QueryPlan/ITransformingStep.h>
 #include <Processors/Transforms/AggregatingTransform.h>
-#include <QueryPipeline/SizeLimits.h>
 #include <Poco/Logger.h>
 #include <Common/AggregateUtil.h>
-#include <Common/logger_useful.h>
 
 namespace local_engine
 {
@@ -38,10 +37,7 @@ class GraceMergingAggregatedStep : public DB::ITransformingStep
 {
 public:
     explicit GraceMergingAggregatedStep(
-        DB::ContextPtr context_,
-        const DB::DataStream & input_stream_,
-        DB::Aggregator::Params params_,
-        bool no_pre_aggregated_);
+        DB::ContextPtr context_, const DB::DataStream & input_stream_, DB::Aggregator::Params params_, bool no_pre_aggregated_);
     ~GraceMergingAggregatedStep() override = default;
 
     String getName() const override { return "GraceMergingAggregatedStep"; }
@@ -50,23 +46,26 @@ public:
 
     void describeActions(DB::JSONBuilder::JSONMap & map) const override;
     void describeActions(DB::IQueryPlanStep::FormatSettings & settings) const override;
+
 private:
     DB::ContextPtr context;
     DB::Aggregator::Params params;
     bool no_pre_aggregated;
-    void updateOutputStream() override; 
+    void updateOutputStream() override;
 };
 
 class GraceMergingAggregatedTransform : public DB::IProcessor
 {
 public:
     using Status = DB::IProcessor::Status;
-    explicit GraceMergingAggregatedTransform(const DB::Block &header_, DB::AggregatingTransformParamsPtr params_, DB::ContextPtr context_, bool no_pre_aggregated_);
+    explicit GraceMergingAggregatedTransform(
+        const DB::Block & header_, DB::AggregatingTransformParamsPtr params_, DB::ContextPtr context_, bool no_pre_aggregated_);
     ~GraceMergingAggregatedTransform() override;
 
     Status prepare() override;
     void work() override;
     String getName() const override { return "GraceMergingAggregatedTransform"; }
+
 private:
     bool no_pre_aggregated;
     DB::Block header;
@@ -77,7 +76,7 @@ private:
     DB::TemporaryDataOnDiskPtr tmp_data_disk;
     DB::AggregatedDataVariantsPtr current_data_variants = nullptr;
     size_t current_bucket_index = 0;
-    
+
     /// Followings are configurations defined in context config.
     // max buckets number, default is 32
     size_t max_buckets = 0;
@@ -120,7 +119,7 @@ private:
     std::unique_ptr<AggregateDataBlockConverter> currentDataVariantToBlockConverter(bool final);
     void checkAndSetupCurrentDataVariants();
     /// Merge one block into current_data_variants.
-    void mergeOneBlock(const DB::Block &block, bool is_original_block);
+    void mergeOneBlock(const DB::Block & block, bool is_original_block);
     bool isMemoryOverflow();
 
     bool input_finished = false;

@@ -20,7 +20,6 @@
 
 #include <Formats/FormatSettings.h>
 #include <Processors/Formats/Impl/HiveTextRowInputFormat.h>
-#include <Poco/URI.h>
 
 namespace local_engine
 {

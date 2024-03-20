@@ -15,18 +15,14 @@
  * limitations under the License.
  */
 
-
-#include <google/protobuf/wrappers.pb.h>
-
+#include "MergeTreeRelParser.h"
 #include <Parser/FunctionParser.h>
 #include <Parser/TypeParser.h>
 #include <Storages/StorageMergeTreeFactory.h>
+#include <google/protobuf/wrappers.pb.h>
+#include <Poco/StringTokenizer.h>
 #include <Common/CHUtil.h>
 #include <Common/MergeTreeTool.h>
-
-#include "MergeTreeRelParser.h"
-
-#include <Poco/StringTokenizer.h>
 
 
 namespace DB
@@ -61,9 +57,7 @@ static Int64 findMinPosition(const NameSet & condition_table_columns, const Name
 }
 
 CustomStorageMergeTreePtr MergeTreeRelParser::parseStorage(
-    const substrait::Rel & rel_,
-    const substrait::ReadRel::ExtensionTable & extension_table,
-    ContextMutablePtr context)
+    const substrait::Rel & rel_, const substrait::ReadRel::ExtensionTable & extension_table, ContextMutablePtr context)
 {
     const auto & rel = rel_.read();
     google::protobuf::StringValue table;
@@ -96,8 +90,7 @@ CustomStorageMergeTreePtr MergeTreeRelParser::parseStorage(
     return storage;
 }
 
-DB::QueryPlanPtr
-MergeTreeRelParser::parseReadRel(
+DB::QueryPlanPtr MergeTreeRelParser::parseReadRel(
     DB::QueryPlanPtr query_plan,
     const substrait::ReadRel & rel,
     const substrait::ReadRel::ExtensionTable & extension_table,

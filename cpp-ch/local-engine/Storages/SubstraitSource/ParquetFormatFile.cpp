@@ -22,7 +22,6 @@
 #include <numeric>
 #include <utility>
 
-#include <DataTypes/DataTypesNumber.h>
 #include <Formats/FormatFactory.h>
 #include <Formats/FormatSettings.h>
 #include <IO/SeekableReadBuffer.h>
@@ -30,7 +29,6 @@
 #include <Processors/Formats/Impl/ArrowColumnToCHColumn.h>
 #include <Processors/Formats/Impl/ParquetBlockInputFormat.h>
 #include <Storages/Parquet/VectorizedParquetRecordReader.h>
-#include <Storages/SubstraitSource/SubstraitFileSourceStep.h>
 #include <parquet/arrow/reader.h>
 #include <parquet/metadata.h>
 #include <Common/Exception.h>

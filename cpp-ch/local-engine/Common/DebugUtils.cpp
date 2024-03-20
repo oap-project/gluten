@@ -17,12 +17,9 @@
 #include "DebugUtils.h"
 #include <Columns/ColumnNullable.h>
 #include <Columns/ColumnString.h>
-#include <DataTypes/DataTypeDate.h>
-#include <DataTypes/DataTypeDate32.h>
 #include <DataTypes/DataTypeDateTime64.h>
 #include <Formats/FormatSettings.h>
 #include <Functions/FunctionHelpers.h>
-#include <IO/WriteBufferFromString.h>
 
 namespace debug
 {
@@ -47,17 +44,11 @@ void headBlock(const DB::Block & block, size_t count)
                 std::cerr << "\t";
             DB::WhichDataType which(type);
             if (which.isAggregateFunction())
-            {
                 std::cerr << "Nan";
-            }
             else if (col->isNullAt(row))
-            {
                 std::cerr << "null";
-            }
             else
-            {
                 std::cerr << toString((*col)[row]);
-            }
         }
         std::cerr << std::endl;
     }

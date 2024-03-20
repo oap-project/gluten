@@ -19,7 +19,6 @@
 #include <mutex>
 #include <stack>
 #include <jni.h>
-#include <Core/ColumnWithTypeAndName.h>
 #include <Core/Defines.h>
 #include <Core/NamesAndTypes.h>
 #include <DataTypes/Serializations/ISerialization.h>

@@ -19,25 +19,22 @@
 #include <Columns/ColumnNullable.h>
 #include <Columns/ColumnString.h>
 #include <Core/Field.h>
-#include <DataTypes/DataTypeArray.h>
 #include <DataTypes/DataTypeMap.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/DataTypeString.h>
-#include <DataTypes/DataTypesNumber.h>
 #include <Functions/FunctionFactory.h>
 #include <Functions/FunctionHelpers.h>
 #include <Functions/IFunction.h>
 #include <Common/Exception.h>
 
-#include <Poco/Logger.h>
 #include <Common/logger_useful.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
-    extern const int ILLEGAL_COLUMN;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int ILLEGAL_COLUMN;
 }
 }
 
@@ -102,9 +99,7 @@ public:
         }
         const auto * str_col = DB::checkAndGetColumn<DB::ColumnString>(arguments[0].column.get());
         if (!str_col) [[unlikely]]
-        {
             throw DB::Exception(DB::ErrorCodes::ILLEGAL_COLUMN, "argument 0 for function {} must be String", getName());
-        }
         const DB::ColumnString::Chars & str_vec = str_col->getChars();
         const DB::ColumnString::Offsets & str_offsets = str_col->getOffsets();
         map_col->reserve(str_offsets.size());

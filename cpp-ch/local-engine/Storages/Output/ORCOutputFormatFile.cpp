@@ -18,8 +18,8 @@
 #include "ORCOutputFormatFile.h"
 
 #if USE_ORC
-#    include <Formats/FormatFactory.h>
-#    include <Processors/Formats/Impl/ORCBlockOutputFormat.h>
+#include <Formats/FormatFactory.h>
+#include <Processors/Formats/Impl/ORCBlockOutputFormat.h>
 
 namespace local_engine
 {

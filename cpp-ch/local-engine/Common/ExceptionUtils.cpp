@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 #include "ExceptionUtils.h"
-
+#include <Common/logger_useful.h>
 using namespace DB;
 
 namespace local_engine

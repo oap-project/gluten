@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <Parser/FunctionParser.h>
-#include <DataTypes/IDataType.h>
-#include <Common/CHUtil.h>
 #include <Core/Field.h>
 #include <DataTypes/DataTypeArray.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <Functions/FunctionHelpers.h>
+#include <Parser/FunctionParser.h>
+#include <Common/CHUtil.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int BAD_ARGUMENTS;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -36,14 +35,11 @@ namespace local_engine
 
 class FunctionParserArrayElement : public FunctionParser
 {
-
 public:
     explicit FunctionParserArrayElement(SerializedPlanParser * plan_parser_) : FunctionParser(plan_parser_) { }
     ~FunctionParserArrayElement() override = default;
 
-    const ActionsDAG::Node * parse(
-    const substrait::Expression_ScalarFunction & substrait_func,
-    ActionsDAGPtr & actions_dag) const override
+    const ActionsDAG::Node * parse(const substrait::Expression_ScalarFunction & substrait_func, ActionsDAGPtr & actions_dag) const override
     {
         /**
             parse arrayElement(arr, idx) as
@@ -70,11 +66,9 @@ public:
         auto * if_node = toFunctionNode(actions_dag, "if", {greater_or_equals_node, null_const_node, array_element_node});
         return if_node;
     }
+
 protected:
-    String getCHFunctionName(const substrait::Expression_ScalarFunction & /*substrait_func*/) const override
-    {
-        return "arrayElement";
-    }
+    String getCHFunctionName(const substrait::Expression_ScalarFunction & /*substrait_func*/) const override { return "arrayElement"; }
 };
 
 }

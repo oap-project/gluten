@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 #include "LeadLagParser.h"
-#include <Columns/ColumnNullable.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/DataTypesNumber.h>
 #include <Interpreters/ActionsDAG.h>
@@ -23,8 +22,8 @@
 
 namespace local_engine
 {
-DB::ActionsDAG::NodeRawConstPtrs
-LeadParser::parseFunctionArguments(const CommonFunctionInfo & func_info, const String & /*ch_func_name*/, DB::ActionsDAGPtr & actions_dag) const
+DB::ActionsDAG::NodeRawConstPtrs LeadParser::parseFunctionArguments(
+    const CommonFunctionInfo & func_info, const String & /*ch_func_name*/, DB::ActionsDAGPtr & actions_dag) const
 {
     DB::ActionsDAG::NodeRawConstPtrs args;
     const auto & arg0 = func_info.arguments[0].value();
@@ -34,15 +33,12 @@ LeadParser::parseFunctionArguments(const CommonFunctionInfo & func_info, const S
     const auto & arg2 = func_info.arguments[2].value();
     const auto * arg0_col = actions_dag->getInputs()[arg0.selection().direct_reference().struct_field().field()];
     auto arg0_col_name = arg0_col->result_name;
-    auto arg0_col_type= arg0_col->result_type;
+    auto arg0_col_type = arg0_col->result_type;
     const DB::ActionsDAG::Node * node = nullptr;
     if (arg2.has_literal() && arg2.literal().has_null() && !arg0_col_type->isNullable())
     {
         node = ActionsDAGUtil::convertNodeType(
-            actions_dag,
-            &actions_dag->findInOutputs(arg0_col_name),
-            DB::makeNullable(arg0_col_type)->getName(),
-            arg0_col_name);
+            actions_dag, &actions_dag->findInOutputs(arg0_col_name), DB::makeNullable(arg0_col_type)->getName(), arg0_col_name);
         actions_dag->addOrReplaceInOutputs(*node);
         args.push_back(node);
     }
@@ -61,13 +57,13 @@ LeadParser::parseFunctionArguments(const CommonFunctionInfo & func_info, const S
         node = parseExpression(actions_dag, arg2);
         actions_dag->addOrReplaceInOutputs(*node);
         args.push_back(node);
-    }    
+    }
     return args;
 }
 AggregateFunctionParserRegister<LeadParser> lead_register;
 
-DB::ActionsDAG::NodeRawConstPtrs
-LagParser::parseFunctionArguments(const CommonFunctionInfo & func_info, const String & /*ch_func_name*/, DB::ActionsDAGPtr & actions_dag) const
+DB::ActionsDAG::NodeRawConstPtrs LagParser::parseFunctionArguments(
+    const CommonFunctionInfo & func_info, const String & /*ch_func_name*/, DB::ActionsDAGPtr & actions_dag) const
 {
     DB::ActionsDAG::NodeRawConstPtrs args;
     const auto & arg0 = func_info.arguments[0].value();
@@ -82,10 +78,7 @@ LagParser::parseFunctionArguments(const CommonFunctionInfo & func_info, const St
     if (arg2.has_literal() && arg2.literal().has_null() && !arg0_col->result_type->isNullable())
     {
         node = ActionsDAGUtil::convertNodeType(
-            actions_dag,
-            &actions_dag->findInOutputs(arg0_col_name),
-            DB::makeNullable(arg0_col_type)->getName(),
-            arg0_col_name);
+            actions_dag, &actions_dag->findInOutputs(arg0_col_name), DB::makeNullable(arg0_col_type)->getName(), arg0_col_name);
         actions_dag->addOrReplaceInOutputs(*node);
         args.push_back(node);
     }

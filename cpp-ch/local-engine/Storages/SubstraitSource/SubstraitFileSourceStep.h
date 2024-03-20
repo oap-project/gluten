@@ -17,11 +17,9 @@
 
 #pragma once
 
+#include <Interpreters/Context_fwd.h>
 #include <Processors/QueryPlan/ReadFromPreparedSource.h>
 #include <Processors/QueryPlan/SourceStepWithFilter.h>
-#include <Storages/MergeTree/KeyCondition.h>
-#include <Interpreters/Context_fwd.h>
-#include <Core/NamesAndTypes.h>
 
 namespace local_engine
 {

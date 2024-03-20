@@ -20,7 +20,6 @@
 
 #include <AggregateFunctions/AggregateFunctionGroupBloomFilter.h>
 #include "Core/TypeId.h"
-#include "Interpreters/BloomFilter.h"
 #include "base/types.h"
 
 
@@ -30,7 +29,7 @@ struct Settings;
 
 namespace ErrorCodes
 {
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
 }
 }
 

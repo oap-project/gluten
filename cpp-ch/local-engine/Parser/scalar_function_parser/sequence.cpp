@@ -14,17 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <Parser/FunctionParser.h>
-#include <DataTypes/IDataType.h>
-#include <DataTypes/DataTypeArray.h>
-#include <Common/CHUtil.h>
 #include <Core/Field.h>
+#include <Parser/FunctionParser.h>
+#include <Common/CHUtil.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -41,9 +39,7 @@ public:
 
     String getName() const override { return name; }
 
-    const ActionsDAG::Node * parse(
-        const substrait::Expression_ScalarFunction & substrait_func,
-        ActionsDAGPtr & actions_dag) const override
+    const ActionsDAG::Node * parse(const substrait::Expression_ScalarFunction & substrait_func, ActionsDAGPtr & actions_dag) const override
     {
         /**
             parse sequence(start, end, step) as
@@ -108,13 +104,8 @@ public:
         const auto * null_const_node = addColumnToActionsDAG(actions_dag, result_type, {});
         const auto * or_condition_node = toFunctionNode(actions_dag, "or", {start_is_null_node, end_is_null_node, step_is_null_node});
 
-        const auto * result_node = toFunctionNode(actions_dag, "multiIf", {
-            or_condition_node,
-            null_const_node,
-            modulo_step_eq_zero_node,
-            range_1_node,
-            range_2_node
-        });
+        const auto * result_node = toFunctionNode(
+            actions_dag, "multiIf", {or_condition_node, null_const_node, modulo_step_eq_zero_node, range_1_node, range_2_node});
         return convertNodeTypeIfNeeded(substrait_func, result_node, actions_dag);
     }
 };

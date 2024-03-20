@@ -21,9 +21,8 @@
 
 #if USE_ORC
 
-#    include <memory>
-#    include <IO/WriteBuffer.h>
-#    include <Storages/Output/OutputFormatFile.h>
+#include <memory>
+#include <Storages/Output/OutputFormatFile.h>
 
 namespace local_engine
 {

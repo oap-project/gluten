@@ -14,20 +14,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <Parser/FunctionParser.h>
-#include <DataTypes/IDataType.h>
-#include <Common/CHUtil.h>
 #include <Core/Field.h>
 #include <DataTypes/DataTypeArray.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <Functions/FunctionHelpers.h>
+#include <Parser/FunctionParser.h>
+#include <Common/CHUtil.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int BAD_ARGUMENTS;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -44,9 +43,7 @@ public:
 
     String getName() const override { return name; }
 
-    const ActionsDAG::Node * parse(
-    const substrait::Expression_ScalarFunction & substrait_func,
-    ActionsDAGPtr & actions_dag) const override
+    const ActionsDAG::Node * parse(const substrait::Expression_ScalarFunction & substrait_func, ActionsDAGPtr & actions_dag) const override
     {
         /**
             parse array_contains(arr, value) as
@@ -95,24 +92,23 @@ public:
         const auto * true_node = addColumnToActionsDAG(actions_dag, result_type, 1);
         const auto * false_node = addColumnToActionsDAG(actions_dag, result_type, 0);
 
-        const auto * multi_if_node = toFunctionNode(actions_dag, "multiIf", {
-            arr_is_null_node,
-            null_const_node,
-            val_is_null_node,
-            null_const_node,
-            has_arr_value_node,
-            true_node,
-            has_arr_null_node,
-            null_const_node,
-            false_node
-        });
+        const auto * multi_if_node = toFunctionNode(
+            actions_dag,
+            "multiIf",
+            {arr_is_null_node,
+             null_const_node,
+             val_is_null_node,
+             null_const_node,
+             has_arr_value_node,
+             true_node,
+             has_arr_null_node,
+             null_const_node,
+             false_node});
         return convertNodeTypeIfNeeded(substrait_func, multi_if_node, actions_dag);
     }
+
 protected:
-    String getCHFunctionName(const substrait::Expression_ScalarFunction & /*substrait_func*/) const override
-    {
-        return "has";
-    }
+    String getCHFunctionName(const substrait::Expression_ScalarFunction & /*substrait_func*/) const override { return "has"; }
 };
 
 static FunctionParserRegister<FunctionParserArrayContains> register_array_contains;

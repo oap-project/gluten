@@ -14,21 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
+#include <Columns/ColumnVector.h>
+#include <DataTypes/DataTypesNumber.h>
+#include <DataTypes/IDataType.h>
+#include <Functions/FunctionFactory.h>
 #include <Common/DateLUT.h>
 #include <Common/DateLUTImpl.h>
 #include <Common/LocalDateTime.h>
-#include <Columns/ColumnVector.h>
-#include <DataTypes/IDataType.h>
-#include <DataTypes/DataTypeNullable.h>
-#include <DataTypes/DataTypesNumber.h>
-#include <Functions/FunctionFactory.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
 }
 }
 
@@ -56,24 +56,21 @@ public:
     size_t getNumberOfArguments() const override { return 0; }
     bool isVariadic() const override { return true; }
     bool useDefaultImplementationForConstants() const override { return true; }
-    DataTypePtr getReturnTypeImpl(const ColumnsWithTypeAndName &) const override
-    {
-        return std::make_shared<DataTypeUInt32>();
-    }
+    DataTypePtr getReturnTypeImpl(const ColumnsWithTypeAndName &) const override { return std::make_shared<DataTypeUInt32>(); }
 
     ColumnPtr executeImpl(const DB::ColumnsWithTypeAndName & arguments, const DataTypePtr & result_type, size_t input_rows) const override
     {
-       if (arguments.size() != 1 && arguments.size() != 2)
+        if (arguments.size() != 1 && arguments.size() != 2)
             throw Exception(ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH, "Function {} argument size must be 1 or 2", name);
-        
-       ColumnWithTypeAndName first_arg = arguments[0];
-       if (isDate(first_arg.type))
+
+        ColumnWithTypeAndName first_arg = arguments[0];
+        if (isDate(first_arg.type))
             return executeInternal<UInt16>(first_arg.column, input_rows);
         else
             return executeInternal<Int32>(first_arg.column, input_rows);
     }
 
-    template<typename T>
+    template <typename T>
     ColumnPtr NO_SANITIZE_UNDEFINED executeInternal(const ColumnPtr & col, size_t input_rows) const
     {
         const ColumnVector<T> * col_src = checkAndGetColumn<ColumnVector<T>>(col.get());
@@ -81,7 +78,7 @@ public:
         PaddedPODArray<UInt32> & data = assert_cast<ColumnVector<UInt32> *>(res.get())->getData();
         if (col->size() == 0)
             return res;
-        
+
         for (size_t i = 0; i < input_rows; ++i)
         {
             const T t = col_src->getElement(i);

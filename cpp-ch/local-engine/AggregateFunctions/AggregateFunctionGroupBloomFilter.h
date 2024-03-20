@@ -21,14 +21,13 @@
 #include <Columns/ColumnAggregateFunction.h>
 #include <Columns/ColumnVector.h>
 #include <DataTypes/DataTypesNumber.h>
-#include "Common/Exception.h"
+#include <IO/VarInt.h>
+#include <base/types.h>
+#include <Common/Exception.h>
 #include <Common/assert_cast.h>
-#include "IO/VarInt.h"
-#include "base/types.h"
 
 
 #include <IO/ReadHelpers.h>
-#include <IO/WriteHelpers.h>
 #include <Interpreters/BloomFilter.h>
 
 namespace local_engine
@@ -106,9 +105,7 @@ public:
     void checkFilterSize(size_t filter_size_) const
     {
         if (filter_size_ <= 0)
-        {
             throw Exception(ErrorCodes::BAD_ARGUMENTS, "filter_size being LTE 0 means bloom filter is not properly initialized");
-        }
     }
 
     void add(AggregateDataPtr __restrict place, const IColumn ** columns, size_t row_num, Arena *) const override
@@ -128,26 +125,21 @@ public:
     {
         // Skip un-initted values
         if (!this->data(rhs).initted)
-        {
             return;
-        }
         const auto & bloom_other = this->data(rhs).bloom_filter;
         const auto & filter_other = bloom_other.getFilter();
         if (!this->data(place).initted)
         {
             // We use filter_other's size/hashes/seed to avoid passing these parameters around to construct AggregateFunctionGroupBloomFilter.
             checkFilterSize(bloom_other.getSize());
-            this->data(place).bloom_filter = BloomFilter(BloomFilterParameters(bloom_other.getSize(), bloom_other.getHashes(), bloom_other.getSeed()));
+            this->data(place).bloom_filter
+                = BloomFilter(BloomFilterParameters(bloom_other.getSize(), bloom_other.getHashes(), bloom_other.getSeed()));
             this->data(place).initted = true;
         }
         auto & filter_self = this->data(place).bloom_filter.getFilter();
         for (size_t i = 0; i < filter_other.size(); ++i)
-        {
             if (filter_other[i])
-            {
                 filter_self[i] |= filter_other[i];
-            }
-        }
     }
 
     void serialize(ConstAggregateDataPtr __restrict place, WriteBuffer & buf, std::optional<size_t> /* version */) const override

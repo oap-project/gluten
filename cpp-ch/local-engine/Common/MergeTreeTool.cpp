@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 #include "MergeTreeTool.h"
+#include <Parsers/ASTSelectQuery.h>
 
 #include <IO/ReadBufferFromString.h>
 #include <IO/ReadHelpers.h>
-#include <IO/WriteBufferFromString.h>
-#include <IO/WriteHelpers.h>
 #include <Storages/MergeTree/IMergeTreeDataPart.h>
 #include <google/protobuf/util/json_util.h>
 
@@ -27,33 +26,28 @@ using namespace DB;
 
 namespace local_engine
 {
-std::shared_ptr<DB::StorageInMemoryMetadata> buildMetaData(const DB::NamesAndTypesList &columns, ContextPtr context, const MergeTreeTable &table)
+std::shared_ptr<DB::StorageInMemoryMetadata>
+buildMetaData(const DB::NamesAndTypesList & columns, ContextPtr context, const MergeTreeTable & table)
 {
     std::shared_ptr<DB::StorageInMemoryMetadata> metadata = std::make_shared<DB::StorageInMemoryMetadata>();
     ColumnsDescription columns_description;
     for (const auto & item : columns)
-    {
         columns_description.add(ColumnDescription(item.name, item.type));
-    }
     metadata->setColumns(std::move(columns_description));
     metadata->partition_key.expression_list_ast = std::make_shared<ASTExpressionList>();
     metadata->sorting_key = KeyDescription::parse(table.order_by_key, metadata->getColumns(), context);
     if (table.primary_key.empty())
-    {
         metadata->primary_key.expression = std::make_shared<ExpressionActions>(std::make_shared<ActionsDAG>());
-    }
     else
-    {
         metadata->primary_key = KeyDescription::parse(table.primary_key, metadata->getColumns(), context);
-    }
     return metadata;
 }
 
 std::unique_ptr<MergeTreeSettings> buildMergeTreeSettings()
 {
     auto settings = std::make_unique<DB::MergeTreeSettings>();
-//    settings->set("min_bytes_for_wide_part", Field(0));
-//    settings->set("min_rows_for_wide_part", Field(0));
+    //    settings->set("min_bytes_for_wide_part", Field(0));
+    //    settings->set("min_rows_for_wide_part", Field(0));
     settings->set("allow_nullable_key", Field(1));
     // settings->set("storage_policy", Field("s3_main"));
     return settings;
@@ -72,7 +66,6 @@ std::unique_ptr<SelectQueryInfo> buildQueryInfo(NamesAndTypesList & names_and_ty
 
 MergeTreeTable parseMergeTreeTableString(const std::string & info)
 {
-
     ReadBufferFromString in(info);
     assertString("MergeTree;", in);
     MergeTreeTable table;
@@ -124,13 +117,13 @@ std::unordered_set<String> MergeTreeTable::getPartNames() const
 RangesInDataParts MergeTreeTable::extractRange(DataPartsVector parts_vector) const
 {
     std::unordered_map<String, DataPartPtr> name_index;
-    std::ranges::for_each(parts_vector, [&](const DataPartPtr & part) {name_index.emplace(part->name, part);});
+    std::ranges::for_each(parts_vector, [&](const DataPartPtr & part) { name_index.emplace(part->name, part); });
     RangesInDataParts ranges_in_data_parts;
 
     std::ranges::transform(
         parts,
         std::inserter(ranges_in_data_parts, ranges_in_data_parts.end()),
-        [&](const MergeTreePart& part)
+        [&](const MergeTreePart & part)
         {
             RangesInDataPart ranges_in_data_part;
             ranges_in_data_part.data_part = name_index.at(part.name);

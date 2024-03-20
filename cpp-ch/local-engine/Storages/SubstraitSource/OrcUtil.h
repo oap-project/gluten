@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 #pragma once
-#include <Processors/Formats/Impl/ArrowColumnToCHColumn.h>
 #include <Processors/Formats/Impl/ORCBlockInputFormat.h>
 
 /// there are destructor not be overrided warnings in orc lib, ignore them

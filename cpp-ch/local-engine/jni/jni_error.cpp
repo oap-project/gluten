@@ -18,9 +18,7 @@
 #include <jni.h>
 #include <jni/jni_common.h>
 #include <jni/jni_error.h>
-#include <Poco/Logger.h>
 #include <Common/Exception.h>
-#include <Common/logger_useful.h>
 
 namespace local_engine
 {
@@ -35,25 +33,15 @@ void JniErrorsGlobalState::destroy(JNIEnv * env)
     if (env)
     {
         if (io_exception_class)
-        {
             env->DeleteGlobalRef(io_exception_class);
-        }
         if (runtime_exception_class)
-        {
             env->DeleteGlobalRef(runtime_exception_class);
-        }
         if (unsupportedoperation_exception_class)
-        {
             env->DeleteGlobalRef(unsupportedoperation_exception_class);
-        }
         if (illegal_access_exception_class)
-        {
             env->DeleteGlobalRef(illegal_access_exception_class);
-        }
         if (illegal_argument_exception_class)
-        {
             env->DeleteGlobalRef(illegal_argument_exception_class);
-        }
     }
 }
 

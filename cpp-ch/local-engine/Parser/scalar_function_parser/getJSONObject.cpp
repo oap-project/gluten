@@ -15,16 +15,15 @@
  * limitations under the License.
  */
 #include <Parser/FunctionParser.h>
-#include <Poco/Logger.h>
+#include <Rewriter/ExpressionRewriter.h>
 #include <Common/Exception.h>
 #include <Common/logger_useful.h>
-#include <Rewriter/ExpressionRewriter.h>
 
 namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int BAD_ARGUMENTS;
+extern const int BAD_ARGUMENTS;
 }
 }
 
@@ -37,10 +36,11 @@ class GetJSONObjectParser : public FunctionParser
 public:
     static constexpr auto name = "get_json_object";
 
-    explicit GetJSONObjectParser(SerializedPlanParser * plan_parser_): FunctionParser(plan_parser_) {}
+    explicit GetJSONObjectParser(SerializedPlanParser * plan_parser_) : FunctionParser(plan_parser_) { }
     ~GetJSONObjectParser() override = default;
 
     String getName() const override { return name; }
+
 protected:
     String getCHFunctionName(const substrait::Expression_ScalarFunction & scalar_function) const override
     {
@@ -61,9 +61,7 @@ protected:
     {
         const auto & args = substrait_func.arguments();
         if (args.size() != 2)
-        {
             throw DB::Exception(DB::ErrorCodes::BAD_ARGUMENTS, "Function {} requires 2 arguments", ch_func_name);
-        }
         if (args[0].value().has_scalar_function()
             && args[0].value().scalar_function().function_reference() == SelfDefinedFunctionReference::GET_JSON_OBJECT)
         {
@@ -74,7 +72,8 @@ protected:
                 const auto flatten_function_pb = args[0].value().scalar_function();
                 const auto * flatten_arg0 = parseExpression(actions_dag, flatten_function_pb.arguments(0).value());
                 const auto * flatten_arg1 = parseExpression(actions_dag, flatten_function_pb.arguments(1).value());
-                flatten_json_column_node = toFunctionNode(actions_dag, FlattenJSONStringOnRequiredFunction::name, flatten_json_column_name, {flatten_arg0, flatten_arg1});
+                flatten_json_column_node = toFunctionNode(
+                    actions_dag, FlattenJSONStringOnRequiredFunction::name, flatten_json_column_name, {flatten_arg0, flatten_arg1});
                 actions_dag->addOrReplaceInOutputs(*flatten_json_column_node);
             }
             return {flatten_json_column_node, parseExpression(actions_dag, args[1].value())};
@@ -86,10 +85,7 @@ protected:
     }
 
 private:
-    static String getFlatterJsonColumnName(const substrait::Expression & arg)
-    {
-        return arg.ShortDebugString();
-    }
+    static String getFlatterJsonColumnName(const substrait::Expression & arg) { return arg.ShortDebugString(); }
 };
 
 static FunctionParserRegister<GetJSONObjectParser> register_get_json_object_parser;

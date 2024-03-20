@@ -20,14 +20,12 @@
 #include <DataTypes/DataTypeAggregateFunction.h>
 #include <DataTypes/DataTypeArray.h>
 #include <DataTypes/DataTypeDate32.h>
-#include <DataTypes/DataTypeDateTime.h>
 #include <DataTypes/DataTypeDateTime64.h>
 #include <DataTypes/DataTypeFactory.h>
 #include <DataTypes/DataTypeFixedString.h>
 #include <DataTypes/DataTypeMap.h>
 #include <DataTypes/DataTypeNothing.h>
 #include <DataTypes/DataTypeNullable.h>
-#include <DataTypes/DataTypeSet.h>
 #include <DataTypes/DataTypeString.h>
 #include <DataTypes/DataTypeTuple.h>
 #include <DataTypes/DataTypesDecimal.h>
@@ -258,9 +256,7 @@ DB::Block TypeParser::buildBlockFromNamedStruct(const substrait::NamedStruct & s
         auto ch_type = parseType(substrait_type, &field_names);
 
         if (low_card_columns.contains(name))
-        {
             ch_type = std::make_shared<DB::DataTypeLowCardinality>(ch_type);
-        }
 
         // This is a partial aggregate data column.
         // It's type is special, must be a struct type contains all arguments types.
@@ -281,8 +277,8 @@ DB::Block TypeParser::buildBlockFromNamedStruct(const substrait::NamedStruct & s
             auto agg_function_name = function_parser->getCHFunctionName(args_types);
             auto action = NullsAction::EMPTY;
             ch_type = AggregateFunctionFactory::instance()
-                      .get(agg_function_name, action, args_types, function_parser->getDefaultFunctionParameters(), properties)
-                      ->getStateType();
+                          .get(agg_function_name, action, args_types, function_parser->getDefaultFunctionParameters(), properties)
+                          ->getStateType();
         }
 
         internal_cols.push_back(ColumnWithTypeAndName(ch_type, name));

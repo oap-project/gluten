@@ -15,10 +15,8 @@
  * limitations under the License.
  */
 #include "CustomStorageMergeTree.h"
-
-
-#include <Storages/MergeTree/DataPartStorageOnDiskFull.h>
 #include <Interpreters/MergeTreeTransaction.h>
+#include <Storages/MergeTree/DataPartStorageOnDiskFull.h>
 #include <Storages/MergeTree/checkDataPart.h>
 
 namespace DB
@@ -56,7 +54,7 @@ void CustomStorageMergeTree::wrapRangesInDataParts(DB::ReadFromMergeTree & sourc
             const size_t end = std::min(range.end, std::get<1>(expected_range));
             // [1, 1) or [5, 2) are invalid.
             if (begin >= end)
-                continue ;
+                continue;
             MarkRange final_range(begin, end);
             final_ranges.emplace_back(final_range);
         }
@@ -79,14 +77,14 @@ CustomStorageMergeTree::CustomStorageMergeTree(
     std::unique_ptr<MergeTreeSettings> storage_settings_,
     bool /*has_force_restore_data_flag*/)
     : MergeTreeData(
-          table_id_,
-          metadata_,
-          context_,
-          date_column_name,
-          merging_params_,
-          std::move(storage_settings_),
-          false, /// require_part_metadata
-          attach ? LoadingStrictnessLevel::ATTACH : LoadingStrictnessLevel::FORCE_RESTORE)
+        table_id_,
+        metadata_,
+        context_,
+        date_column_name,
+        merging_params_,
+        std::move(storage_settings_),
+        false, /// require_part_metadata
+        attach ? LoadingStrictnessLevel::ATTACH : LoadingStrictnessLevel::FORCE_RESTORE)
     , writer(*this)
     , reader(*this)
 {
@@ -99,7 +97,7 @@ DataPartsVector CustomStorageMergeTree::loadDataPartsWithNames(std::unordered_se
 {
     DataPartsVector data_parts;
     const auto disk = getStoragePolicy()->getDisks().at(0);
-    for (const auto& name : parts)
+    for (const auto & name : parts)
     {
         const auto num = part_num.fetch_add(1);
         MergeTreePartInfo part_info = {"all", num, num, 0};
@@ -110,10 +108,7 @@ DataPartsVector CustomStorageMergeTree::loadDataPartsWithNames(std::unordered_se
 }
 
 MergeTreeData::LoadPartResult CustomStorageMergeTree::loadDataPart(
-    const MergeTreePartInfo & part_info,
-    const String & part_name,
-    const DiskPtr & part_disk_ptr,
-    MergeTreeDataPartState to_state)
+    const MergeTreePartInfo & part_info, const String & part_name, const DiskPtr & part_disk_ptr, MergeTreeDataPartState to_state)
 {
     LOG_TRACE(log, "Loading {} part {} from disk {}", magic_enum::enum_name(to_state), part_name, part_disk_ptr->getName());
 

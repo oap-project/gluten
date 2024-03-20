@@ -16,19 +16,15 @@
  */
 #pragma once
 #include <cstddef>
-#include <unordered_map>
 #include <Core/Block.h>
 #include <Interpreters/Aggregator.h>
 #include <Interpreters/Context.h>
 #include <Processors/Chunk.h>
 #include <Processors/IProcessor.h>
-#include <Processors/Port.h>
 #include <Processors/QueryPlan/IQueryPlanStep.h>
 #include <Processors/QueryPlan/ITransformingStep.h>
 #include <Processors/Transforms/AggregatingTransform.h>
-#include <QueryPipeline/SizeLimits.h>
 #include <Poco/Logger.h>
-#include <Common/logger_useful.h>
 #include <Common/AggregateUtil.h>
 
 namespace local_engine
@@ -40,11 +36,12 @@ class StreamingAggregatingTransform : public DB::IProcessor
 {
 public:
     using Status = DB::IProcessor::Status;
-    explicit StreamingAggregatingTransform(DB::ContextPtr context_, const DB::Block &header_, DB::AggregatingTransformParamsPtr params_);
+    explicit StreamingAggregatingTransform(DB::ContextPtr context_, const DB::Block & header_, DB::AggregatingTransformParamsPtr params_);
     ~StreamingAggregatingTransform() override;
     String getName() const override { return "StreamingAggregatingTransform"; }
     Status prepare() override;
     void work() override;
+
 private:
     DB::ContextPtr context;
     DB::Block header;
@@ -71,7 +68,7 @@ private:
     DB::Chunk input_chunk;
     DB::Chunk output_chunk;
     bool input_finished = false;
-    
+
     std::unique_ptr<AggregateDataBlockConverter> block_converter = nullptr;
     Poco::Logger * logger = &Poco::Logger::get("StreamingAggregatingTransform");
 
@@ -92,10 +89,7 @@ private:
 class StreamingAggregatingStep : public DB::ITransformingStep
 {
 public:
-    explicit StreamingAggregatingStep(
-        DB::ContextPtr context_,
-        const DB::DataStream & input_stream_,
-        DB::Aggregator::Params params_);
+    explicit StreamingAggregatingStep(DB::ContextPtr context_, const DB::DataStream & input_stream_, DB::Aggregator::Params params_);
     ~StreamingAggregatingStep() override = default;
 
     String getName() const override { return "StreamingAggregating"; }

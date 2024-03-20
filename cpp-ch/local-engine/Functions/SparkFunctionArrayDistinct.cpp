@@ -14,18 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <Functions/IFunction.h>
-#include <Functions/FunctionFactory.h>
-#include <Functions/FunctionHelpers.h>
-#include <DataTypes/DataTypeArray.h>
-#include <DataTypes/DataTypeNullable.h>
 #include <Columns/ColumnArray.h>
 #include <Columns/ColumnNullable.h>
 #include <Columns/ColumnString.h>
+#include <Columns/IColumn.h>
+#include <DataTypes/DataTypeArray.h>
+#include <Functions/FunctionFactory.h>
+#include <Functions/FunctionHelpers.h>
+#include <Functions/IFunction.h>
 #include <Common/HashTable/ClearableHashSet.h>
 #include <Common/SipHash.h>
 #include <Common/assert_cast.h>
-#include <Columns/IColumn.h>
 
 
 namespace DB
@@ -33,7 +32,7 @@ namespace DB
 
 namespace ErrorCodes
 {
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
 }
 
 
@@ -46,15 +45,9 @@ class FunctionArrayDistinctSpark : public IFunction
 public:
     static constexpr auto name = "arrayDistinctSpark";
 
-    static FunctionPtr create(ContextPtr)
-    {
-        return std::make_shared<FunctionArrayDistinctSpark>();
-    }
+    static FunctionPtr create(ContextPtr) { return std::make_shared<FunctionArrayDistinctSpark>(); }
 
-    String getName() const override
-    {
-        return name;
-    }
+    String getName() const override { return name; }
 
     bool isVariadic() const override { return false; }
 
@@ -68,13 +61,17 @@ public:
     {
         const DataTypeArray * array_type = checkAndGetDataType<DataTypeArray>(arguments[0].get());
         if (!array_type)
-            throw Exception(ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Argument for function {} must be array but it  has type {}.",
-                getName(), arguments[0]->getName());
+            throw Exception(
+                ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT,
+                "Argument for function {} must be array but it  has type {}.",
+                getName(),
+                arguments[0]->getName());
         /// difference: we can return Array(Nullable()) type
         return std::make_shared<DataTypeArray>(array_type->getNestedType());
     }
 
-    ColumnPtr executeImpl(const ColumnsWithTypeAndName & arguments, const DataTypePtr & result_type, size_t input_rows_count) const override;
+    ColumnPtr
+    executeImpl(const ColumnsWithTypeAndName & arguments, const DataTypePtr & result_type, size_t input_rows_count) const override;
 
 private:
     /// Initially allocate a piece of memory for 512 elements. NOTE: This is just a guess.
@@ -104,7 +101,8 @@ private:
 };
 
 
-ColumnPtr FunctionArrayDistinctSpark::executeImpl(const ColumnsWithTypeAndName & arguments, const DataTypePtr & result_type, size_t /*input_rows_count*/) const
+ColumnPtr FunctionArrayDistinctSpark::executeImpl(
+    const ColumnsWithTypeAndName & arguments, const DataTypePtr & result_type, size_t /*input_rows_count*/) const
 {
     ColumnPtr array_ptr = arguments[0].column;
     const ColumnArray * array = checkAndGetColumn<ColumnArray>(array_ptr.get());
@@ -125,25 +123,21 @@ ColumnPtr FunctionArrayDistinctSpark::executeImpl(const ColumnsWithTypeAndName &
     const IColumn * inner_col;
 
     if (nullable_col)
-    {
         inner_col = &nullable_col->getNestedColumn();
-    }
     else
-    {
         inner_col = &src_data;
-    }
 
     if (!(executeNumber<UInt8>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<UInt16>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<UInt32>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<UInt64>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<Int8>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<Int16>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<Int32>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<Int64>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<Float32>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeNumber<Float64>(*inner_col, offsets, res_data, res_offsets, nullable_col)
-        || executeString(*inner_col, offsets, res_data, res_offsets, nullable_col)))
+          || executeNumber<UInt16>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<UInt32>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<UInt64>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<Int8>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<Int16>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<Int32>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<Int64>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<Float32>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeNumber<Float64>(*inner_col, offsets, res_data, res_offsets, nullable_col)
+          || executeString(*inner_col, offsets, res_data, res_offsets, nullable_col)))
         executeHashed(*inner_col, offsets, res_data, res_offsets, nullable_col);
 
     return res_ptr;
@@ -160,9 +154,7 @@ bool FunctionArrayDistinctSpark::executeNumber(
     const ColumnVector<T> * src_data_concrete = checkAndGetColumn<ColumnVector<T>>(&src_data);
 
     if (!src_data_concrete)
-    {
         return false;
-    }
 
     const PaddedPODArray<T> & values = src_data_concrete->getData();
 
@@ -171,8 +163,7 @@ bool FunctionArrayDistinctSpark::executeNumber(
     if (nullable_col)
         src_null_map = &nullable_col->getNullMapData();
 
-    using Set = ClearableHashSetWithStackMemory<T, DefaultHash<T>,
-        INITIAL_SIZE_DEGREE>;
+    using Set = ClearableHashSetWithStackMemory<T, DefaultHash<T>, INITIAL_SIZE_DEGREE>;
 
     Set set;
 
@@ -223,8 +214,7 @@ bool FunctionArrayDistinctSpark::executeString(
     if (!src_data_concrete)
         return false;
 
-    using Set = ClearableHashSetWithStackMemory<StringRef, StringRefHash,
-        INITIAL_SIZE_DEGREE>;
+    using Set = ClearableHashSetWithStackMemory<StringRef, StringRefHash, INITIAL_SIZE_DEGREE>;
 
     const PaddedPODArray<UInt8> * src_null_map = nullptr;
 
@@ -277,8 +267,7 @@ void FunctionArrayDistinctSpark::executeHashed(
     ColumnArray::Offsets & res_offsets,
     const ColumnNullable * nullable_col)
 {
-    using Set = ClearableHashSetWithStackMemory<UInt128, UInt128TrivialHash,
-        INITIAL_SIZE_DEGREE>;
+    using Set = ClearableHashSetWithStackMemory<UInt128, UInt128TrivialHash, INITIAL_SIZE_DEGREE>;
 
     const PaddedPODArray<UInt8> * src_null_map = nullptr;
 

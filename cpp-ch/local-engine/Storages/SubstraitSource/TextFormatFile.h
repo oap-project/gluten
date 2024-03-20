@@ -16,8 +16,6 @@
  */
 #pragma once
 
-#include <memory>
-
 #include <Storages/SubstraitSource/FormatFile.h>
 
 namespace local_engine

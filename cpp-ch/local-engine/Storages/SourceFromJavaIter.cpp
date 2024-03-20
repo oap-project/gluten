@@ -16,24 +16,21 @@
  */
 #include "SourceFromJavaIter.h"
 #include <Columns/ColumnConst.h>
-#include <Columns/ColumnNullable.h>
 #include <Columns/ColumnMap.h>
+#include <Columns/ColumnNullable.h>
 #include <Columns/ColumnTuple.h>
 #include <Columns/IColumn.h>
-#include <Core/ColumnsWithTypeAndName.h>
-#include <DataTypes/DataTypesNumber.h>
-#include <Processors/Transforms/AggregatingTransform.h>
-#include <jni/jni_common.h>
-#include <Common/assert_cast.h>
-#include <Common/CHUtil.h>
-#include <Common/DebugUtils.h>
-#include <Common/Exception.h>
-#include <Common/JNIUtils.h>
 #include <DataTypes/DataTypeArray.h>
-#include <DataTypes/DataTypeTuple.h>
 #include <DataTypes/DataTypeMap.h>
 #include <DataTypes/DataTypeNullable.h>
+#include <DataTypes/DataTypeTuple.h>
+#include <DataTypes/DataTypesNumber.h>
 #include <DataTypes/IDataType.h>
+#include <Processors/Transforms/AggregatingTransform.h>
+#include <jni/jni_common.h>
+#include <Common/CHUtil.h>
+#include <Common/JNIUtils.h>
+#include <Common/assert_cast.h>
 
 namespace local_engine
 {
@@ -164,8 +161,9 @@ DB::ColumnPtr SourceFromJavaIter::convertNestedNullable(const DB::ColumnPtr & co
         const auto & map_type = assert_cast<const DB::DataTypeMap &>(*nested_target_type);
         auto tuple_columns = assert_cast<const DB::ColumnTuple *>(array_column.getDataPtr().get())->getColumns();
         // only convert for value column as key is always non-nullable
-        const auto & value_column = convertNestedNullable(tuple_columns[1],  map_type.getValueType());
-        auto result_column = DB::ColumnArray::create(DB::ColumnTuple::create(DB::Columns{tuple_columns[0], value_column}), array_column.getOffsetsPtr());
+        const auto & value_column = convertNestedNullable(tuple_columns[1], map_type.getValueType());
+        auto result_column
+            = DB::ColumnArray::create(DB::ColumnTuple::create(DB::Columns{tuple_columns[0], value_column}), array_column.getOffsetsPtr());
         return DB::ColumnMap::create(std::move(result_column));
     }
 

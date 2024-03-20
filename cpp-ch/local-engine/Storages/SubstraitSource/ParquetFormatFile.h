@@ -19,14 +19,10 @@
 #include "config.h"
 
 #if USE_PARQUET
-#include <memory>
-#include <DataTypes/DataTypeFixedString.h>
-#include <DataTypes/DataTypeString.h>
-#include <DataTypes/DataTypesNumber.h>
+
 #include <IO/ReadBuffer.h>
 #include <Storages/SubstraitSource/FormatFile.h>
 #include <parquet/metadata.h>
-#include <parquet/statistics.h>
 
 namespace local_engine
 {

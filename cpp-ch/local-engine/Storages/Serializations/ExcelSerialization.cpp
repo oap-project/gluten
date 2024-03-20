@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 #include "ExcelSerialization.h"
 #include <Columns/ColumnsNumber.h>
 #include <DataTypes/DataTypesDecimal.h>
@@ -31,7 +33,7 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int INCORRECT_DATA;
+extern const int INCORRECT_DATA;
 }
 }
 

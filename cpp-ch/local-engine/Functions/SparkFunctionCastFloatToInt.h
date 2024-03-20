@@ -14,16 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#pragma once
 
-#include <Common/NaNUtils.h>
-#include <DataTypes/IDataType.h>
+#include <Columns/ColumnNullable.h>
+#include <Columns/ColumnVector.h>
+#include <Columns/ColumnsNumber.h>
 #include <DataTypes/DataTypeNullable.h>
 #include <DataTypes/DataTypesNumber.h>
-#include <Functions/IFunction.h>
+#include <DataTypes/IDataType.h>
 #include <Functions/FunctionFactory.h>
-#include <Columns/ColumnsNumber.h>
-#include <Columns/ColumnVector.h>
-#include <Columns/ColumnNullable.h>
+#include <Functions/IFunction.h>
+#include <Common/NaNUtils.h>
 
 using namespace DB;
 
@@ -31,9 +32,9 @@ namespace DB
 {
 namespace ErrorCodes
 {
-    extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
-    extern const int ILLEGAL_TYPE_OF_ARGUMENT;
-    extern const int TYPE_MISMATCH;
+extern const int NUMBER_OF_ARGUMENTS_DOESNT_MATCH;
+extern const int ILLEGAL_TYPE_OF_ARGUMENT;
+extern const int TYPE_MISMATCH;
 }
 }
 
@@ -56,9 +57,7 @@ public:
     DB::DataTypePtr getReturnTypeImpl(const DB::DataTypes &) const override
     {
         if constexpr (std::is_integral_v<T>)
-        {
             return DB::makeNullable(std::make_shared<const DB::DataTypeNumber<T>>());
-        }
         else
             throw DB::Exception(DB::ErrorCodes::TYPE_MISMATCH, "Function {}'s return type should be Int", name);
     }
@@ -67,25 +66,23 @@ public:
     {
         if (arguments.size() != 1)
             throw DB::Exception(DB::ErrorCodes::NUMBER_OF_ARGUMENTS_DOESNT_MATCH, "Function {}'s arguments number must be 1", name);
-        
+
         if (!isFloat(removeNullable(arguments[0].type)))
             throw DB::Exception(DB::ErrorCodes::ILLEGAL_TYPE_OF_ARGUMENT, "Function {}'s 1st argument must be float type", name);
-        
+
         DB::ColumnPtr src_col = arguments[0].column;
         size_t size = src_col->size();
 
         auto res_col = DB::ColumnVector<T>::create(size);
         auto null_map_col = DB::ColumnUInt8::create(size, 0);
 
-        switch(removeNullable(arguments[0].type)->getTypeId())
+        switch (removeNullable(arguments[0].type)->getTypeId())
         {
-            case DB::TypeIndex::Float32:
-            {
+            case DB::TypeIndex::Float32: {
                 executeInternal<Float32>(src_col, res_col->getData(), null_map_col->getData());
                 break;
             }
-            case DB::TypeIndex::Float64:
-            {
+            case DB::TypeIndex::Float64: {
                 executeInternal<Float64>(src_col, res_col->getData(), null_map_col->getData());
                 break;
             }
@@ -109,7 +106,6 @@ public:
                 data[i] = static_cast<T>(element);
         }
     }
-
 };
 
 }

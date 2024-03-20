@@ -18,15 +18,11 @@
 #include <memory>
 #include <Columns/IColumn.h>
 #include <Core/Block.h>
-#include <Storages/IO/NativeWriter.h>
-#include <Functions/IFunction.h>
-#include <IO/WriteBufferFromFile.h>
 #include <Shuffle/SelectorBuilder.h>
-#include <Common/PODArray.h>
-#include <Common/PODArray_fwd.h>
-#include <base/types.h>
 #include <Shuffle/ShuffleWriterBase.h>
 #include <Storages/IO/CompressedWriteBuffer.h>
+#include <Storages/IO/NativeWriter.h>
+#include <base/types.h>
 
 
 namespace local_engine
@@ -84,25 +80,24 @@ using ColumnsBufferPtr = std::shared_ptr<ColumnsBuffer>;
 
 struct SplitResult
 {
-    UInt64 total_compute_pid_time = 0;           // Total nanoseconds to compute partition id
-    UInt64 total_write_time = 0;                 // Total nanoseconds to write data to local/celeborn, including the time writing to buffer
-    UInt64 total_spill_time = 0;                 // Total nanoseconds to execute PartitionWriter::evictPartitions
-    UInt64 total_compress_time = 0;              // Total nanoseconds to execute compression before writing data to local/celeborn
-    UInt64 total_bytes_written = 0;              // Sum of partition_length
-    UInt64 total_bytes_spilled = 0;              // Total bytes of blocks spilled to local/celeborn before serialization and compression
-    std::vector<UInt64> partition_lengths;        // Total written bytes of each partition after serialization and compression
-    std::vector<UInt64> raw_partition_lengths;    // Total written bytes of each partition after serialization
-    UInt64 total_split_time = 0;                 // Total nanoseconds to execute CachedShuffleWriter::split, excluding total_compute_pid_time
-    UInt64 total_io_time = 0;                    // Total nanoseconds to write data to local/celeborn, excluding the time writing to buffer
-    UInt64 total_serialize_time = 0;             // Total nanoseconds to execute spill_to_file/spill_to_celeborn. Bad naming, it works not as the name suggests.
+    UInt64 total_compute_pid_time = 0; // Total nanoseconds to compute partition id
+    UInt64 total_write_time = 0; // Total nanoseconds to write data to local/celeborn, including the time writing to buffer
+    UInt64 total_spill_time = 0; // Total nanoseconds to execute PartitionWriter::evictPartitions
+    UInt64 total_compress_time = 0; // Total nanoseconds to execute compression before writing data to local/celeborn
+    UInt64 total_bytes_written = 0; // Sum of partition_length
+    UInt64 total_bytes_spilled = 0; // Total bytes of blocks spilled to local/celeborn before serialization and compression
+    std::vector<UInt64> partition_lengths; // Total written bytes of each partition after serialization and compression
+    std::vector<UInt64> raw_partition_lengths; // Total written bytes of each partition after serialization
+    UInt64 total_split_time = 0; // Total nanoseconds to execute CachedShuffleWriter::split, excluding total_compute_pid_time
+    UInt64 total_io_time = 0; // Total nanoseconds to write data to local/celeborn, excluding the time writing to buffer
+    UInt64 total_serialize_time
+        = 0; // Total nanoseconds to execute spill_to_file/spill_to_celeborn. Bad naming, it works not as the name suggests.
 
     String toString() const
     {
         std::ostringstream oss;
 
-        auto to_seconds = [](UInt64 nanoseconds) -> double {
-            return static_cast<double>(nanoseconds) / 1000000000ULL;
-        };
+        auto to_seconds = [](UInt64 nanoseconds) -> double { return static_cast<double>(nanoseconds) / 1000000000ULL; };
 
         oss << "compute_pid_time(s):" << to_seconds(total_compute_pid_time) << " split_time(s):" << to_seconds(total_split_time)
             << " spill time(s):" << to_seconds(total_spill_time) << " serialize_time(s):" << to_seconds(total_serialize_time)
@@ -118,7 +113,7 @@ using ShuffleSplitterPtr = std::unique_ptr<ShuffleSplitter>;
 class ShuffleSplitter : public ShuffleWriterBase
 {
 public:
-    inline const static std::vector<std::string> compress_methods =  {"", "ZSTD", "LZ4"};
+    inline const static std::vector<std::string> compress_methods = {"", "ZSTD", "LZ4"};
 
     static ShuffleSplitterPtr create(const std::string & short_name, const SplitOptions & options_);
 

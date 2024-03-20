@@ -16,7 +16,6 @@
  */
 #pragma once
 
-#include <mutex>
 #include <unordered_map>
 
 namespace local_engine
@@ -36,9 +35,7 @@ public:
         std::lock_guard lock{mutex};
         auto it = map.find(key);
         if (it == map.end())
-        {
             return nullptr;
-        }
         return it->second;
     }
 

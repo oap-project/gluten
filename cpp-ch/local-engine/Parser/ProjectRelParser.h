@@ -19,7 +19,6 @@
 #include <Core/SortDescription.h>
 #include <Parser/RelParser.h>
 #include <Poco/Logger.h>
-#include <Common/logger_useful.h>
 
 namespace local_engine
 {
@@ -30,7 +29,7 @@ public:
     {
         ActionsDAGPtr before_array_join; /// Optional
         ActionsDAGPtr array_join;
-        ActionsDAGPtr after_array_join;  /// Optional
+        ActionsDAGPtr after_array_join; /// Optional
     };
 
     explicit ProjectRelParser(SerializedPlanParser * plan_paser_);
