@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
-  "builtin-baseline": "fba75d09065fcc76a25dcf386b1d00d33f5175af",
+  "builtin-baseline": "a7b6122f6b6504d16d96117336a0562693579933",
   "dependencies": ["jemalloc"],
   "default-features": ["velox", "velox-s3", "velox-gcs", "velox-hdfs", "velox-abfs", "duckdb"],
   "features": {
