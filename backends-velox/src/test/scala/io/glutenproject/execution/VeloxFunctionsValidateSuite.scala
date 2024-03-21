@@ -449,11 +449,19 @@ class VeloxFunctionsValidateSuite extends VeloxWholeStageTransformerSuite {
                          | from lineitem limit 100""".stripMargin) {
       checkOperatorMatch[ProjectExecTransformer]
     }
+    runQueryAndCompare("""SELECT monotonically_increasing_id()
+                         | from lineitem limit 100""".stripMargin) {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
   }
 
   test("Test spark_partition_id function") {
     runQueryAndCompare("""SELECT spark_partition_id(), l_orderkey
                          | from lineitem limit 100""".stripMargin) {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+    runQueryAndCompare("""SELECT spark_partition_id()
+                         |from lineitem limit 100""".stripMargin) {
       checkOperatorMatch[ProjectExecTransformer]
     }
   }
