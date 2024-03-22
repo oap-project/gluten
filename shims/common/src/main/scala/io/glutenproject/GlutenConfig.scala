@@ -252,11 +252,11 @@ class GlutenConfig(conf: SQLConf) extends Logging {
 
   def veloxSpillFileSystem: String = conf.getConf(COLUMNAR_VELOX_SPILL_FILE_SYSTEM)
 
-  def veloxMaxSpillFileSize: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_RUN_ROWS)
+  def veloxMaxSpillRunRows: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_RUN_ROWS)
 
-  def veloxMaxSpillFileSize: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_BYTES)
+  def veloxMaxSpillBytes: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_BYTES)
 
-  def veloxMaxSpillFileSize: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_WRITE_BUFFER_SIZE)
+  def veloxMaxWriteBufferSize: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_WRITE_BUFFER_SIZE)
 
   def veloxBloomFilterExpectedNumItems: Long =
     conf.getConf(COLUMNAR_VELOX_BLOOM_FILTER_EXPECTED_NUM_ITEMS)
