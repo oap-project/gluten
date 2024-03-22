@@ -252,6 +252,12 @@ class GlutenConfig(conf: SQLConf) extends Logging {
 
   def veloxSpillFileSystem: String = conf.getConf(COLUMNAR_VELOX_SPILL_FILE_SYSTEM)
 
+  def veloxMaxSpillFileSize: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_RUN_ROWS)
+
+  def veloxMaxSpillFileSize: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_BYTES)
+
+  def veloxMaxSpillFileSize: Long = conf.getConf(COLUMNAR_VELOX_MAX_SPILL_WRITE_BUFFER_SIZE)
+
   def veloxBloomFilterExpectedNumItems: Long =
     conf.getConf(COLUMNAR_VELOX_BLOOM_FILTER_EXPECTED_NUM_ITEMS)
 
@@ -1244,6 +1250,27 @@ object GlutenConfig {
       .stringConf
       .checkValues(Set("local", "heap-over-local"))
       .createWithDefaultString("local")
+
+  val COLUMNAR_VELOX_MAX_SPILL_RUN_ROWS =
+    buildConf("spark.gluten.sql.columnar.backend.velox.MaxSpillRunRows")
+      .internal()
+      .doc("The maximum row size of a single spill run")
+      .bytesConf(ByteUnit.BYTE)
+      .createWithDefaultString("12M")
+
+  val COLUMNAR_VELOX_MAX_SPILL_BYTES =
+    buildConf("spark.gluten.sql.columnar.backend.velox.MaxSpillBytes")
+      .internal()
+      .doc("The maximum file size of a query")
+      .bytesConf(ByteUnit.BYTE)
+      .createWithDefaultString("100G")
+
+  val COLUMNAR_VELOX_MAX_SPILL_WRITE_BUFFER_SIZE =
+    buildConf("spark.gluten.sql.columnar.backend.velox.spillWriteBufferSize")
+      .internal()
+      .doc("The maximum write buffer size")
+      .bytesConf(ByteUnit.BYTE)
+      .createWithDefaultString("4M")
 
   val MAX_PARTITION_PER_WRITERS_SESSION =
     buildConf("spark.gluten.sql.columnar.backend.velox.maxPartitionsPerWritersSession")
