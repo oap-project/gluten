@@ -55,6 +55,8 @@
     <project.prefix>spark-sql-columnar</project.prefix>
     <jar.assembly.name.prefix>gluten</jar.assembly.name.prefix>
     <os-maven-plugin.version>1.5.0.Final</os-maven-plugin.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
     <!-- To build built-in backend c++ codes -->
     <scala.recompile.mode>all</scala.recompile.mode>
     <!-- For unit tests -->
@@ -250,6 +252,30 @@
       <modules>
         <module>gluten-ut</module>
       </modules>
+    </profile>
+    <profile>
+      <id>java-8</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+      </properties>
+    </profile>
+    <profile>
+      <id>java-11</id>
+      <properties>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+      </properties>
+    </profile>
+    <profile>
+      <id>java-17</id>
+      <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+      </properties>
     </profile>
   </profiles>
 
@@ -545,8 +571,6 @@
           <artifactId>maven-compiler-plugin</artifactId>
           <version>${maven.compiler.plugin}</version>
           <configuration>
-            <source>1.8</source>
-            <target>1.8</target>
             <encoding>UTF-8</encoding>
             <maxmem>1024m</maxmem>
             <fork>true</fork>
