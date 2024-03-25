@@ -1,0 +1,32 @@
+diff --git a/cpp/cmake_modules/ThirdpartyToolchain.cmake b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+index 94f926039..f7ebf9233 100644
+--- a/cpp/cmake_modules/ThirdpartyToolchain.cmake
++++ b/cpp/cmake_modules/ThirdpartyToolchain.cmake
+@@ -2501,13 +2501,9 @@ if(ARROW_WITH_ZSTD)
+   if(ZSTD_VENDORED)
+     set(ARROW_ZSTD_LIBZSTD zstd::libzstd_static)
+   else()
+-    if(ARROW_ZSTD_USE_SHARED)
+-      set(ARROW_ZSTD_LIBZSTD zstd::libzstd_shared)
+-    else()
+-      set(ARROW_ZSTD_LIBZSTD zstd::libzstd_static)
+-    endif()
++    set(ARROW_ZSTD_LIBZSTD zstd::libzstd_shared)
+     if(NOT TARGET ${ARROW_ZSTD_LIBZSTD})
+-      message(FATAL_ERROR "Zstandard target doesn't exist: ${ARROW_ZSTD_LIBZSTD}")
++      set(ARROW_ZSTD_LIBZSTD zstd::libzstd_static)
+     endif()
+     message(STATUS "Found Zstandard: ${ARROW_ZSTD_LIBZSTD}")
+   endif()
+diff --git a/cpp/src/arrow/c/helpers.h b/cpp/src/arrow/c/helpers.h
+index a24f272fe..e25f78c85 100644
+--- a/cpp/src/arrow/c/helpers.h
++++ b/cpp/src/arrow/c/helpers.h
+@@ -17,6 +17,7 @@
+ 
+ #pragma once
+ 
++#include <cassert>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
