@@ -914,6 +914,23 @@ JNIEXPORT jlong JNICALL Java_io_glutenproject_vectorized_ShuffleWriterJniWrapper
         std::move(partitionWriterOptions),
         memoryManager->getArrowMemoryPool(),
         std::move(celebornClient));
+  } else if (partitionWriterType == "uniffle") {
+    jclass unifflePartitionPusherClass =
+        createGlobalClassReferenceOrError(env, "Lorg/apache/spark/shuffle/writer/PartitionPusher;");
+    jmethodID unifflePushPartitionDataMethod =
+        getMethodIdOrError(env, unifflePartitionPusherClass, "pushPartitionData", "(I[BI)I");
+    JavaVM* vm;
+    if (env->GetJavaVM(&vm) != JNI_OK) {
+      throw gluten::GlutenException("Unable to get JavaVM instance");
+    }
+    // rename CelebornClient RssClient
+    std::shared_ptr<CelebornClient> uniffleClient =
+        std::make_shared<CelebornClient>(vm, partitionPusher, unifflePushPartitionDataMethod);
+    partitionWriter = std::make_unique<CelebornPartitionWriter>(
+        numPartitions,
+        std::move(partitionWriterOptions),
+        memoryManager->getArrowMemoryPool(),
+        std::move(uniffleClient));
   } else {
     throw gluten::GlutenException("Unrecognizable partition writer type: " + partitionWriterType);
   }

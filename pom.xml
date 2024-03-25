@@ -51,6 +51,7 @@
     <sparkshim.artifactId>spark-sql-columnar-shims-spark32</sparkshim.artifactId>
     <celeborn.version>0.3.2-incubating</celeborn.version>
     <arrow.version>14.0.1</arrow.version>
+    <uniffle.version>0.8.0</uniffle.version>
     <arrow-memory.artifact>arrow-memory-unsafe</arrow-memory.artifact>
     <hadoop.version>2.7.4</hadoop.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -234,6 +235,15 @@
       </activation>
       <modules>
         <module>gluten-celeborn</module>
+      </modules>
+    </profile>
+    <profile>
+      <id>rss-uniffle</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <modules>
+        <module>gluten-uniffle</module>
       </modules>
     </profile>
     <profile>

@@ -33,7 +33,7 @@ static constexpr double kDefaultBufferReallocThreshold = 0.25;
 static constexpr double kDefaultMergeBufferThreshold = 0.25;
 static constexpr bool kEnableBufferedWrite = true;
 
-enum PartitionWriterType { kLocal, kCeleborn };
+enum PartitionWriterType { kLocal, kCeleborn, kUniffle };
 
 struct ShuffleReaderOptions {
   arrow::Compression::type compressionType = arrow::Compression::type::LZ4_FRAME;
