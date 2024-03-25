@@ -519,6 +519,13 @@ class VeloxFunctionsValidateSuite extends VeloxWholeStageTransformerSuite {
     }
   }
 
+  test("Test input_file_name function") {
+    spark.sparkContext.setLogLevel("info")
+    runQueryAndCompare("""SELECT input_file_name() from lineitem limit 100""".stripMargin, false) {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+  }
+
   test("regexp_replace") {
     runQueryAndCompare(
       "SELECT regexp_replace(c_comment, '\\w', 'something') FROM customer limit 50") {
