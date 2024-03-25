@@ -1,0 +1,14 @@
+FROM centos:7
+
+RUN yum install -y git patch wget sudo
+
+# build
+RUN git clone --depth=1 -b wip_static_packaging_refine  https://github.com/zhouyuan/gluten /opt/gluten
+
+RUN echo "check_certificate = off" >> ~/.wgetrc
+# deps
+RUN cd /opt/gluten && bash ./dev/vcpkg/setup-build-depends.sh
+
+# vcpkg env
+ENV VCPKG_BINARY_SOURCES=clear;files,/var/cache/vcpkg,readwrite
+RUN source /opt/rh/devtoolset-9/enable && cd /opt/gluten && source dev/vcpkg/env.sh

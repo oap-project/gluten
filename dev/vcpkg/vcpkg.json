@@ -24,6 +24,10 @@
         "libdwarf",
         "fmt",
         {
+          "name": "arrow",
+          "version>=": "15.0.0"
+        },
+        {
           "name": "folly",
           "features": ["zstd", "lz4", "lzma", "snappy"]
         },
