@@ -1020,7 +1020,7 @@ JNIEXPORT jlong Java_org_apache_spark_sql_execution_datasources_CHDatasourceJniW
         local_engine::SerializedPlanParser::parseExtensionTable(split_info_str);
 
     auto storage = local_engine::MergeTreeRelParser::parseStorage(
-        plan_ptr->relations()[0].root().input(), extension_table, local_engine::SerializedPlanParser::global_context);
+        extension_table, local_engine::SerializedPlanParser::global_context);
     auto uuid = uuid_str + "_" + task_id;
     auto * writer = new local_engine::SparkMergeTreeWriter(
         *storage, storage->getInMemoryMetadataPtr(), local_engine::SerializedPlanParser::global_context, uuid, partition_dir, bucket_dir);

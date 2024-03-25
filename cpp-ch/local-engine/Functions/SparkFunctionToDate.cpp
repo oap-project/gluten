@@ -53,7 +53,7 @@ public:
     bool isVariadic() const override { return true; }
     bool useDefaultImplementationForConstants() const override { return true; }
 
-    bool checkAndGetDate32(DB::ReadBuffer & buf, DB::DataTypeDate32::FieldType &x, const DateLUTImpl & date_lut) const
+    bool checkAndGetDate32(DB::ReadBuffer & buf, DB::DataTypeDate32::FieldType &x, const DateLUTImpl & date_lut, UInt8 & can_be_parsed) const
     {
         auto checkNumbericASCII = [&](DB::ReadBuffer & rb, size_t start, size_t length) -> bool
         {
@@ -73,12 +73,16 @@ public:
             else
                 return true;
         };
-        if (!checkNumbericASCII(buf, 0, 4) 
-            || !checkDelimiter(buf, 4) 
+        bool yearIsNumberic = checkNumbericASCII(buf, 0, 4);
+        if (!yearIsNumberic
+            || !checkDelimiter(buf, 4)
             || !checkNumbericASCII(buf, 5, 2)
             || !checkDelimiter(buf, 7) 
             || !checkNumbericASCII(buf, 8, 2))
+        {
+            can_be_parsed = yearIsNumberic;
             return false;
+        }
         else
         {
             UInt8 month = (*(buf.position() + 5) - '0') * 10 + (*(buf.position() + 6) - '0');
@@ -157,12 +161,18 @@ public:
                     null_container[i] = true;
                     continue;
                 }
-                if (!checkAndGetDate32(buf, result_container[i], *local_time_zone))
+                UInt8 can_be_parsed = 1;
+                if (!checkAndGetDate32(buf, result_container[i], *local_time_zone, can_be_parsed))
                 {
-                    time_t tmp = 0;
-                    bool parsed = tryParseDateTimeBestEffort(tmp, buf, *local_time_zone, *utc_time_zone);
-                    result_container[i] = local_time_zone->toDayNum<time_t>(tmp);
-                    null_container[i] = !parsed;
+                    if (!can_be_parsed)
+                        null_container[i] = true;
+                    else
+                    {
+                        time_t tmp = 0;
+                        bool parsed = tryParseDateTimeBestEffort(tmp, buf, *local_time_zone, *utc_time_zone);
+                        result_container[i] = local_time_zone->toDayNum<time_t>(tmp);
+                        null_container[i] = !parsed;
+                    }
                 }
             }
         }

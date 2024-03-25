@@ -124,6 +124,7 @@ public:
 };
 
 void registerAllFunctions();
+void registerGlutenDisks();
 
 class BackendFinalizerUtil;
 class JNIUtils;

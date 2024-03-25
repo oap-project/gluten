@@ -301,7 +301,7 @@ void ColumnsBuffer::appendSelective(
         accumulated_columns.reserve(source.columns());
         for (size_t i = 0; i < source.columns(); i++)
         {
-            auto column = source.getColumns()[i]->convertToFullColumnIfConst()->convertToFullIfNeeded()->cloneEmpty();
+            auto column = source.getColumns()[i]->convertToFullIfNeeded()->cloneEmpty();
             column->reserve(prefer_buffer_size);
             accumulated_columns.emplace_back(std::move(column));
         }

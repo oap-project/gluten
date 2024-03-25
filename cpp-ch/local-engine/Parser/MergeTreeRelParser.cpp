@@ -23,6 +23,7 @@
 #include <Storages/StorageMergeTreeFactory.h>
 #include <Common/CHUtil.h>
 #include <Common/MergeTreeTool.h>
+#include <Storages/Mergetree/MetaDataHelper.h>
 
 #include "MergeTreeRelParser.h"
 
@@ -61,17 +62,14 @@ static Int64 findMinPosition(const NameSet & condition_table_columns, const Name
 }
 
 CustomStorageMergeTreePtr MergeTreeRelParser::parseStorage(
-    const substrait::Rel & rel_,
     const substrait::ReadRel::ExtensionTable & extension_table,
     ContextMutablePtr context)
 {
-    const auto & rel = rel_.read();
     google::protobuf::StringValue table;
     table.ParseFromString(extension_table.detail().value());
     auto merge_tree_table = local_engine::parseMergeTreeTableString(table.value());
     DB::Block header;
-    chassert(rel.has_base_schema());
-    header = TypeParser::buildBlockFromNamedStruct(rel.base_schema(), merge_tree_table.low_card_key);
+    header = TypeParser::buildBlockFromNamedStruct(merge_tree_table.schema, merge_tree_table.low_card_key);
     auto names_and_types_list = header.getNamesAndTypesList();
     auto storage_factory = StorageMergeTreeFactory::instance();
     auto metadata = buildMetaData(names_and_types_list, context, merge_tree_table);
@@ -89,8 +87,7 @@ CustomStorageMergeTreePtr MergeTreeRelParser::parseStorage(
                 context,
                 "",
                 MergeTreeData::MergingParams(),
-                buildMergeTreeSettings());
-            custom_storage_merge_tree->loadDataParts(false, std::nullopt);
+                buildMergeTreeSettings(merge_tree_table.table_configs));
             return custom_storage_merge_tree;
         });
     return storage;
@@ -137,13 +134,13 @@ MergeTreeRelParser::parseReadRel(
                 global_context,
                 "",
                 MergeTreeData::MergingParams(),
-                buildMergeTreeSettings());
+                buildMergeTreeSettings(merge_tree_table.table_configs));
             return custom_storage_merge_tree;
         });
 
+    restoreMetaData(storage, merge_tree_table, context);
     for (const auto & [name, sizes] : storage->getColumnSizes())
         column_sizes[name] = sizes.data_compressed;
-
     query_context.storage_snapshot = std::make_shared<StorageSnapshot>(*storage, metadata);
     query_context.custom_storage_merge_tree = storage;
     auto names_and_types_list = input.getNamesAndTypesList();

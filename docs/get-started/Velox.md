@@ -345,16 +345,13 @@ Using the following configuration options to customize spilling:
 | spark.gluten.sql.columnar.backend.velox.aggregationSpillEnabled          | true          | Whether spill is enabled on aggregations                                                                                                                                          |
 | spark.gluten.sql.columnar.backend.velox.joinSpillEnabled                 | true          | Whether spill is enabled on joins                                                                                                                                                 |
 | spark.gluten.sql.columnar.backend.velox.orderBySpillEnabled              | true          | Whether spill is enabled on sorts                                                                                                                                                 |
-| spark.gluten.sql.columnar.backend.velox.aggregationSpillMemoryThreshold  | 0             | Memory limit before spilling to disk for aggregations, per Spark task. Unit: byte                                                                                                 |
-| spark.gluten.sql.columnar.backend.velox.joinSpillMemoryThreshold         | 0             | Memory limit before spilling to disk for joins, per Spark task. Unit: byte                                                                                                        |
-| spark.gluten.sql.columnar.backend.velox.orderBySpillMemoryThreshold      | 0             | Memory limit before spilling to disk for sorts, per Spark task. Unit: byte                                                                                                        |
 | spark.gluten.sql.columnar.backend.velox.maxSpillLevel                    | 4             | The max allowed spilling level with zero being the initial spilling level                                                                                                         |
 | spark.gluten.sql.columnar.backend.velox.maxSpillFileSize                 | 20MB          | The max allowed spill file size. If it is zero, then there is no limit                                                                                                            |
 | spark.gluten.sql.columnar.backend.velox.minSpillRunSize                  | 268435456     | The min spill run size limit used to select partitions for spilling                                                                                                               |
 | spark.gluten.sql.columnar.backend.velox.spillStartPartitionBit           | 29            | The start partition bit which is used with 'spillPartitionBits' together to calculate the spilling partition number                                                               |
 | spark.gluten.sql.columnar.backend.velox.spillPartitionBits               | 2             | The number of bits used to calculate the spilling partition number. The number of spilling partitions will be power of two                                                        |
 | spark.gluten.sql.columnar.backend.velox.spillableReservationGrowthPct    | 25            | The spillable memory reservation growth percentage of the previous memory reservation size                                                                                        |
-
+| spark.gluten.sql.columnar.backend.velox.spillThreadNum                   | 0             | (Experimental) The thread num of a dedicated thread pool to do spill
 # Velox User-Defined Functions (UDF)
 
 ## Introduction

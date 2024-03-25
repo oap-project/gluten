@@ -586,7 +586,7 @@ DB::ContextMutablePtr global_context;
     std::vector<ColumnData> columns(arguments.size() + 1);
     for (size_t i = 0; i < arguments.size(); ++i)
     {
-        auto column = block.getByPosition(i).column->convertToFullColumnIfConst();
+        auto column = block.getByPosition(i).column->convertToFullIfNeeded();
         columns[i] = getColumnData(column.get());
     }
     for (auto _ : state)

@@ -639,4 +639,25 @@ class GlutenFunctionValidateSuite extends GlutenClickHouseWholeStageTransformerS
     val sql = "select  cast(concat(' ', cast(id as string)) as bigint) from range(10)"
     runQueryAndCompare(sql)(checkOperatorMatch[ProjectExecTransformer])
   }
+
+  test("avg(bigint) overflow") {
+    withSQLConf(
+      "spark.gluten.sql.columnar.forceShuffledHashJoin" -> "false",
+      "spark.sql.autoBroadcastJoinThreshold" -> "-1") {
+      withTable("myitem") {
+        sql("create table big_int(id bigint) using parquet")
+        sql("""
+              |insert into big_int values (9223372036854775807),
+              |(9223372036854775807),
+              |(9223372036854775807),
+              |(9223372036854775807)
+              |""".stripMargin)
+        val q = "select avg(id) from big_int"
+        runQueryAndCompare(q)(checkOperatorMatch[CHHashAggregateExecTransformer])
+        val disinctSQL = "select count(distinct id), avg(distinct id), avg(id) from big_int"
+        runQueryAndCompare(disinctSQL)(checkOperatorMatch[CHHashAggregateExecTransformer])
+      }
+    }
+  }
+
 }

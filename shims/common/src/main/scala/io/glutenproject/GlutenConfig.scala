@@ -353,6 +353,8 @@ class GlutenConfig(conf: SQLConf) extends Logging {
   def enableColumnarProjectCollapse: Boolean = conf.getConf(ENABLE_COLUMNAR_PROJECT_COLLAPSE)
 
   def awsSdkLogLevel: String = conf.getConf(AWS_SDK_LOG_LEVEL)
+
+  def enableCastAvgAggregateFunction: Boolean = conf.getConf(COLUMNAR_NATIVE_CAST_AGGREGATE_ENABLED)
 }
 
 object GlutenConfig {
@@ -1689,6 +1691,12 @@ object GlutenConfig {
     buildConf("spark.gluten.sql.orc.charType.scan.fallback.enabled")
       .internal()
       .doc("Force fallback for orc char type scan.")
+      .booleanConf
+      .createWithDefault(true)
+
+  val COLUMNAR_NATIVE_CAST_AGGREGATE_ENABLED =
+    buildConf("spark.gluten.sql.columnar.cast.avg")
+      .internal()
       .booleanConf
       .createWithDefault(true)
 }

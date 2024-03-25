@@ -555,16 +555,6 @@ trait SparkPlanExecApi {
                     attributeSeq = originalInputAttributes)
                   .doTransform(args))
             }
-            val ignoreNulls = if (offset == 0) {
-              // This is a workaround for Velox backend, because velox has bug if the
-              // ignoreNulls is true and offset is 0.
-              // Logically, if offset is 0 the ignoreNulls is always meaningless, so
-              // this workaround is safe.
-              // TODO, remove this once Velox has fixed it
-              false
-            } else {
-              offsetWf.ignoreNulls
-            }
             val windowFunctionNode = ExpressionBuilder.makeWindowFunction(
               WindowFunctionsBuilder.create(args, offsetWf).toInt,
               childrenNodeList,
@@ -573,7 +563,7 @@ trait SparkPlanExecApi {
               WindowExecTransformer.getFrameBound(frame.upper),
               WindowExecTransformer.getFrameBound(frame.lower),
               frame.frameType.sql,
-              ignoreNulls
+              offsetWf.ignoreNulls
             )
             windowExpressionNodes.add(windowFunctionNode)
           case wf @ NthValue(input, offset: Literal, ignoreNulls: Boolean) =>

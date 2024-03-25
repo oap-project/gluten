@@ -90,7 +90,8 @@ CustomStorageMergeTree::CustomStorageMergeTree(
     , writer(*this)
     , reader(*this)
 {
-    initializeDirectoriesAndFormatVersion(relative_data_path_, attach, date_column_name);
+    relative_data_path = relative_data_path_;
+    format_version = 1;
 }
 
 std::atomic<int> CustomStorageMergeTree::part_num;

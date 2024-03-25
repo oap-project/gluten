@@ -82,7 +82,11 @@ public:
 
 private:
     DB::MergeTreeDataWriter::TemporaryPart
-    writeTempPart(DB::BlockWithPartition & block_with_partition, const DB::StorageMetadataPtr & metadata_snapshot, DB::ContextPtr context);
+    writeTempPart(DB::BlockWithPartition & block_with_partition, const DB::StorageMetadataPtr & metadata_snapshot);
+    DB::MergeTreeDataWriter::TemporaryPart
+    writeTempPartAndFinalize(DB::BlockWithPartition & block_with_partition, const DB::StorageMetadataPtr & metadata_snapshot);
+    void saveFileStatus(const DB::MergeTreeDataWriter::TemporaryPart & temp_part) const;
+
     String uuid;
     String partition_dir;
     String bucket_dir;

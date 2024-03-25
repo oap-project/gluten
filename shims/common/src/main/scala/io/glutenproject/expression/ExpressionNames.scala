@@ -117,6 +117,7 @@ object ExpressionNames {
 
   // URL functions
   final val PARSE_URL = "parse_url"
+  final val URL_DECODE = "url_decode"
 
   // SparkSQL Math functions
   final val ABS = "abs"

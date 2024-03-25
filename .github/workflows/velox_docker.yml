@@ -1,0 +1,575 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Velox backend Github Runner
+
+on:
+  pull_request:
+    paths:
+      - '.github/**'
+      - 'pom.xml'
+      - 'backends-velox/**'
+      - 'gluten-celeborn/**'
+      - 'gluten-core/**'
+      - 'gluten-data/**'
+      - 'gluten-delta/**'
+      - 'gluten-iceberg/**'
+      - 'gluten-ut/**'
+      - 'shims/**'
+      - 'tools/gluten-it/**'
+      - 'tools/gluten-te/**'
+      - 'ep/build-velox/**'
+      - 'cpp/*'
+      - 'cpp/CMake/**'
+      - 'cpp/velox/**'
+      - 'cpp/core/**'
+      - 'dev/**'
+
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.head_ref || github.sha }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build-native-lib:
+    runs-on: ubuntu-20.04
+    container: inteldpo/gluten-centos-packaging:latest # centos7 with depedencies installed
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Gluten velox third party
+        run: |
+          yum install sudo patch java-1.8.0-openjdk-devel -y && \
+          cd $GITHUB_WORKSPACE/ep/build-velox/src && \
+          ./get_velox.sh && \
+          source /opt/rh/devtoolset-9/enable && \
+          source $GITHUB_WORKSPACE//dev/vcpkg/env.sh && \
+          cd $GITHUB_WORKSPACE/ && \
+          sed -i '/^headers/d' ep/build-velox/build/velox_ep/CMakeLists.txt && \
+          export NUM_THREADS=4
+          ./dev/builddeps-veloxbe.sh --build_tests=OFF  --build_benchmarks=OFF --enable_s3=ON \
+          --enable_gcs=ON --enable_hdfs=ON --enable_abfs=ON
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./cpp/build/releases/
+          name: velox-native-lib-${{github.sha}}
+
+  run-tpc-test-ubuntu:
+    needs: build-native-lib
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ["ubuntu:20.04", "ubuntu:22.04"]
+        spark: ["spark-3.2", "spark-3.3", "spark-3.4", "spark-3.5"]
+    runs-on: ubuntu-20.04
+    container: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: velox-native-lib-${{github.sha}}
+          path: ./cpp/build/releases
+      - name: Setup java and maven
+        run: |
+          apt-get update && \
+          apt-get install -y openjdk-8-jdk maven && \
+          apt remove openjdk-11* -y
+      - name: Build for Spark ${{ matrix.spark }}
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          mvn clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
+      - name: Build and run TPCH/DS ${{ matrix.spark }}
+        run: |
+          cd $GITHUB_WORKSPACE/tools/gluten-it && \
+          mvn clean install -P${{ matrix.spark }} \
+          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
+          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1
+
+
+  run-tpc-test-centos7:
+    needs: build-native-lib
+    strategy:
+      fail-fast: false
+      matrix:
+        spark: ["spark-3.2", "spark-3.3", "spark-3.4", "spark-3.5"]
+    runs-on: ubuntu-20.04
+    container: centos:7
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: velox-native-lib-${{github.sha}}
+          path: ./cpp/build/releases
+      - name: Setup java and maven
+        run: |
+          yum update -y && yum install -y java-1.8.0-openjdk-devel wget
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Build for Spark ${{ matrix.spark }}
+        run: |
+          cd $GITHUB_WORKSPACE/
+          export MAVEN_HOME=/usr/lib/maven
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
+      - name: Build and run TPCH/DS ${{ matrix.spark }}
+        run: |
+          cd $GITHUB_WORKSPACE/tools/gluten-it 
+          export MAVEN_HOME=/usr/lib/maven
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -P${{ matrix.spark }} \
+          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
+          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1
+
+  run-tpc-test-centos8:
+    needs: build-native-lib
+    strategy:
+      fail-fast: false
+      matrix:
+        spark: ["spark-3.2", "spark-3.3", "spark-3.4", "spark-3.5"]
+    runs-on: ubuntu-20.04
+    container: centos:8
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: velox-native-lib-${{github.sha}}
+          path: ./cpp/build/releases
+      - name: Update mirror list
+        run: |
+          sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-* || true
+          sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-* || true
+      - name: Setup java and maven
+        run: |
+          yum update -y && yum install -y java-1.8.0-openjdk-devel wget
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Build for Spark ${{ matrix.spark }}
+        run: |
+          cd $GITHUB_WORKSPACE/ 
+          export MAVEN_HOME=/usr/lib/maven
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
+      - name: Build and run TPCH/DS ${{ matrix.spark }}
+        run: |
+          cd $GITHUB_WORKSPACE/tools/gluten-it
+          export MAVEN_HOME=/usr/lib/maven
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -P${{ matrix.spark }} \
+          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
+          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1
+     
+  # run-tpc-test-centos8-oom-randomkill:
+  #   needs: build-native-lib
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       spark: ["spark-3.2"]
+  #   runs-on: ubuntu-20.04
+  #   container: centos:8
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Download All Artifacts
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: velox-native-lib-${{github.sha}}
+  #         path: ./cpp/build/releases
+  #     - name: Update mirror list
+  #       run: |
+  #         sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-* || true
+  #         sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-* || true
+  #     - name: Setup java and maven
+  #       run: |
+  #         yum update -y && yum install -y java-1.8.0-openjdk-devel wget
+  #         wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+  #         tar -xvf apache-maven-3.8.8-bin.tar.gz
+  #         mv apache-maven-3.8.8 /usr/lib/maven
+  #     - name: Build for Spark ${{ matrix.spark }}
+  #       run: |
+  #         cd $GITHUB_WORKSPACE/ 
+  #         export MAVEN_HOME=/usr/lib/maven
+  #         export PATH=${PATH}:${MAVEN_HOME}/bin
+  #         mvn clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
+  #     - name: TPC-DS SF30.0 Parquet local spark3.2 Q67/Q95 low memory, memory isolation off
+  #       run: |
+  #         export MAVEN_HOME=/usr/lib/maven
+  #         export PATH=${PATH}:${MAVEN_HOME}/bin
+  #         cd tools/gluten-it && \
+  #         mvn clean install -Pspark-3.2 \
+  #         && GLUTEN_IT_JVM_ARGS=-Xmx50G sbin/gluten-it.sh parameterized \
+  #           --local --preset=velox --benchmark-type=ds --error-on-memleak --queries=q67,q95 -s=30.0 --threads=12 --shuffle-partitions=72 --iterations=1 \
+  #           --skip-data-gen -m=OffHeapExecutionMemory \
+  #           -d=ISOLATION:OFF,spark.gluten.memory.isolation=false \
+  #           -d=OFFHEAP_SIZE:5g,spark.memory.offHeap.size=5g \
+  #           -d=OFFHEAP_SIZE:3g,spark.memory.offHeap.size=3g \
+  #           -d=OVER_ACQUIRE:0.3,spark.gluten.memory.overAcquiredMemoryRatio=0.3 \
+  #           -d=OVER_ACQUIRE:0.5,spark.gluten.memory.overAcquiredMemoryRatio=0.5
+  #     - name: (To be fixed) TPC-DS SF30.0 Parquet local spark3.2 Q67/Q95 low memory, memory isolation on
+  #       run: |
+  #         export MAVEN_HOME=/usr/lib/maven
+  #         export PATH=${PATH}:${MAVEN_HOME}/bin
+  #         cd tools/gluten-it && \
+  #         mvn clean install -Pspark-3.2 \
+  #         && GLUTEN_IT_JVM_ARGS=-Xmx50G sbin/gluten-it.sh parameterized \
+  #           --local --preset=velox --benchmark-type=ds --error-on-memleak --queries=q67,q95 -s=30.0 --threads=12 --shuffle-partitions=72 --iterations=1 \
+  #           --skip-data-gen -m=OffHeapExecutionMemory \
+  #           -d=ISOLATION:ON,spark.gluten.memory.isolation=true,spark.memory.storageFraction=0.1 \
+  #           -d=OFFHEAP_SIZE:5g,spark.memory.offHeap.size=5g \
+  #           -d=OFFHEAP_SIZE:3g,spark.memory.offHeap.size=3g \
+  #           -d=OVER_ACQUIRE:0.3,spark.gluten.memory.overAcquiredMemoryRatio=0.3 \
+  #           -d=OVER_ACQUIRE:0.5,spark.gluten.memory.overAcquiredMemoryRatio=0.5 || true
+  #     - name: TPC-DS SF30.0 Parquet local spark3.2 Q23A/Q23B low memory
+  #       run: |
+  #         cd tools/gluten-it && \
+  #         GLUTEN_IT_JVM_ARGS=-Xmx50G sbin/gluten-it.sh parameterized \
+  #           --local --preset=velox --benchmark-type=ds --error-on-memleak --queries=q23a,q23b -s=30.0 --threads=12 --shuffle-partitions=72 --iterations=1 \
+  #           --skip-data-gen -m=OffHeapExecutionMemory \
+  #           -d=ISOLATION:OFF,spark.gluten.memory.isolation=false \
+  #           -d=ISOLATION:ON,spark.gluten.memory.isolation=true,spark.memory.storageFraction=0.1 \
+  #           -d=OFFHEAP_SIZE:2g,spark.memory.offHeap.size=2g \
+  #           -d=FLUSH_MODE:DISABLED,spark.gluten.sql.columnar.backend.velox.flushablePartialAggregation=false,spark.gluten.sql.columnar.backend.velox.maxPartialAggregationMemoryRatio=1.0,spark.gluten.sql.columnar.backend.velox.maxExtendedPartialAggregationMemoryRatio=1.0,spark.gluten.sql.columnar.backend.velox.abandonPartialAggregationMinPct=100,spark.gluten.sql.columnar.backend.velox.abandonPartialAggregationMinRows=0 \
+  #           -d=FLUSH_MODE:ABANDONED,spark.gluten.sql.columnar.backend.velox.maxPartialAggregationMemoryRatio=1.0,spark.gluten.sql.columnar.backend.velox.maxExtendedPartialAggregationMemoryRatio=1.0,spark.gluten.sql.columnar.backend.velox.abandonPartialAggregationMinPct=0,spark.gluten.sql.columnar.backend.velox.abandonPartialAggregationMinRows=0 \
+  #           -d=FLUSH_MODE:FLUSHED,spark.gluten.sql.columnar.backend.velox.maxPartialAggregationMemoryRatio=0.05,spark.gluten.sql.columnar.backend.velox.maxExtendedPartialAggregationMemoryRatio=0.1,spark.gluten.sql.columnar.backend.velox.abandonPartialAggregationMinPct=100,spark.gluten.sql.columnar.backend.velox.abandonPartialAggregationMinRows=0
+  #     - name: (To be fixed) TPC-DS SF30.0 Parquet local spark3.2 Q97 low memory # The case currently causes crash with "free: invalid size".
+  #       run: |
+  #         cd tools/gluten-it && \
+  #         GLUTEN_IT_JVM_ARGS=-Xmx50G sbin/gluten-it.sh parameterized \
+  #           --local --preset=velox --benchmark-type=ds --error-on-memleak --queries=q97 -s=30.0 --threads=12 --shuffle-partitions=72 --iterations=1 \
+  #           --skip-data-gen -m=OffHeapExecutionMemory \
+  #           -d=ISOLATION:OFF,spark.gluten.memory.isolation=false \
+  #           -d=ISOLATION:ON,spark.gluten.memory.isolation=true,spark.memory.storageFraction=0.1 \
+  #           -d=OFFHEAP_SIZE:2g,spark.memory.offHeap.size=2g \
+  #           -d=OFFHEAP_SIZE:1g,spark.memory.offHeap.size=1g || true
+
+  # run-tpc-test-centos8-celeborn:
+  #   needs: build-native-lib
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       spark: ["spark-3.2"]
+  #   runs-on: ubuntu-20.04
+  #   container: centos:8
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Download All Artifacts
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: velox-native-lib-${{github.sha}}
+  #         path: ./cpp/build/releases
+  #     - name: Update mirror list
+  #       run: |
+  #         sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-* || true
+  #         sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-* || true
+  #     - name: Setup java and maven
+  #       run: |
+  #         yum update -y && yum install -y java-1.8.0-openjdk-devel wget
+  #         wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+  #         tar -xvf apache-maven-3.8.8-bin.tar.gz
+  #         mv apache-maven-3.8.8 /usr/lib/maven
+  #     - name: Build for Spark ${{ matrix.spark }}
+  #       run: |
+  #         cd $GITHUB_WORKSPACE/ 
+  #         export MAVEN_HOME=/usr/lib/maven
+  #         export PATH=${PATH}:${MAVEN_HOME}/bin
+  #         mvn clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
+  #     - name: TPC-H SF1.0 && TPC-DS SF1.0 Parquet local spark3.2 with Celeborn 0.4.0
+  #       run: |
+  #         export MAVEN_HOME=/usr/lib/maven
+  #         export PATH=${PATH}:${MAVEN_HOME}/bin
+  #         cd /opt && mkdir -p celeborn && \
+  #         wget https://archive.apache.org/dist/incubator/celeborn/celeborn-0.4.0-incubating/apache-celeborn-0.4.0-incubating-bin.tgz && \
+  #         tar xzf apache-celeborn-0.4.0-incubating-bin.tgz -C /opt/celeborn --strip-components=1 && cd celeborn && \
+  #         mv ./conf/celeborn-env.sh.template ./conf/celeborn-env.sh && \
+  #         echo -e "CELEBORN_MASTER_MEMORY=4g\nCELEBORN_WORKER_MEMORY=4g\nCELEBORN_WORKER_OFFHEAP_MEMORY=8g" > ./conf/celeborn-env.sh && \
+  #         echo -e "celeborn.worker.commitFiles.threads 128\nceleborn.worker.sortPartition.threads 64" > ./conf/celeborn-defaults.conf \
+  #         && bash ./sbin/start-master.sh && bash ./sbin/start-worker.sh && \
+  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss,celeborn-0.4 \
+  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+  #           --local --preset=velox-with-celeborn --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
+  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+  #           --local --preset=velox-with-celeborn --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
+  #         bash /opt/celeborn/sbin/stop-worker.sh \
+  #         && bash /opt/celeborn/sbin/stop-master.sh && rm -rf /opt/celeborn
+  #     - name: TPC-H SF1.0 && TPC-DS SF10.0 Parquet local spark3.2 with Celeborn 0.3.2
+  #       run: |
+  #         export MAVEN_HOME=/usr/lib/maven
+  #         export PATH=${PATH}:${MAVEN_HOME}/bin
+  #         cd /opt && mkdir -p celeborn && \
+  #         wget https://archive.apache.org/dist/incubator/celeborn/celeborn-0.3.2-incubating/apache-celeborn-0.3.2-incubating-bin.tgz && \
+  #         tar xzf apache-celeborn-0.3.2-incubating-bin.tgz -C /opt/celeborn --strip-components=1 && cd celeborn && \
+  #         mv ./conf/celeborn-env.sh.template ./conf/celeborn-env.sh && \
+  #         echo -e "CELEBORN_MASTER_MEMORY=4g\nCELEBORN_WORKER_MEMORY=4g\nCELEBORN_WORKER_OFFHEAP_MEMORY=8g" > ./conf/celeborn-env.sh && \
+  #         echo -e "celeborn.worker.commitFiles.threads 128\nceleborn.worker.sortPartition.threads 64" > ./conf/celeborn-defaults.conf \
+  #         && bash ./sbin/start-master.sh && bash ./sbin/start-worker.sh && \
+  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss \
+  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+  #           --local --preset=velox-with-celeborn --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
+  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+  #           --local --preset=velox-with-celeborn --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
+  #         bash /opt/celeborn/sbin/stop-worker.sh \
+  #         && bash /opt/celeborn/sbin/stop-master.sh
+
+  run-spark-test-spark32:
+    runs-on: ubuntu-20.04
+    container: ghcr.io/facebookincubator/velox-dev:circleci-avx
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Gluten velox third party
+        run: |
+          yum install sudo patch java-1.8.0-openjdk-devel wget -y && \
+          cd ep/build-velox/src && \
+          ./get_velox.sh && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./build_velox.sh --run_setup_script=OFF --enable_ep_cache=OFF --build_test_utils=ON
+      - name: Build Gluten CPP library
+        run: |
+          cd $GITHUB_WORKSPACE/cpp && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./compile.sh --build_velox_backend=ON --build_protobuf=ON --build_tests=ON --build_examples=ON --build_benchmarks=ON
+      - name: Setup java and maven
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Prepare spark.test.home for Spark 3.2.2 (other tests)
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          wget https://archive.apache.org/dist/spark/spark-3.2.2/spark-3.2.2-bin-hadoop3.2.tgz && \
+          tar --strip-components=1 -xf spark-3.2.2-bin-hadoop3.2.tgz spark-3.2.2-bin-hadoop3.2/jars/ && \
+          rm -rf spark-3.2.2-bin-hadoop3.2.tgz && \
+          mkdir -p $GITHUB_WORKSPACE//shims/spark32/spark_home/assembly/target/scala-2.12 && \
+          mv jars $GITHUB_WORKSPACE//shims/spark32/spark_home/assembly/target/scala-2.12 && \
+          cd $GITHUB_WORKSPACE// && \
+          wget https://github.com/apache/spark/archive/refs/tags/v3.2.2.tar.gz && \
+          tar --strip-components=1 -xf v3.2.2.tar.gz spark-3.2.2/sql/core/src/test/resources/  && \
+          mkdir -p shims/spark32/spark_home/ && \
+          mv sql shims/spark32/spark_home/ 
+      - name: Build and run unit test for Spark 3.2.2 (other tests)
+        run: |
+          cd $GITHUB_WORKSPACE/
+          export SPARK_SCALA_VERSION=2.12
+          export MAVEN_HOME=/usr/lib/maven 
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -Pspark-3.2 -Pspark-ut -Pbackends-velox -Prss -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark32/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
+          mvn test -Pspark-3.2 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
+
+  run-spark-test-spark32-slow:
+    runs-on: ubuntu-20.04
+    container: ghcr.io/facebookincubator/velox-dev:circleci-avx
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Gluten velox third party
+        run: |
+          yum install sudo patch java-1.8.0-openjdk-devel wget -y && \
+          cd ep/build-velox/src && \
+          ./get_velox.sh && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./build_velox.sh --run_setup_script=OFF --enable_ep_cache=OFF --build_test_utils=ON
+      - name: Build Gluten CPP library
+        run: |
+          cd $GITHUB_WORKSPACE/cpp && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./compile.sh --build_velox_backend=ON --build_protobuf=ON
+      - name: Setup java and maven
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Prepare spark.test.home for Spark 3.2.2 (slow tests)
+        run: |
+          cd $GITHUB_WORKSPACE// && \
+          wget https://github.com/apache/spark/archive/refs/tags/v3.2.2.tar.gz && \
+          tar --strip-components=1 -xf v3.2.2.tar.gz spark-3.2.2/sql/core/src/test/resources/  && \
+          mkdir -p shims/spark32/spark_home/ && \
+          mv sql shims/spark32/spark_home/ 
+      - name: Build and run unit test for Spark 3.2.2 (slow tests)
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          export MAVEN_HOME=/usr/lib/maven 
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -Pspark-3.2 -Pspark-ut -Pbackends-velox -Prss -Piceberg -Pdelta -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark32/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
+
+  run-spark-test-spark33:
+    runs-on: ubuntu-20.04
+    container: ghcr.io/facebookincubator/velox-dev:circleci-avx
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Gluten velox third party
+        run: |
+          yum install sudo patch java-1.8.0-openjdk-devel wget -y && \
+          cd ep/build-velox/src && \
+          ./get_velox.sh && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./build_velox.sh --run_setup_script=OFF --enable_ep_cache=OFF --build_test_utils=ON
+      - name: Build Gluten CPP library
+        run: |
+          cd $GITHUB_WORKSPACE/cpp && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./compile.sh --build_velox_backend=ON --build_protobuf=ON --build_tests=ON --build_examples=ON --build_benchmarks=ON
+      - name: Setup java and maven
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Prepare spark.test.home for Spark 3.3.1 (other tests)
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          wget https://archive.apache.org/dist/spark/spark-3.3.1/spark-3.3.1-bin-hadoop3.tgz && \
+          tar --strip-components=1 -xf spark-3.3.1-bin-hadoop3.tgz spark-3.3.1-bin-hadoop3/jars/ && \
+          rm -rf spark-3.3.1-bin-hadoop3.tgz && \
+          mkdir -p $GITHUB_WORKSPACE//shims/spark33/spark_home/assembly/target/scala-2.12 && \
+          mv jars $GITHUB_WORKSPACE//shims/spark33/spark_home/assembly/target/scala-2.12 && \
+          cd $GITHUB_WORKSPACE// && \
+          wget https://github.com/apache/spark/archive/refs/tags/v3.3.1.tar.gz && \
+          tar --strip-components=1 -xf v3.3.1.tar.gz spark-3.3.1/sql/core/src/test/resources/  && \
+          mkdir -p shims/spark33/spark_home/ && \
+          mv sql shims/spark33/spark_home/ 
+      - name: Build and Run unit test for Spark 3.3.1 (other tests)
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          export SPARK_SCALA_VERSION=2.12 && \
+          export MAVEN_HOME=/usr/lib/maven 
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -Pspark-3.3 -Pbackends-velox -Prss -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark33/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
+          mvn test -Pspark-3.3 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
+
+  run-spark-test-spark33-slow:
+    runs-on: ubuntu-20.04
+    container: ghcr.io/facebookincubator/velox-dev:circleci-avx
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Gluten velox third party
+        run: |
+          yum install sudo patch java-1.8.0-openjdk-devel wget -y && \
+          cd ep/build-velox/src && \
+          ./get_velox.sh && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./build_velox.sh --run_setup_script=OFF --enable_ep_cache=OFF --build_test_utils=ON
+      - name: Build Gluten CPP library
+        run: |
+          cd $GITHUB_WORKSPACE/cpp && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./compile.sh --build_velox_backend=ON --build_protobuf=ON
+      - name: Setup java and maven
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Prepare spark.test.home for Spark 3.3.1 (slow tests)
+        run: |
+          cd $GITHUB_WORKSPACE// && \
+          wget https://github.com/apache/spark/archive/refs/tags/v3.3.1.tar.gz && \
+          tar --strip-components=1 -xf v3.3.1.tar.gz spark-3.3.1/sql/core/src/test/resources/  && \
+          mkdir -p shims/spark33/spark_home/ && \
+          mv sql shims/spark33/spark_home/ 
+      - name: Build and Run unit test for Spark 3.3.1 (slow tests)
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          export MAVEN_HOME=/usr/lib/maven 
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -Pspark-3.3 -Pbackends-velox -Prss -Piceberg -Pdelta -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark33/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
+
+
+
+  run-spark-test-spark34:
+    runs-on: ubuntu-20.04
+    container: ghcr.io/facebookincubator/velox-dev:circleci-avx
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Gluten velox third party
+        run: |
+          yum install sudo patch java-1.8.0-openjdk-devel wget -y && \
+          cd ep/build-velox/src && \
+          ./get_velox.sh && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./build_velox.sh --run_setup_script=OFF --enable_ep_cache=OFF --build_test_utils=ON
+      - name: Build Gluten CPP library
+        run: |
+          cd $GITHUB_WORKSPACE/cpp && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./compile.sh --build_velox_backend=ON --build_protobuf=ON --build_tests=ON --build_examples=ON --build_benchmarks=ON
+      - name: Setup java and maven
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Prepare spark.test.home for Spark 3.4.2 (other tests)
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          wget https://archive.apache.org/dist/spark/spark-3.4.2/spark-3.4.2-bin-hadoop3.tgz && \
+          tar --strip-components=1 -xf spark-3.4.2-bin-hadoop3.tgz spark-3.4.2-bin-hadoop3/jars/ && \
+          rm -rf spark-3.4.2-bin-hadoop3.tgz && \
+          mkdir -p $GITHUB_WORKSPACE//shims/spark34/spark_home/assembly/target/scala-2.12 && \
+          mv jars $GITHUB_WORKSPACE//shims/spark34/spark_home/assembly/target/scala-2.12 && \
+          cd $GITHUB_WORKSPACE// && \
+          wget https://github.com/apache/spark/archive/refs/tags/v3.4.2.tar.gz && \
+          tar --strip-components=1 -xf v3.4.2.tar.gz spark-3.4.2/sql/core/src/test/resources/  && \
+          mkdir -p shims/spark34/spark_home/ && \
+          mv sql shims/spark34/spark_home/ 
+      - name: Build and Run unit test for Spark 3.4.2 (other tests)
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          export SPARK_SCALA_VERSION=2.12 && \
+          export MAVEN_HOME=/usr/lib/maven 
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -Pspark-3.4 -Pbackends-velox -Prss  -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark34/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
+          mvn test -Pspark-3.4 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
+
+
+  run-spark-test-spark34-slow:
+    runs-on: ubuntu-20.04
+    container: ghcr.io/facebookincubator/velox-dev:circleci-avx
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Gluten velox third party
+        run: |
+          yum install sudo patch java-1.8.0-openjdk-devel wget -y && \
+          cd ep/build-velox/src && \
+          ./get_velox.sh && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./build_velox.sh --run_setup_script=OFF --enable_ep_cache=OFF --build_test_utils=ON
+      - name: Build Gluten CPP library
+        run: |
+          cd $GITHUB_WORKSPACE/cpp && \
+          source /opt/rh/gcc-toolset-9/enable && \
+          ./compile.sh --build_velox_backend=ON --build_protobuf=ON
+      - name: Setup java and maven
+        run: |
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Prepare spark.test.home for Spark 3.4.2 (slow tests)
+        run: |
+          cd $GITHUB_WORKSPACE// && \
+          wget https://github.com/apache/spark/archive/refs/tags/v3.4.2.tar.gz && \
+          tar --strip-components=1 -xf v3.4.2.tar.gz spark-3.4.2/sql/core/src/test/resources/  && \
+          mkdir -p shims/spark34/spark_home/ && \
+          mv sql shims/spark34/spark_home/ 
+      - name: Build and Run unit test for Spark 3.4.2 (slow tests)
+        run: |
+          cd $GITHUB_WORKSPACE/
+          export MAVEN_HOME=/usr/lib/maven
+          export PATH=${PATH}:${MAVEN_HOME}/bin
+          mvn clean install -Pspark-3.4 -Pbackends-velox -Prss -Piceberg -Pdelta -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark34/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest

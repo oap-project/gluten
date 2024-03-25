@@ -28,6 +28,7 @@ import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.{InternalRow, SQLConfHelper}
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
+import org.apache.spark.sql.catalyst.expressions.objects.StaticInvoke
 import org.apache.spark.sql.catalyst.optimizer.NormalizeNaNAndZero
 import org.apache.spark.sql.execution.{ScalarSubquery, _}
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanExec
@@ -115,6 +116,19 @@ object ExpressionConverter extends SQLConfHelper with Logging {
         return replaceScalaUDFWithExpressionTransformer(s, attributeSeq, expressionsMap)
       case _ if HiveUDFTransformer.isHiveUDF(expr) =>
         return HiveUDFTransformer.replaceWithExpressionTransformer(expr, attributeSeq)
+      case i: StaticInvoke =>
+        val objectName = i.staticObject.getName.stripSuffix("$")
+        if (objectName.endsWith("UrlCodec")) {
+          val child = i.arguments(0)
+          i.functionName match {
+            case "decode" =>
+              return GenericExpressionTransformer(
+                ExpressionNames.URL_DECODE,
+                child.map(
+                  replaceWithExpressionTransformerInternal(_, attributeSeq, expressionsMap)),
+                i)
+          }
+        }
       case _ =>
     }
 

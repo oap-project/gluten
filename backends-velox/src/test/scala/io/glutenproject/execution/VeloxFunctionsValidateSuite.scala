@@ -458,6 +458,21 @@ class VeloxFunctionsValidateSuite extends VeloxWholeStageTransformerSuite {
     }
   }
 
+  testWithSpecifiedSparkVersion("Test url_decode function", Some("3.4.2")) {
+    withTempPath {
+      path =>
+        Seq("https%3A%2F%2Fspark.apache.org")
+          .toDF("a")
+          .write
+          .parquet(path.getCanonicalPath)
+        spark.sparkContext.setLogLevel("info")
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("url_tbl")
+        runQueryAndCompare("select url_decode(a) from url_tbl") {
+          checkOperatorMatch[ProjectExecTransformer]
+        }
+    }
+  }
+
   test("Test hex function") {
     runQueryAndCompare("SELECT hex(l_partkey), hex(l_shipmode) FROM lineitem limit 1") {
       checkOperatorMatch[ProjectExecTransformer]

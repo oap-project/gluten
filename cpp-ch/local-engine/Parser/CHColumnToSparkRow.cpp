@@ -325,12 +325,12 @@ SparkRowInfo::SparkRowInfo(
     {
         const auto & col = cols[col_idx];
         /// No need to calculate backing data length for fixed length types
-        const auto type_without_nullable = removeNullable(col.type);
+        const auto type_without_nullable = removeLowCardinalityAndNullable(col.type);
         if (BackingDataLengthCalculator::isVariableLengthDataType(type_without_nullable))
         {
             if (BackingDataLengthCalculator::isDataTypeSupportRawData(type_without_nullable))
             {
-                auto column = col.column->convertToFullColumnIfConst();
+                auto column = col.column->convertToFullIfNeeded();
                 const auto * nullable_column = checkAndGetColumn<ColumnNullable>(*column);
                 if (nullable_column)
                 {
@@ -348,13 +348,13 @@ SparkRowInfo::SparkRowInfo(
                     for (size_t i = 0; i < num_rows; ++i)
                     {
                         size_t row_idx = masks == nullptr ? i : masks->at(i);
-                        lengths[i] += roundNumberOfBytesToNearestWord(col.column->getDataAt(row_idx).size);
+                        lengths[i] += roundNumberOfBytesToNearestWord(column->getDataAt(row_idx).size);
                     }
                 }
             }
             else
             {
-                BackingDataLengthCalculator calculator(col.type);
+                BackingDataLengthCalculator calculator(type_without_nullable);
                 for (size_t i = 0; i < num_rows; ++i)
                 {
                     size_t row_idx = masks == nullptr ? i : masks->at(i);
@@ -462,11 +462,12 @@ std::unique_ptr<SparkRowInfo> CHColumnToSparkRow::convertCHColumnToSparkRow(cons
         const auto & col = block.getByPosition(col_idx);
         int64_t field_offset = spark_row_info->getFieldOffset(col_idx);
 
-        ColumnWithTypeAndName col_not_const{col.column->convertToFullColumnIfConst(), col.type, col.name};
+        ColumnWithTypeAndName col_full{col.column->convertToFullIfNeeded(),
+            removeLowCardinality(col.type), col.name};
         writeValue(
             spark_row_info->getBufferAddress(),
             field_offset,
-            col_not_const,
+            col_full,
             col_idx,
             spark_row_info->getNumRows(),
             spark_row_info->getOffsets(),

@@ -43,6 +43,11 @@ struct MergeTreePart
     size_t end;
 };
 
+struct MergeTreeTableSettings
+{
+    String storage_policy = "";
+};
+
 struct MergeTreeTable
 {
     inline static const String TUPLE = "tuple()";
@@ -54,7 +59,7 @@ struct MergeTreeTable
     std::string primary_key = "";
     std::string relative_path;
     std::string absolute_path;
-    std::string table_configs_json;
+    MergeTreeTableSettings table_configs;
     std::vector<MergeTreePart> parts;
     std::unordered_set<String> getPartNames() const;
     RangesInDataParts extractRange(DataPartsVector parts_vector) const;
@@ -62,7 +67,7 @@ struct MergeTreeTable
 
 std::shared_ptr<DB::StorageInMemoryMetadata> buildMetaData(const DB::NamesAndTypesList &columns, ContextPtr context, const MergeTreeTable &);
 
-std::unique_ptr<MergeTreeSettings> buildMergeTreeSettings();
+std::unique_ptr<MergeTreeSettings> buildMergeTreeSettings(const MergeTreeTableSettings & config);
 
 std::unique_ptr<SelectQueryInfo> buildQueryInfo(NamesAndTypesList & names_and_types_list);
 

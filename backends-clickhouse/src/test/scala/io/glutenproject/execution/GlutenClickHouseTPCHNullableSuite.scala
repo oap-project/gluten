@@ -195,4 +195,19 @@ class GlutenClickHouseTPCHNullableSuite extends GlutenClickHouseTPCHAbstractSuit
                           |""".stripMargin) { _ => }
     assert(result(0).getLong(0) == 227302L)
   }
+
+  test("test 'GLUTEN-5016'") {
+    withSQLConf(("spark.gluten.sql.columnar.preferColumnar", "false")) {
+      val sql =
+        """
+          |SELECT
+          |   sum(l_quantity) AS sum_qty
+          |FROM
+          |   lineitem
+          |WHERE
+          |   l_shipdate <= date'1998-09-02'
+          |""".stripMargin
+      runSql(sql, noFallBack = true) { _ => }
+    }
+  }
 }

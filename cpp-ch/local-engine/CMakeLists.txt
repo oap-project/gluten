@@ -57,6 +57,8 @@ add_headers_and_sources(shuffle Shuffle)
 add_headers_and_sources(operator Operator)
 add_headers_and_sources(jni jni)
 add_headers_and_sources(aggregate_functions AggregateFunctions)
+add_headers_and_sources(disks Disks)
+add_headers_and_sources(disks Disks/ObjectStorages)
 
 include_directories(
         ${JNI_INCLUDE_DIRS}
@@ -89,7 +91,9 @@ add_library(gluten_clickhouse_backend_libs
         ${shuffle_sources}
         ${operator_sources}
         ${aggregate_functions_sources}
-        ${jni_sources})
+        ${jni_sources}
+        ${disks_sources}
+)
 
 target_link_libraries(gluten_clickhouse_backend_libs PUBLIC
         substrait_source

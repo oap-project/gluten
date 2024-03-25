@@ -38,7 +38,6 @@ class MergeTreeRelParser : public RelParser
 {
 public:
     static std::shared_ptr<CustomStorageMergeTree> parseStorage(
-        const substrait::Rel & rel_,
         const substrait::ReadRel::ExtensionTable & extension_table,
         ContextMutablePtr context);
 

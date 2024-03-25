@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.StringValue;
 import io.substrait.proto.ReadRel;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,10 +72,11 @@ public class ExtensionTableNode implements SplitInfo {
     this.maxPartsNum = maxPartsNum;
     this.database = database;
     this.tableName = tableName;
-    if (relativePath.contains(":/")) { // file:/tmp/xxx => tmp/xxx
-      this.relativePath = relativePath.substring(relativePath.indexOf(":/") + 2);
+    URI table_uri = URI.create(relativePath);
+    if (table_uri.getPath().startsWith("/")) { // file:///tmp/xxx => tmp/xxx
+      this.relativePath = table_uri.getPath().substring(1);
     } else {
-      this.relativePath = relativePath;
+      this.relativePath = table_uri.getPath();
     }
     this.absolutePath = absolutePath;
     this.tableSchemaJson = tableSchemaJson;
