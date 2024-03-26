@@ -54,12 +54,14 @@ AggregateRelParser::AggregateRelParser(SerializedPlanParser * plan_paser_) : Rel
 DB::QueryPlanPtr AggregateRelParser::parse(DB::QueryPlanPtr query_plan, const substrait::Rel & rel, std::list<const substrait::Rel *> &)
 {
     setup(std::move(query_plan), rel);
+
     addPreProjection();
     LOG_TRACE(logger, "header after pre-projection is: {}", plan->getCurrentDataStream().header.dumpStructure());
     if (has_final_stage)
     {
         addMergingAggregatedStep();
         LOG_TRACE(logger, "header after merging is: {}", plan->getCurrentDataStream().header.dumpStructure());
+
         addPostProjection();
         LOG_TRACE(logger, "header after post-projection is: {}", plan->getCurrentDataStream().header.dumpStructure());
     }
@@ -67,6 +69,7 @@ DB::QueryPlanPtr AggregateRelParser::parse(DB::QueryPlanPtr query_plan, const su
     {
         addCompleteModeAggregatedStep();
         LOG_TRACE(logger, "header after complete aggregate is: {}", plan->getCurrentDataStream().header.dumpStructure());
+
         addPostProjection();
         LOG_TRACE(logger, "header after post-projection is: {}", plan->getCurrentDataStream().header.dumpStructure());
     }
@@ -184,6 +187,8 @@ void AggregateRelParser::addPreProjection()
     }
     if (projection_action->dumpDAG() != dag_footprint)
     {
+        /// Avoid unnecessary evaluation
+        projection_action->removeUnusedActions();
         auto projection_step = std::make_unique<DB::ExpressionStep>(plan->getCurrentDataStream(), projection_action);
         projection_step->setStepDescription("Projection before aggregate");
         steps.emplace_back(projection_step.get());
@@ -193,22 +198,41 @@ void AggregateRelParser::addPreProjection()
 
 void AggregateRelParser::buildAggregateDescriptions(AggregateDescriptions & descriptions)
 {
-    auto build_result_column_name = [](const String & function_name, const Strings & arg_column_names, substrait::AggregationPhase phase)
+    auto build_result_column_name = [](const String & function_name, const Array & params, const Strings & arg_names, substrait::AggregationPhase phase)
     {
         if (phase == substrait::AggregationPhase::AGGREGATION_PHASE_INTERMEDIATE_TO_RESULT)
         {
-            assert(arg_column_names.size() == 1);
-            return arg_column_names[0];
+            assert(arg_names.size() == 1);
+            return arg_names[0];
         }
-        String arg_list_str = boost::algorithm::join(arg_column_names, ",");
-        return function_name + "(" + arg_list_str + ")";
+
+        String result = function_name;
+        if (!params.empty())
+        {
+            result += "(";
+            for (size_t i = 0; i < params.size(); ++i)
+            {
+                if (i != 0)
+                    result += ",";
+                result += toString(params[i]);
+            }
+            result += ")";
+        }
+
+        result += "(";
+        result += boost::algorithm::join(arg_names, ",");
+        result += ")";
+        return result;
     };
+
     for (auto & agg_info : aggregates)
     {
         AggregateDescription description;
         const auto & measure = agg_info.measure->measure();
-        description.column_name = build_result_column_name(agg_info.function_name, agg_info.arg_column_names, measure.phase());
+        description.column_name
+            = build_result_column_name(agg_info.function_name, agg_info.params, agg_info.arg_column_names, measure.phase());
         agg_info.measure_column_name = description.column_name;
+        // std::cout << "description.column_name:" << description.column_name << std::endl;
         description.argument_names = agg_info.arg_column_names;
         DB::AggregateFunctionProperties properties;
 
@@ -259,7 +283,7 @@ void AggregateRelParser::addMergingAggregatedStep()
 {
     AggregateDescriptions aggregate_descriptions;
     buildAggregateDescriptions(aggregate_descriptions);
-    auto settings = getContext()->getSettingsRef();
+    const auto & settings = getContext()->getSettingsRef();
     Aggregator::Params params(
         grouping_keys,
         aggregate_descriptions,
@@ -298,7 +322,7 @@ void AggregateRelParser::addCompleteModeAggregatedStep()
 {
     AggregateDescriptions aggregate_descriptions;
     buildAggregateDescriptions(aggregate_descriptions);
-    auto settings = getContext()->getSettingsRef();
+    const auto & settings = getContext()->getSettingsRef();
     bool enable_streaming_aggregating = getContext()->getConfigRef().getBool("enable_streaming_aggregating", true);
     if (enable_streaming_aggregating)
     {
@@ -376,7 +400,7 @@ void AggregateRelParser::addAggregatingStep()
 {
     AggregateDescriptions aggregate_descriptions;
     buildAggregateDescriptions(aggregate_descriptions);
-    auto settings = getContext()->getSettingsRef();
+    const auto & settings = getContext()->getSettingsRef();
     bool enable_streaming_aggregating = getContext()->getConfigRef().getBool("enable_streaming_aggregating", true);
 
     if (enable_streaming_aggregating)

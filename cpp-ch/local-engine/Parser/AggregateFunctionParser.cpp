@@ -148,19 +148,11 @@ const DB::ActionsDAG::Node * AggregateFunctionParser::convertNodeTypeIfNeeded(
     const CommonFunctionInfo & func_info,
     const DB::ActionsDAG::Node * func_node,
     DB::ActionsDAGPtr & actions_dag,
-    bool withNullability) const
+    bool with_nullability) const
 {
     const auto & output_type = func_info.output_type;
-    bool needToConvertNodeType = false;
-    if (withNullability)
-    {
-        needToConvertNodeType = !TypeParser::isTypeMatchedWithNullability(output_type, func_node->result_type);
-    }
-    else
-    {
-        needToConvertNodeType = !TypeParser::isTypeMatched(output_type, func_node->result_type);
-    }
-    if (needToConvertNodeType)
+    bool need_convert_type = !TypeParser::isTypeMatched(output_type, func_node->result_type, !with_nullability);
+    if (need_convert_type)
     {
         func_node = ActionsDAGUtil::convertNodeType(
             actions_dag, func_node, TypeParser::parseType(output_type)->getName(), func_node->result_name);

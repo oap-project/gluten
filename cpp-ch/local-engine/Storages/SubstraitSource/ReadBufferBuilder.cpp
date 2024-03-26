@@ -14,7 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include "config.h"
+
 #include <memory>
+#include <shared_mutex>
+#include <thread>
 #include <Disks/IO/AsynchronousBoundedReadBuffer.h>
 #include <Disks/IO/ReadBufferFromAzureBlobStorage.h>
 #include <Disks/IO/ReadBufferFromRemoteFSGather.h>
@@ -22,9 +27,13 @@
 #include <IO/BoundedReadBuffer.h>
 #include <IO/ReadBufferFromFile.h>
 #include <IO/ReadBufferFromS3.h>
+#include <IO/ReadSettings.h>
 #include <IO/S3/getObjectInfo.h>
 #include <IO/S3Common.h>
 #include <IO/SeekableReadBuffer.h>
+#include <Interpreters/Cache/FileCache.h>
+#include <Interpreters/Cache/FileCacheFactory.h>
+#include <Interpreters/Cache/FileCacheSettings.h>
 #include <Interpreters/Context_fwd.h>
 #include <Storages/HDFS/AsynchronousReadBufferFromHDFS.h>
 #include <Storages/HDFS/HDFSCommon.h>
@@ -32,21 +41,16 @@
 #include <Storages/StorageS3Settings.h>
 #include <Storages/SubstraitSource/ReadBufferBuilder.h>
 #include <Storages/SubstraitSource/SubstraitFileSource.h>
-
-#include <sys/stat.h>
-#include <Poco/URI.h>
-#include "IO/ReadSettings.h"
-
+#include <boost/compute/detail/lru_cache.hpp>
 #include <hdfs/hdfs.h>
+#include <sys/stat.h>
 #include <Poco/Logger.h>
+#include <Poco/URI.h>
+#include <Common/CHUtil.h>
 #include <Common/FileCacheConcurrentMap.h>
 #include <Common/Throttler.h>
 #include <Common/logger_useful.h>
 #include <Common/safe_cast.h>
-
-#include <Interpreters/Cache/FileCache.h>
-#include <Interpreters/Cache/FileCacheFactory.h>
-#include <Interpreters/Cache/FileCacheSettings.h>
 
 #if USE_AWS_S3
 #include <aws/core/client/DefaultRetryStrategy.h>
@@ -55,11 +59,6 @@
 #include <aws/s3/model/ListObjectsV2Request.h>
 #endif
 
-#include <Common/CHUtil.h>
-
-#include <shared_mutex>
-#include <thread>
-#include <boost/compute/detail/lru_cache.hpp>
 
 namespace DB
 {

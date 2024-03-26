@@ -47,12 +47,12 @@ public:
         throw DB::Exception(DB::ErrorCodes::NOT_IMPLEMENTED, "Not implement");
     }
 
-    virtual String getCHFunctionName(const DB::DataTypes &) const override
+    virtual String getCHFunctionName(DB::DataTypes &) const override
     {
         throw DB::Exception(DB::ErrorCodes::NOT_IMPLEMENTED, "Not implement");
     }
     const DB::ActionsDAG::Node * convertNodeTypeIfNeeded(
-        const CommonFunctionInfo &, const DB::ActionsDAG::Node * func_node, DB::ActionsDAGPtr & actions_dag, bool /* withNullability */) const override
+        const CommonFunctionInfo &, const DB::ActionsDAG::Node * func_node, DB::ActionsDAGPtr & actions_dag, bool /* with_nullability */) const override
     {
         const DB::ActionsDAG::Node * ret_node = func_node;
         if (func_node->result_type->isNullable())
@@ -79,7 +79,7 @@ public:
     static constexpr auto name = "collect_list";
     String getName() const override { return name; }
     String getCHFunctionName(const CommonFunctionInfo &) const override { return "groupArray"; }
-    String getCHFunctionName(const DB::DataTypes &) const override { return "groupArray"; }
+    String getCHFunctionName(DB::DataTypes &) const override { return "groupArray"; }
 };
 
 class CollectSetParser : public CollectFunctionParser
@@ -90,6 +90,6 @@ public:
     static constexpr auto name = "collect_set";
     String getName() const override { return name; }
     String getCHFunctionName(const CommonFunctionInfo &) const override { return "groupUniqArray"; }
-    String getCHFunctionName(const DB::DataTypes &) const override { return "groupUniqArray"; }
+    String getCHFunctionName(DB::DataTypes &) const override { return "groupUniqArray"; }
 };
 }

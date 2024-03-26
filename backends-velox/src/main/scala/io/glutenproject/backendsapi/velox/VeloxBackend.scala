@@ -28,7 +28,7 @@ import io.glutenproject.substrait.rel.LocalFilesNode.ReadFileFormat.{DwrfReadFor
 
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.expressions.{Alias, CumeDist, DenseRank, Descending, Expression, Lag, Lead, Literal, NamedExpression, NthValue, NTile, PercentRank, Rand, RangeFrame, Rank, RowNumber, SortOrder, SpecialFrameBoundary, SpecifiedWindowFrame, Uuid}
-import org.apache.spark.sql.catalyst.expressions.aggregate.{AggregateExpression, Count, Sum}
+import org.apache.spark.sql.catalyst.expressions.aggregate.{AggregateExpression, ApproximatePercentile, Count, Sum}
 import org.apache.spark.sql.catalyst.plans.JoinType
 import org.apache.spark.sql.catalyst.util.CharVarcharUtils
 import org.apache.spark.sql.execution.{ProjectExec, SparkPlan}
@@ -323,8 +323,10 @@ object BackendSettings extends BackendSettingsApi {
             case _ =>
           }
           windowExpression.windowFunction match {
-            case _: RowNumber | _: AggregateExpression | _: Rank | _: CumeDist | _: DenseRank |
-                _: PercentRank | _: NthValue | _: NTile | _: Lag | _: Lead =>
+            case _: RowNumber | _: Rank | _: CumeDist | _: DenseRank | _: PercentRank |
+                _: NthValue | _: NTile | _: Lag | _: Lead =>
+            case aggrExpr: AggregateExpression
+                if !aggrExpr.aggregateFunction.isInstanceOf[ApproximatePercentile] =>
             case _ =>
               allSupported = false
           }

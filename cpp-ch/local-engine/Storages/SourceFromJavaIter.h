@@ -31,7 +31,9 @@ public:
 
     static Int64 byteArrayToLong(JNIEnv * env, jbyteArray arr);
 
-    SourceFromJavaIter(DB::ContextPtr context_, DB::Block header, jobject java_iter_, bool materialize_input_);
+    static DB::Block * peekBlock(JNIEnv * env, jobject java_iter);
+
+    SourceFromJavaIter(DB::ContextPtr context_, DB::Block header, jobject java_iter_, bool materialize_input_, DB::Block * peek_block_);
     ~SourceFromJavaIter() override;
 
     String getName() const override { return "SourceFromJavaIter"; }
@@ -41,10 +43,13 @@ private:
     void convertNullable(DB::Chunk & chunk);
     DB::ColumnPtr convertNestedNullable(const DB::ColumnPtr & column, const DB::DataTypePtr & target_type);
 
-    jobject java_iter;
-    bool materialize_input;
     DB::ContextPtr context;
     DB::Block original_header;
+    jobject java_iter;
+    bool materialize_input;
+
+    /// The first block read from java iteration to decide exact types of columns, especially for AggregateFunctions with parameters.
+    DB::Block * first_block = nullptr;
 };
 
 }

@@ -89,9 +89,11 @@ public:
     /// In some special cases, different arguments size or different arguments types may refer to different
     /// CH function implementation.
     virtual String getCHFunctionName(const CommonFunctionInfo & func_info) const = 0;
+
     /// In most cases, arguments size and types are enough to determine the CH function implementation.
-    /// This is only be used in SerializedPlanParser::parseNameStructure.
-    virtual String getCHFunctionName(const DB::DataTypes & args) const = 0;
+    /// It is only be used in TypeParser::buildBlockFromNamedStruct
+    /// Users are allowed to modify arg types to make it fit for ggregateFunctionFactory::instance().get(...) in TypeParser::buildBlockFromNamedStruct
+    virtual String getCHFunctionName(DB::DataTypes & args) const = 0;
 
     /// Do some preprojections for the function arguments, and return the necessary arguments for the CH function.
     virtual DB::ActionsDAG::NodeRawConstPtrs
@@ -112,7 +114,8 @@ public:
     virtual const DB::ActionsDAG::Node * convertNodeTypeIfNeeded(
         const CommonFunctionInfo & func_info,
         const DB::ActionsDAG::Node * func_node,
-        DB::ActionsDAGPtr & actions_dag, bool withNullability) const;
+        DB::ActionsDAGPtr & actions_dag,
+        bool with_nullability) const;
 
     /// Parameters are only used in aggregate functions at present. e.g. percentiles(0.5)(x).
     /// 0.5 is the parameter of percentiles function.

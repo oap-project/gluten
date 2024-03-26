@@ -278,6 +278,8 @@ DB::Block TypeParser::buildBlockFromNamedStruct(const substrait::NamedStruct & s
             auto tmp_ctx = DB::Context::createCopy(SerializedPlanParser::global_context);
             SerializedPlanParser tmp_plan_parser(tmp_ctx);
             auto function_parser = AggregateFunctionParserFactory::instance().get(name_parts[3], &tmp_plan_parser);
+            /// This may remove elements from args_types, because some of them are used to determine CH function name, but not needed for the following
+            /// call `AggregateFunctionFactory::instance().get`
             auto agg_function_name = function_parser->getCHFunctionName(args_types);
             auto action = NullsAction::EMPTY;
             ch_type = AggregateFunctionFactory::instance()
@@ -314,21 +316,20 @@ DB::Block TypeParser::buildBlockFromNamedStructWithoutDFS(const substrait::Named
     return res;
 }
 
-bool TypeParser::isTypeMatched(const substrait::Type & substrait_type, const DataTypePtr & ch_type)
+bool TypeParser::isTypeMatched(const substrait::Type & substrait_type, const DataTypePtr & ch_type, bool ignore_nullability)
 {
     const auto parsed_ch_type = TypeParser::parseType(substrait_type);
-    // if it's only different in nullability, we consider them same.
-    // this will be problematic for some functions being not-null in spark but nullable in clickhouse.
-    // e.g. murmur3hash
-    const auto a = removeNullable(parsed_ch_type);
-    const auto b = removeNullable(ch_type);
-    return a->equals(*b);
-}
-
-bool TypeParser::isTypeMatchedWithNullability(const substrait::Type & substrait_type, const DataTypePtr & ch_type)
-{
-    const auto parsed_ch_type = TypeParser::parseType(substrait_type);
-    return parsed_ch_type->equals(*ch_type);
+    if (ignore_nullability)
+    {
+        // if it's only different in nullability, we consider them same.
+        // this will be problematic for some functions being not-null in spark but nullable in clickhouse.
+        // e.g. murmur3hash
+        const auto a = removeNullable(parsed_ch_type);
+        const auto b = removeNullable(ch_type);
+        return a->equals(*b);
+    }
+    else
+        return parsed_ch_type->equals(*ch_type);
 }
 
 DB::DataTypePtr TypeParser::tryWrapNullable(substrait::Type_Nullability nullable, DB::DataTypePtr nested_type)

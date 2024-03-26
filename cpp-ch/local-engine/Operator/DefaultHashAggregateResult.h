@@ -22,7 +22,7 @@
 namespace local_engine
 {
 
-/// Special case: goruping keys is empty, and there is no input from updstream, but still need to return one default row.
+/// Special case: goruping keys is empty, and there is no input from upstream, but still need to return one default row.
 class DefaultHashAggregateResultStep : public DB::ITransformingStep
 {
 public:

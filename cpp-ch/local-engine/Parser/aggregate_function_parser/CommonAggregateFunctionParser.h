@@ -31,7 +31,7 @@ namespace local_engine
         String getName() const override { return  #substait_name; } \
         static constexpr auto name = #substait_name; \
         String getCHFunctionName(const CommonFunctionInfo &) const override { return #ch_name; } \
-        String getCHFunctionName(const DB::DataTypes &) const override { return #ch_name; } \
+        String getCHFunctionName(DB::DataTypes &) const override { return #ch_name; } \
     }; \
     static const AggregateFunctionParserRegister<AggregateFunctionParser##cls_name> register_##cls_name = AggregateFunctionParserRegister<AggregateFunctionParser##cls_name>();
 
