@@ -77,7 +77,12 @@ std::unordered_set<std::shared_ptr<UdfLoader::UdfSignature>> UdfLoader::getRegis
       const auto& entry = udfEntry[i];
       auto dataType = toSubstraitTypeStr(entry.dataType);
       auto argTypes = toSubstraitTypeStr(entry.numArgs, entry.argTypes);
-      signatures.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes));
+      if (entry.isUdaf) {
+        auto intermediateType = toSubstraitTypeStr(entry.intermediateType);
+        signatures.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes, intermediateType));
+      } else {
+        signatures.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes));
+      }
     }
     free(udfEntry);
   }

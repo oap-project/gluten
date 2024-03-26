@@ -76,10 +76,11 @@ abstract class VeloxUdfSuite extends GlutenQueryTest with SQLHelper {
                          |  myudf1(1),
                          |  myudf1(1L),
                          |  myudf2(100L),
-                         |  mydate(cast('2024-03-25' as date), 5)
+                         |  mydate(cast('2024-03-25' as date), 5),
+                         |  myavg(1)
                          |""".stripMargin)
     df.collect()
-    assert(df.collect().sameElements(Array(Row(6, 6L, 105, Date.valueOf("2024-03-30")))))
+    assert(df.collect().sameElements(Array(Row(6, 6L, 105, Date.valueOf("2024-03-30"), 1.0))))
   }
 }
 

@@ -25,8 +25,7 @@ import io.glutenproject.expression.ConverterUtils.FunctionConfig
 import io.glutenproject.extension.columnar.TransformHints
 import io.glutenproject.sql.shims.SparkShimLoader
 import io.glutenproject.substrait.expression.{ExpressionBuilder, ExpressionNode, IfThenNode}
-import io.glutenproject.vectorized.{ColumnarBatchSerializer, ColumnarBatchSerializeResult}
-
+import io.glutenproject.vectorized.{ColumnarBatchSerializeResult, ColumnarBatchSerializer}
 import org.apache.spark.{ShuffleDependency, SparkException}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.serializer.Serializer
@@ -37,7 +36,7 @@ import org.apache.spark.sql.catalyst.{AggregateFunctionRewriteRule, FlushableHas
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
 import org.apache.spark.sql.catalyst.catalog.BucketSpec
 import org.apache.spark.sql.catalyst.catalog.CatalogTypes.TablePartitionSpec
-import org.apache.spark.sql.catalyst.expressions.{Alias, Ascending, Attribute, Cast, CreateNamedStruct, ElementAt, Expression, ExpressionInfo, Generator, GetArrayItem, GetMapValue, GetStructField, If, IsNaN, Literal, Murmur3Hash, NamedExpression, NaNvl, PosExplode, Round, SortOrder, StringSplit, StringTrim, Uuid}
+import org.apache.spark.sql.catalyst.expressions.{Alias, Ascending, Attribute, Cast, CreateNamedStruct, ElementAt, Expression, ExpressionInfo, Generator, GetArrayItem, GetMapValue, GetStructField, If, IsNaN, Literal, Murmur3Hash, NaNvl, NamedExpression, PosExplode, Round, SortOrder, StringSplit, StringTrim, Uuid}
 import org.apache.spark.sql.catalyst.expressions.aggregate.{AggregateExpression, HLLAdapter}
 import org.apache.spark.sql.catalyst.optimizer.BuildSide
 import org.apache.spark.sql.catalyst.plans.JoinType
@@ -50,19 +49,16 @@ import org.apache.spark.sql.execution.exchange.{BroadcastExchangeExec, ShuffleEx
 import org.apache.spark.sql.execution.joins.BuildSideRelation
 import org.apache.spark.sql.execution.metric.SQLMetric
 import org.apache.spark.sql.execution.utils.ExecUtil
-import org.apache.spark.sql.expression.{UDFExpression, UDFResolver}
+import org.apache.spark.sql.expression.{UDFExpression, UDFResolver, UserDefinedAggregateFunction}
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.vectorized.ColumnarBatch
-
 import com.google.common.collect.Lists
 import org.apache.commons.lang3.ClassUtils
 
 import javax.ws.rs.core.UriBuilder
-
 import java.lang.{Long => JLong}
 import java.util.{Map => JMap}
-
 import scala.collection.mutable.ListBuffer
 
 class SparkPlanExecApiImpl extends SparkPlanExecApi {
@@ -644,6 +640,7 @@ class SparkPlanExecApiImpl extends SparkPlanExecApi {
     Seq(
       Sig[HLLAdapter](ExpressionNames.APPROX_DISTINCT),
       Sig[UDFExpression](ExpressionNames.UDF_PLACEHOLDER),
+      Sig[UserDefinedAggregateFunction](ExpressionNames.UDF_PLACEHOLDER),
       Sig[NaNvl](ExpressionNames.NANVL))
   }
 

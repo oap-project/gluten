@@ -18,16 +18,19 @@
 #include <velox/expression/VectorFunction.h>
 #include <velox/functions/Macros.h>
 #include <velox/functions/Registerer.h>
+#include <velox/functions/lib/aggregates/AverageAggregateBase.h>
 #include <iostream>
 #include "udf/Udf.h"
 
 namespace {
 
 using namespace facebook::velox;
+using namespace facebook::velox::functions::aggregate;
 
 static const char* kInteger = "int";
 static const char* kBigInt = "bigint";
 static const char* kDate = "date";
+static const char* kDouble = "double";
 
 template <TypeKind Kind>
 class PlusConstantFunction : public exec::VectorFunction {
@@ -107,7 +110,137 @@ static std::vector<std::shared_ptr<exec::FunctionSignature>> bigintSignatures() 
 
 } // namespace
 
-const int kNumMyUdf = 4;
+namespace {
+
+template <typename TInput, typename TAccumulator, typename TResult>
+class AverageAggregate : public AverageAggregateBase<TInput, TAccumulator, TResult> {
+ public:
+  explicit AverageAggregate(TypePtr resultType) : AverageAggregateBase<TInput, TAccumulator, TResult>(resultType) {}
+
+  void extractAccumulators(char** groups, int32_t numGroups, VectorPtr* result) override {
+    auto rowVector = (*result)->as<RowVector>();
+    auto sumVector = rowVector->childAt(0)->asFlatVector<TAccumulator>();
+    auto countVector = rowVector->childAt(1)->asFlatVector<int64_t>();
+
+    rowVector->resize(numGroups);
+    sumVector->resize(numGroups);
+    countVector->resize(numGroups);
+    rowVector->clearAllNulls();
+
+    int64_t* rawCounts = countVector->mutableRawValues();
+    TAccumulator* rawSums = sumVector->mutableRawValues();
+    for (auto i = 0; i < numGroups; ++i) {
+      // When all inputs are nulls, the partial result is (0, 0).
+      char* group = groups[i];
+      auto* sumCount = this->accumulator(group);
+      rawCounts[i] = sumCount->count;
+      rawSums[i] = sumCount->sum;
+    }
+  }
+
+  void extractValues(char** groups, int32_t numGroups, VectorPtr* result) override {
+    auto vector = (*result)->as<FlatVector<TResult>>();
+    VELOX_CHECK(vector);
+    vector->resize(numGroups);
+    uint64_t* rawNulls = this->getRawNulls(vector);
+
+    TResult* rawValues = vector->mutableRawValues();
+    for (int32_t i = 0; i < numGroups; ++i) {
+      char* group = groups[i];
+      auto* sumCount = this->accumulator(group);
+      if (sumCount->count == 0) {
+        // In Spark, if all inputs are null, count will be 0,
+        // and the result of final avg will be null.
+        vector->setNull(i, true);
+      } else {
+        this->clearNull(rawNulls, i);
+        rawValues[i] = (TResult)sumCount->sum / sumCount->count;
+      }
+    }
+  }
+};
+
+exec::AggregateRegistrationResult
+registerAverage(const std::string& name, bool withCompanionFunctions, bool overwrite) {
+  std::vector<std::shared_ptr<exec::AggregateFunctionSignature>> signatures;
+
+  for (const auto& inputType : {"smallint", "integer", "bigint"}) {
+    signatures.push_back(exec::AggregateFunctionSignatureBuilder()
+                             .returnType("double")
+                             .intermediateType("row(double,bigint)")
+                             .argumentType(inputType)
+                             .build());
+  }
+
+  return exec::registerAggregateFunction(
+      name,
+      std::move(signatures),
+      [name](
+          core::AggregationNode::Step step,
+          const std::vector<TypePtr>& argTypes,
+          const TypePtr& resultType,
+          const core::QueryConfig& /*config*/) -> std::unique_ptr<exec::Aggregate> {
+        VELOX_CHECK_LE(argTypes.size(), 1, "{} takes at most one argument", name);
+        auto inputType = argTypes[0];
+        if (exec::isRawInput(step)) {
+          switch (inputType->kind()) {
+            case TypeKind::SMALLINT:
+              return std::make_unique<AverageAggregate<int16_t, double, double>>(resultType);
+            case TypeKind::INTEGER:
+              return std::make_unique<AverageAggregate<int32_t, double, double>>(resultType);
+            case TypeKind::BIGINT: {
+              if (inputType->isShortDecimal()) {
+                return std::make_unique<DecimalAverageAggregateBase<int64_t>>(resultType);
+              }
+              return std::make_unique<AverageAggregate<int64_t, double, double>>(resultType);
+            }
+            case TypeKind::HUGEINT: {
+              if (inputType->isLongDecimal()) {
+                return std::make_unique<DecimalAverageAggregateBase<int128_t>>(resultType);
+              }
+              VELOX_NYI();
+            }
+            case TypeKind::REAL:
+              return std::make_unique<AverageAggregate<float, double, double>>(resultType);
+            case TypeKind::DOUBLE:
+              return std::make_unique<AverageAggregate<double, double, double>>(resultType);
+            default:
+              VELOX_FAIL("Unknown input type for {} aggregation {}", name, inputType->kindName());
+          }
+        } else {
+          checkAvgIntermediateType(inputType);
+          switch (resultType->kind()) {
+            case TypeKind::REAL:
+              return std::make_unique<AverageAggregate<int64_t, double, float>>(resultType);
+            case TypeKind::DOUBLE:
+            case TypeKind::ROW:
+              return std::make_unique<AverageAggregate<int64_t, double, double>>(resultType);
+            case TypeKind::BIGINT:
+              return std::make_unique<DecimalAverageAggregateBase<int64_t>>(resultType);
+            case TypeKind::HUGEINT:
+              return std::make_unique<DecimalAverageAggregateBase<int128_t>>(resultType);
+            case TypeKind::VARBINARY:
+              if (inputType->isLongDecimal()) {
+                return std::make_unique<DecimalAverageAggregateBase<int128_t>>(resultType);
+              } else if (inputType->isShortDecimal() || inputType->kind() == TypeKind::VARBINARY) {
+                // If the input and out type are VARBINARY, then the
+                // LongDecimalWithOverflowState is used and the template type
+                // does not matter.
+                return std::make_unique<DecimalAverageAggregateBase<int64_t>>(resultType);
+              }
+              [[fallthrough]];
+            default:
+              VELOX_FAIL("Unsupported result type for final aggregation: {}", resultType->kindName());
+          }
+        }
+      },
+      withCompanionFunctions,
+      overwrite);
+}
+
+} // namespace
+
+const int kNumMyUdf = 5;
 
 DEFINE_GET_NUM_UDF {
   return kNumMyUdf;
@@ -117,11 +250,14 @@ const char* myUdf1Arg1[] = {kInteger};
 const char* myUdf1Arg2[] = {kBigInt};
 const char* myUdf2Arg1[] = {kBigInt};
 const char* myDateArg[] = {kDate, kInteger};
+const char* myAvgArg[] = {kInteger};
+const char* myAvgIntermediateType = "struct<a:double,b:bigint>";
 DEFINE_GET_UDF_ENTRIES {
   udfEntries[0] = {"myudf1", kInteger, 1, myUdf1Arg1};
   udfEntries[1] = {"myudf1", kBigInt, 1, myUdf1Arg2};
   udfEntries[2] = {"myudf2", kBigInt, 1, myUdf2Arg1};
   udfEntries[3] = {"mydate", kDate, 2, myDateArg};
+  udfEntries[4] = {"myavg", kDouble, 1, myAvgArg, true, myAvgIntermediateType};
 }
 
 DEFINE_REGISTER_UDF {
@@ -129,4 +265,6 @@ DEFINE_REGISTER_UDF {
   facebook::velox::exec::registerVectorFunction(
       "myudf2", bigintSignatures(), std::make_unique<PlusConstantFunction<facebook::velox::TypeKind::BIGINT>>(5));
   facebook::velox::registerFunction<MyDateSimpleFunction, Date, Date, int32_t>({"mydate"});
+
+  registerAverage("myavg", true, true);
 }

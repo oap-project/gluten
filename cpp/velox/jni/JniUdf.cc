@@ -28,6 +28,7 @@ const std::string kUdfResolverClassPath = "Lorg/apache/spark/sql/expression/UDFR
 
 static jclass udfResolverClass;
 static jmethodID registerUDFMethod;
+static jmethodID registerUDAFMethod;
 
 } // namespace
 
@@ -41,6 +42,7 @@ void gluten::initVeloxJniUDF(JNIEnv* env) {
 
   // methods
   registerUDFMethod = getMethodIdOrError(env, udfResolverClass, "registerUDF", "(Ljava/lang/String;[B[B)V");
+  registerUDAFMethod = getMethodIdOrError(env, udfResolverClass, "registerUDAF", "(Ljava/lang/String;[B[B[B)V");
 }
 
 void gluten::finalizeVeloxJniUDF(JNIEnv* env) {
@@ -61,7 +63,17 @@ void gluten::jniGetFunctionSignatures(JNIEnv* env) {
         argTypes, 0, signature->argTypes.length(), reinterpret_cast<const jbyte*>(signature->argTypes.c_str()));
     jobject instance = env->GetStaticObjectField(
         udfResolverClass, env->GetStaticFieldID(udfResolverClass, "MODULE$", kUdfResolverClassPath.c_str()));
-    env->CallVoidMethod(instance, registerUDFMethod, name, returnType, argTypes);
+    if (!signature->intermediateType.empty()) {
+      jbyteArray intermediateType = env->NewByteArray(signature->intermediateType.length());
+      env->SetByteArrayRegion(
+          intermediateType,
+          0,
+          signature->intermediateType.length(),
+          reinterpret_cast<const jbyte*>(signature->intermediateType.c_str()));
+      env->CallVoidMethod(instance, registerUDAFMethod, name, returnType, argTypes, intermediateType);
+    } else {
+      env->CallVoidMethod(instance, registerUDFMethod, name, returnType, argTypes);
+    }
     checkException(env);
   }
 }

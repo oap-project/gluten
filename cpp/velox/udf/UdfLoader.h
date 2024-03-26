@@ -34,8 +34,13 @@ class UdfLoader {
     std::string returnType;
     std::string argTypes;
 
+    std::string intermediateType{};
+
     UdfSignature(std::string name, std::string returnType, std::string argTypes)
         : name(name), returnType(returnType), argTypes(argTypes) {}
+
+    UdfSignature(std::string name, std::string returnType, std::string argTypes, std::string intermediateType)
+        : name(name), returnType(returnType), argTypes(argTypes), intermediateType(intermediateType) {}
 
     ~UdfSignature() = default;
   };
