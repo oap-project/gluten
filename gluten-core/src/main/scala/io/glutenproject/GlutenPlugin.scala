@@ -143,10 +143,18 @@ private[glutenproject] class GlutenDriverPlugin extends DriverPlugin with Loggin
     }
     conf.set(SPARK_SESSION_EXTS_KEY, String.format("%s", extensions))
 
-    // off-heap bytes
-    if (!conf.contains(GlutenConfig.GLUTEN_OFFHEAP_SIZE_KEY)) {
-      throw new GlutenException(s"${GlutenConfig.GLUTEN_OFFHEAP_SIZE_KEY} is not set")
+    // check memory off-heap enabled and size
+    val minOffHeapSize = "1MB"
+    if (
+      !conf.getBoolean(GlutenConfig.GLUTEN_OFFHEAP_ENABLED, false) ||
+      conf.getSizeAsBytes(GlutenConfig.GLUTEN_OFFHEAP_SIZE_KEY, 0) < JavaUtils.byteStringAsBytes(
+        minOffHeapSize)
+    ) {
+      throw new GlutenException(
+        s"Must set '${GlutenConfig.GLUTEN_OFFHEAP_ENABLED}' to true " +
+          s"and set '${GlutenConfig.GLUTEN_OFFHEAP_SIZE_KEY}' to be greater than $minOffHeapSize")
     }
+
     // Session's local time zone must be set. If not explicitly set by user, its default
     // value (detected for the platform) is used, consistent with spark.
     conf.set(GLUTEN_DEFAULT_SESSION_TIMEZONE_KEY, SQLConf.SESSION_LOCAL_TIMEZONE.defaultValueString)
@@ -202,16 +210,6 @@ private[glutenproject] class GlutenExecutorPlugin extends ExecutorPlugin {
   override def init(ctx: PluginContext, extraConf: util.Map[String, String]): Unit = {
     val conf = ctx.conf()
 
-    // Must set the 'spark.memory.offHeap.size' value to native memory malloc
-    if (
-      !conf.getBoolean("spark.memory.offHeap.enabled", false) ||
-      (JavaUtils.byteStringAsBytes(
-        conf.get("spark.memory.offHeap.size").toString) / 1024 / 1024).toInt <= 0
-    ) {
-      throw new IllegalArgumentException(
-        s"Must set 'spark.memory.offHeap.enabled' to true" +
-          s" and set off heap memory size by option 'spark.memory.offHeap.size'")
-    }
     // Initialize Backends API
     // TODO categorize the APIs by driver's or executor's
     BackendsApiManager.initialize()
