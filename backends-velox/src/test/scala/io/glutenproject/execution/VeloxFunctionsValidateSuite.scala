@@ -344,6 +344,27 @@ class VeloxFunctionsValidateSuite extends VeloxWholeStageTransformerSuite {
     }
   }
 
+  test("array_sort") {
+    withTempPath {
+      path =>
+        Seq[Seq[Integer]](
+          Seq(1, 9, 8, 7),
+          Seq(5, null, 8, 9, 7, 2),
+          Seq.empty,
+          null
+        )
+          .toDF("i")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("array_tbl")
+
+        runQueryAndCompare("select array_sort(i) as v from array_tbl;") {
+          checkOperatorMatch[ProjectExecTransformer]
+        }
+    }
+  }
+
   test("map extract - getmapvalue") {
     withTempPath {
       path =>

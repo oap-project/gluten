@@ -209,6 +209,7 @@ object ExpressionMappings {
     Sig[ArrayMax](ARRAY_MAX),
     Sig[ArrayMin](ARRAY_MIN),
     Sig[ArrayJoin](ARRAY_JOIN),
+    Sig[ArraySort](ARRAY_SORT),
     Sig[SortArray](SORT_ARRAY),
     Sig[ArraysOverlap](ARRAYS_OVERLAP),
     Sig[ArrayPosition](ARRAY_POSITION),
