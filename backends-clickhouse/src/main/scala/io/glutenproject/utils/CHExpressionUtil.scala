@@ -179,6 +179,7 @@ object CHExpressionUtil {
     SPARK_PARTITION_ID -> DefaultValidator(),
     URL_DECODE -> DefaultValidator(),
     SKEWNESS -> DefaultValidator(),
-    BIT_LENGTH -> DefaultValidator()
+    BIT_LENGTH -> DefaultValidator(),
+    FROM_UTC_TIMESTAMP -> DefaultValidator()
   )
 }

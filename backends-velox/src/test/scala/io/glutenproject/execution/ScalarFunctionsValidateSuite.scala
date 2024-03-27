@@ -18,6 +18,8 @@ package io.glutenproject.execution
 
 import org.apache.spark.sql.types._
 
+import java.sql.Timestamp
+
 class ScalarFunctionsValidateSuite extends FunctionsValidateTest {
   disableFallbackCheck
   import testImplicits._
@@ -369,6 +371,27 @@ class ScalarFunctionsValidateSuite extends FunctionsValidateTest {
       sql("create table t1 (c1 int, c2 timestamp) USING PARQUET")
       sql("INSERT INTO t1 VALUES(1, NOW())")
       runQueryAndCompare("SELECT c1, HOUR(c2) FROM t1 LIMIT 1")(df => checkFallbackOperators(df, 0))
+    }
+  }
+
+  test("from_utc_timestamp") {
+    withTempPath {
+      path =>
+        Seq(
+          (Timestamp.valueOf("2015-07-24 00:00:00"), "America/Los_Angeles"),
+          (Timestamp.valueOf("2015-07-25 00:00:00"), "America/Los_Angeles")
+        ).toDF("a", "b")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("view")
+
+        runQueryAndCompare("SELECT from_utc_timestamp(a, \"America/Los_Angeles\") from view") {
+          checkOperatorMatch[ProjectExecTransformer]
+        }
+        runQueryAndCompare("SELECT from_utc_timestamp(a, b) from view") {
+          checkOperatorMatch[ProjectExecTransformer]
+        }
     }
   }
 
