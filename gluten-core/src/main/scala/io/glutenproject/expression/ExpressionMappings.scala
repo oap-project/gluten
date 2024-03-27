@@ -275,7 +275,8 @@ object ExpressionMappings {
     Sig[CovSample](COVAR_SAMP),
     Sig[Last](LAST),
     Sig[First](FIRST),
-    Sig[Skewness](SKEWNESS)
+    Sig[Skewness](SKEWNESS),
+    Sig[Kurtosis](KURTOSIS)
   ) ++ SparkShimLoader.getSparkShims.aggregateExpressionMappings
 
   /** Mapping Spark window expression to Substrait function name */

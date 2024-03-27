@@ -901,6 +901,24 @@ abstract class VeloxAggregateFunctionsSuite extends VeloxWholeStageTransformerSu
         }
     }
   }
+
+  test("kurtosis") {
+    runQueryAndCompare("""
+                         |select kurtosis(l_partkey) from lineitem;
+                         |""".stripMargin) {
+      checkOperatorMatch[HashAggregateExecTransformer]
+    }
+    runQueryAndCompare("select kurtosis(l_partkey), count(distinct l_orderkey) from lineitem") {
+      df =>
+        {
+          assert(
+            getExecutedPlan(df).count(
+              plan => {
+                plan.isInstanceOf[HashAggregateExecTransformer]
+              }) == 4)
+        }
+    }
+  }
 }
 
 class VeloxAggregateFunctionsDefaultSuite extends VeloxAggregateFunctionsSuite {
