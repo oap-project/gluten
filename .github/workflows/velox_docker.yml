@@ -372,9 +372,10 @@ jobs:
           echo -e "rss.coordinator.server.periodic.output.interval.times 1\nrss.coordinator.shuffle.nodes.max 1\nrss.rpc.server.port 19999" > ./conf/coordinator.conf && \
           echo -e "rss.server.heartbeat.delay 3000\nrss.rpc.server.port 19997\nrss.jetty.http.port 19996\nrss.server.netty.port 19995\nrss.storage.basePath /opt/uniffle/shuffle_data\nrss.storage.type MEMORY_LOCALFILE\nrss.coordinator.quorum localhost:19999\nrss.server.flush.thread.alive 5\nrss.server.single.buffer.flush.threshold 64m" > ./conf/server.conf && \
           bash ./bin/start-coordinator.sh && bash ./bin/start-shuffle-server.sh && \
-          cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss-uniffle && \
+          sleep 120 && \
           tail -n 200 ./logs/coordinator.log && \
           tail -n 200 ./logs/shuffle_server.log && \
+          cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss-uniffle && \
           GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
             --local --preset=velox-with-uniffle --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
           bash /opt/uniffle/bin/stop-coordinator.sh && bash /opt/uniffle/bin/stop-shuffle-server.sh && \
