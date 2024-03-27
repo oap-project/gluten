@@ -321,7 +321,8 @@ object UDFResolver extends Logging {
       UDFMap.getOrElse(
         (name, children.map(_.dataType)),
         throw new UnsupportedOperationException(
-          s"UDF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} is not registered.")
+          s"UDF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} " +
+            s"is not registered.")
       )
     UDFExpression(name, expressionType.dataType, expressionType.nullable, children)
   }
@@ -331,7 +332,8 @@ object UDFResolver extends Logging {
       UDAFMap.getOrElse(
         (name, children.map(_.dataType)),
         throw new UnsupportedOperationException(
-          s"UDAF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} is not registered.")
+          s"UDAF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} " +
+            s"is not registered.")
       )
 
     UserDefinedAggregateFunction(
