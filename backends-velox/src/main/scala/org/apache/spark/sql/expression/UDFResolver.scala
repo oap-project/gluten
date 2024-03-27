@@ -70,6 +70,10 @@ case class UserDefinedAggregateFunction(
   }
 }
 
+object UserDefinedAggregateFunction {
+  val UDAF_PREFIX = "gluten_udaf_"
+}
+
 case class UDFExpression(
     name: String,
     dataType: DataType,

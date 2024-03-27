@@ -20,7 +20,6 @@
 #include <velox/expression/SignatureBinder.h>
 #include <velox/expression/VectorFunction.h>
 #include <velox/type/fbhive/HiveTypeParser.h>
-#include <functional>
 #include <vector>
 
 #include "Udf.h"
@@ -77,7 +76,7 @@ std::unordered_set<std::shared_ptr<UdfLoader::UdfSignature>> UdfLoader::getRegis
       const auto& entry = udfEntry[i];
       auto dataType = toSubstraitTypeStr(entry.dataType);
       auto argTypes = toSubstraitTypeStr(entry.numArgs, entry.argTypes);
-      if (entry.isUdaf) {
+      if (entry.intermediateType) {
         auto intermediateType = toSubstraitTypeStr(entry.intermediateType);
         signatures.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes, intermediateType));
       } else {

@@ -1141,13 +1141,13 @@ bool SubstraitToVeloxPlanValidator::validate(const ::substrait::AggregateRel& ag
       "covar_pop",
       "covar_samp",
       "approx_distinct",
-      "skewness",
-      "myavg"};
-      // TODO: workaround by adding prefix "udaf_"
+      "skewness"};
+
+  static const std::string kUdafPrefix = "gluten_udaf_";
 
   for (const auto& funcSpec : funcSpecs) {
     auto funcName = SubstraitParser::getNameBeforeDelimiter(funcSpec);
-    if (supportedAggFuncs.find(funcName) == supportedAggFuncs.end()) {
+    if (supportedAggFuncs.find(funcName) == supportedAggFuncs.end() && funcName.find(kUdafPrefix) != 0) {
       LOG_VALIDATION_MSG(funcName + " was not supported in AggregateRel.");
       return false;
     }
