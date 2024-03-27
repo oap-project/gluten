@@ -18,6 +18,8 @@ package io.glutenproject.execution
 
 import org.apache.spark.sql.types._
 
+import java.sql.{Date, Timestamp}
+
 class ScalarFunctionsValidateSuite extends FunctionsValidateTest {
   disableFallbackCheck
   import testImplicits._
@@ -320,6 +322,27 @@ class ScalarFunctionsValidateSuite extends FunctionsValidateTest {
         spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("view")
 
         runQueryAndCompare("SELECT datediff(a, b) from view") {
+          checkOperatorMatch[ProjectExecTransformer]
+        }
+    }
+  }
+
+  test("second") {
+    withTempPath {
+      path =>
+        Seq(
+          (
+            Date.valueOf("2015-04-08"),
+            Timestamp.valueOf("2015-04-08 13:10:15"),
+            Timestamp.valueOf("2013-04-08 13:10:15"))
+        )
+          .toDF("a", "b", "c")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("view")
+
+        runQueryAndCompare("SELECT second(a), second(b), second(c) from view") {
           checkOperatorMatch[ProjectExecTransformer]
         }
     }

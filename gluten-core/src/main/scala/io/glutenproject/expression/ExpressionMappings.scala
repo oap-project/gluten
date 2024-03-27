@@ -179,6 +179,7 @@ object ExpressionMappings {
     Sig[MonthsBetween](MONTHS_BETWEEN),
     Sig[DateFromUnixDate](DATE_FROM_UNIX_DATE),
     Sig[MakeTimestamp](MAKE_TIMESTAMP),
+    Sig[Second](SECOND),
     // JSON functions
     Sig[GetJsonObject](GET_JSON_OBJECT),
     Sig[LengthOfJsonArray](JSON_ARRAY_LENGTH),
