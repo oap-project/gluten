@@ -318,13 +318,21 @@ object UDFResolver extends Logging {
 
   private def getUdfExpression(name: String)(children: Seq[Expression]) = {
     val expressionType =
-      UDFMap.getOrElse((name, children.map(_.dataType)), throw new IllegalStateException())
+      UDFMap.getOrElse(
+        (name, children.map(_.dataType)),
+        throw new UnsupportedOperationException(
+          s"UDF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} is not registered.")
+      )
     UDFExpression(name, expressionType.dataType, expressionType.nullable, children)
   }
 
   private def getUdafExpression(name: String)(children: Seq[Expression]) = {
     val (expressionType, aggBufferAttributes) =
-      UDAFMap.getOrElse((name, children.map(_.dataType)), throw new IllegalStateException())
+      UDAFMap.getOrElse(
+        (name, children.map(_.dataType)),
+        throw new UnsupportedOperationException(
+          s"UDAF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} is not registered.")
+      )
 
     UserDefinedAggregateFunction(
       name,

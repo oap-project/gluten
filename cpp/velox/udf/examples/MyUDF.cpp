@@ -32,6 +32,7 @@ using namespace facebook::velox::functions::aggregate;
 static const char* kInteger = "int";
 static const char* kBigInt = "bigint";
 static const char* kDate = "date";
+static const char* kFloat = "float";
 static const char* kDouble = "double";
 
 template <TypeKind Kind>
@@ -237,7 +238,7 @@ exec::AggregateRegistrationResult registerSimpleAverageAggregate(const std::stri
 
 } // namespace
 
-const int kNumMyUdf = 5;
+const int kNumMyUdf = 8;
 
 DEFINE_GET_NUM_UDF {
   return kNumMyUdf;
@@ -247,14 +248,21 @@ const char* myUdf1Arg1[] = {kInteger};
 const char* myUdf1Arg2[] = {kBigInt};
 const char* myUdf2Arg1[] = {kBigInt};
 const char* myDateArg[] = {kDate, kInteger};
-const char* myAvgArg[] = {kInteger};
+const char* myAvgArg1[] = {kInteger};
+const char* myAvgArg2[] = {kBigInt};
+const char* myAvgArg3[] = {kFloat};
+const char* myAvgArg4[] = {kDouble};
 const char* myAvgIntermediateType = "struct<a:double,b:bigint>";
 DEFINE_GET_UDF_ENTRIES {
-  udfEntries[0] = {"myudf1", kInteger, 1, myUdf1Arg1};
-  udfEntries[1] = {"myudf1", kBigInt, 1, myUdf1Arg2};
-  udfEntries[2] = {"myudf2", kBigInt, 1, myUdf2Arg1};
-  udfEntries[3] = {"mydate", kDate, 2, myDateArg};
-  udfEntries[4] = {"myavg", kDouble, 1, myAvgArg, myAvgIntermediateType};
+  int index = 0;
+  udfEntries[index++] = {"myudf1", kInteger, 1, myUdf1Arg1};
+  udfEntries[index++] = {"myudf1", kBigInt, 1, myUdf1Arg2};
+  udfEntries[index++] = {"myudf2", kBigInt, 1, myUdf2Arg1};
+  udfEntries[index++] = {"mydate", kDate, 2, myDateArg};
+  udfEntries[index++] = {"myavg", kDouble, 1, myAvgArg1, myAvgIntermediateType};
+  udfEntries[index++] = {"myavg", kDouble, 1, myAvgArg2, myAvgIntermediateType};
+  udfEntries[index++] = {"myavg", kDouble, 1, myAvgArg3, myAvgIntermediateType};
+  udfEntries[index++] = {"myavg", kDouble, 1, myAvgArg4, myAvgIntermediateType};
 }
 
 DEFINE_REGISTER_UDF {
