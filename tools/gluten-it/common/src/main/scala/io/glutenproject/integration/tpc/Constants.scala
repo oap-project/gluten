@@ -65,6 +65,7 @@ object Constants {
     .set("spark.shuffle.manager", "org.apache.spark.shuffle.gluten.uniffle.GlutenRssShuffleManager")
     .set("spark.rss.coordinator.quorum", "localhost:19999")
     .set("spark.rss.storage.type", "MEMORY_LOCALFILE")
+    .set("spark.rss.client.type", "GRPC_NETTY")
     .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
     .set("spark.shuffle.service.enabled", "false")
     .set("spark.sql.adaptive.localShuffleReader.enabled", "false")
