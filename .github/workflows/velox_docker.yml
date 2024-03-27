@@ -356,7 +356,7 @@ jobs:
           cd $GITHUB_WORKSPACE/ && \
           export MAVEN_HOME=/usr/lib/maven && \
           export PATH=${PATH}:${MAVEN_HOME}/bin && \
-          mvn clean install -P${{ matrix.spark }} -Pbackends-velox -Prss-uniffle
+          mvn clean install -P${{ matrix.spark }} -Pbackends-velox -Prss-uniffle -DskipTests
       - name: TPC-H SF1.0 && TPC-DS SF1.0 Parquet local spark3.2 with uniffle 0.8.0
         run: |
           export MAVEN_HOME=/usr/lib/maven && \
