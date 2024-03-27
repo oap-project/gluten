@@ -130,7 +130,7 @@ FROM testData
 -- !query schema
 struct<skewness(udf(a)):double,udf(kurtosis(a)):double,udf(min(a)):int,max(udf(a)):int,udf(avg(udf(a))):double,udf(variance(a)):double,stddev(udf(a)):double,udf(sum(a)):bigint,udf(count(a)):bigint>
 -- !query output
--0.2723801058145729	-1.5069204152249134	1	3	2.142857142857143	0.8095238095238094	0.8997354108424372	15	7
+-0.27238010581457284	-1.5069204152249138	1	3	2.142857142857143	0.8095238095238096	0.8997354108424375	15	7
 
 
 -- !query

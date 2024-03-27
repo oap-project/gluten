@@ -150,7 +150,7 @@ FROM testData
 -- !query schema
 struct<skewness(a):double,kurtosis(a):double,min(a):int,max(a):int,avg(a):double,variance(a):double,stddev(a):double,sum(a):bigint,count(a):bigint>
 -- !query output
--0.2723801058145729	-1.5069204152249134	1	3	2.142857142857143	0.8095238095238094	0.8997354108424372	15	7
+-0.27238010581457284	-1.5069204152249138	1	3	2.142857142857143	0.8095238095238096	0.8997354108424375	15	7
 
 
 -- !query
