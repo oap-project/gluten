@@ -17,10 +17,10 @@
 
 #include <dlfcn.h>
 #include <google/protobuf/arena.h>
-#include <velox/expression/SignatureBinder.h>
-#include <velox/expression/VectorFunction.h>
-#include <velox/type/fbhive/HiveTypeParser.h>
 #include <vector>
+#include "velox/expression/SignatureBinder.h"
+#include "velox/expression/VectorFunction.h"
+#include "velox/type/fbhive/HiveTypeParser.h"
 
 #include "Udf.h"
 #include "UdfLoader.h"
@@ -58,7 +58,9 @@ void UdfLoader::loadUdfLibraries0(const std::vector<std::string>& libPaths) {
 }
 
 std::unordered_set<std::shared_ptr<UdfLoader::UdfSignature>> UdfLoader::getRegisteredUdfSignatures() {
-  std::unordered_set<std::shared_ptr<UdfSignature>> signatures;
+  if (!signatures_.empty()) {
+    return signatures_;
+  }
   for (const auto& item : handles_) {
     const auto& libPath = item.first;
     const auto& handle = item.second;
@@ -78,14 +80,32 @@ std::unordered_set<std::shared_ptr<UdfLoader::UdfSignature>> UdfLoader::getRegis
       auto argTypes = toSubstraitTypeStr(entry.numArgs, entry.argTypes);
       if (entry.intermediateType) {
         auto intermediateType = toSubstraitTypeStr(entry.intermediateType);
-        signatures.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes, intermediateType));
+        signatures_.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes, intermediateType));
       } else {
-        signatures.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes));
+        signatures_.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes));
       }
     }
     free(udfEntry);
   }
-  return signatures;
+  return signatures_;
+}
+
+std::unordered_set<std::string> UdfLoader::getRegisteredUdafNames() {
+  if (handles_.empty()) {
+    return {};
+  }
+  if (!names_.empty()) {
+    return names_;
+  }
+  if (signatures_.empty()) {
+    getRegisteredUdfSignatures();
+  }
+  for (const auto& sig : signatures_) {
+    if (!sig->intermediateType.empty()) {
+      names_.insert(sig->name);
+    }
+  }
+  return names_;
 }
 
 void UdfLoader::registerUdf() {
@@ -115,4 +135,5 @@ std::shared_ptr<UdfLoader> UdfLoader::getInstance() {
   static auto instance = std::make_shared<UdfLoader>();
   return instance;
 }
+
 } // namespace gluten

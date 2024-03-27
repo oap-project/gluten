@@ -717,7 +717,7 @@ object VeloxAggregateFunctionsBuilder {
       case Last(_, ignoreNulls) =>
         if (ignoreNulls) sigName = Some(ExpressionNames.LAST_IGNORE_NULL)
       case UserDefinedAggregateFunction(name, _, _, _, _) =>
-        sigName = Some(UserDefinedAggregateFunction.UDAF_PREFIX + name)
+        sigName = Some(name)
       case _ =>
     }
 

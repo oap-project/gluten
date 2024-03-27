@@ -254,7 +254,7 @@ DEFINE_GET_UDF_ENTRIES {
   udfEntries[1] = {"myudf1", kBigInt, 1, myUdf1Arg2};
   udfEntries[2] = {"myudf2", kBigInt, 1, myUdf2Arg1};
   udfEntries[3] = {"mydate", kDate, 2, myDateArg};
-  udfEntries[4] = {"myavg", kDouble, 1, myAvgArg, true, myAvgIntermediateType};
+  udfEntries[4] = {"myavg", kDouble, 1, myAvgArg, myAvgIntermediateType};
 }
 
 DEFINE_REGISTER_UDF {

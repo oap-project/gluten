@@ -51,6 +51,8 @@ class UdfLoader {
 
   std::unordered_set<std::shared_ptr<UdfSignature>> getRegisteredUdfSignatures();
 
+  std::unordered_set<std::string> getRegisteredUdafNames();
+
   void registerUdf();
 
   // unused
@@ -86,5 +88,8 @@ class UdfLoader {
   facebook::velox::type::fbhive::HiveTypeParser parser_{};
   google::protobuf::Arena arena_{};
   VeloxToSubstraitTypeConvertor convertor_{};
+
+  std::unordered_set<std::shared_ptr<UdfSignature>> signatures_;
+  std::unordered_set<std::string> names_;
 };
 } // namespace gluten
