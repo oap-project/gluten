@@ -16,7 +16,6 @@ if [ ! -d "$VCPKG_ROOT" ] || [ -z "$(ls "$VCPKG_ROOT")" ]; then
 fi
 [ -f "$VCPKG" ] || "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
 
-
 $VCPKG install --no-print-usage \
     --triplet="${VCPKG_TRIPLET}" --host-triplet="${VCPKG_TRIPLET}"
 
