@@ -85,6 +85,11 @@ trait SparkPlanExecApi {
   def genHiveTableScanExecTransformer(plan: SparkPlan): HiveTableScanExecTransformer =
     HiveTableScanExecTransformer(plan)
 
+  def genProjectExecTransformer(
+      projectList: Seq[NamedExpression],
+      child: SparkPlan): ProjectExecTransformer =
+    ProjectExecTransformer.createUnsafe(projectList, child)
+
   /** Generate HashAggregateExecTransformer. */
   def genHashAggregateExecTransformer(
       requiredChildDistributionExpressions: Option[Seq[Expression]],

@@ -248,47 +248,14 @@ case class ProjectExecTransformer private (projectList: Seq[NamedExpression], ch
     copy(child = newChild)
 }
 object ProjectExecTransformer {
-  private def processProjectExecTransformer(
-      projectList: Seq[NamedExpression]): Seq[NamedExpression] = {
-
-    // When there is a MergeScalarSubqueries which will create the named_struct with the same name,
-    // looks like {'bloomFilter', BF1, 'bloomFilter', BF2}
-    // or {'count(1)', count(1)#111L, 'avg(a)', avg(a)#222L, 'count(1)', count(1)#333L},
-    // it will cause problem for some backends, e.g. ClickHouse,
-    // which cannot tolerate duplicate type names in struct type,
-    // so we need to rename 'nameExpr' in the named_struct to make them unique
-    // after executing the MergeScalarSubqueries.
-    var needToReplace = false
-    val newProjectList = projectList.map {
-      case alias @ Alias(cns @ CreateNamedStruct(children: Seq[Expression]), "mergedValue") =>
-        // check whether there are some duplicate names
-        if (cns.nameExprs.distinct.size == cns.nameExprs.size) {
-          alias
-        } else {
-          val newChildren = children
-            .grouped(2)
-            .flatMap {
-              case Seq(name: Literal, value: NamedExpression) =>
-                val newLiteral = Literal(name.toString() + "#" + value.exprId.id)
-                Seq(newLiteral, value)
-              case Seq(name, value) => Seq(name, value)
-            }
-            .toSeq
-          needToReplace = true
-          Alias.apply(CreateNamedStruct(newChildren), "mergedValue")(alias.exprId)
-        }
-      case other: NamedExpression => other
-    }
-
-    if (!needToReplace) {
-      projectList
-    } else {
-      newProjectList
-    }
+  def apply(projectList: Seq[NamedExpression], child: SparkPlan): ProjectExecTransformer = {
+    BackendsApiManager.getSparkPlanExecApiInstance.genProjectExecTransformer(projectList, child)
   }
 
-  def apply(projectList: Seq[NamedExpression], child: SparkPlan): ProjectExecTransformer =
-    new ProjectExecTransformer(processProjectExecTransformer(projectList), child)
+  // Directly creating a project transformer may not be considered safe since some backends, E.g.,
+  // Clickhouse may require to intercept the instantiation procedure.
+  def createUnsafe(projectList: Seq[NamedExpression], child: SparkPlan): ProjectExecTransformer =
+    new ProjectExecTransformer(projectList, child)
 }
 
 // An alternatives for UnionExec.
