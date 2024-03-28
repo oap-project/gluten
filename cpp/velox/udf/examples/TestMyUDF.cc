@@ -26,12 +26,15 @@ int main() {
   udfLoader->registerUdf();
 
   auto map = facebook::velox::exec::vectorFunctionFactories();
-  const std::string funcName = "myudf1";
-  auto f = map.withRLock([&funcName](auto& self) -> std::shared_ptr<facebook::velox::exec::VectorFunction> {
-    auto iter = self.find(funcName);
-    std::unordered_map<std::string, std::string> values;
-    const facebook::velox::core::QueryConfig config(std::move(values));
-    return iter->second.factory(funcName, {}, config);
+  const std::vector<std::string> candidates = {"myudf1", "myudf2"};
+  auto f = map.withRLock([&candidates](auto& self) -> bool {
+    return std::all_of(candidates.begin(), candidates.end(), [&](const auto& funcName) {
+      auto iter = self.find(funcName);
+      std::unordered_map<std::string, std::string> values;
+      const facebook::velox::core::QueryConfig config(std::move(values));
+      return iter->second.factory(
+                 funcName, {facebook::velox::exec::VectorFunctionArg{facebook::velox::BIGINT()}}, config) != nullptr;
+    });
   });
 
   if (!f) {

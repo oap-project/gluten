@@ -22,6 +22,7 @@
 #include "velox/expression/VectorFunction.h"
 #include "velox/type/fbhive/HiveTypeParser.h"
 
+#include "Udaf.h"
 #include "Udf.h"
 #include "UdfLoader.h"
 #include "utils/StringUtil.h"
@@ -30,9 +31,13 @@
 
 namespace {
 
-void* loadSymFromLibrary(void* handle, const std::string& libPath, const std::string& func) {
+void* loadSymFromLibrary(
+    void* handle,
+    const std::string& libPath,
+    const std::string& func,
+    bool throwIfNotFound = true) {
   void* sym = dlsym(handle, func.c_str());
-  if (!sym) {
+  if (!sym && throwIfNotFound) {
     throw gluten::GlutenException(func + " not found in " + libPath);
   }
   return sym;
@@ -64,28 +69,53 @@ std::unordered_set<std::shared_ptr<UdfLoader::UdfSignature>> UdfLoader::getRegis
   for (const auto& item : handles_) {
     const auto& libPath = item.first;
     const auto& handle = item.second;
-    void* getNumUdfSym = loadSymFromLibrary(handle, libPath, GLUTEN_TOSTRING(GLUTEN_GET_NUM_UDF));
-    auto getNumUdf = reinterpret_cast<int (*)()>(getNumUdfSym);
-    // allocate
-    int numUdf = getNumUdf();
-    UdfEntry* udfEntry = static_cast<UdfEntry*>(malloc(sizeof(UdfEntry) * numUdf));
 
-    void* getUdfEntriesSym = loadSymFromLibrary(handle, libPath, GLUTEN_TOSTRING(GLUTEN_GET_UDF_ENTRIES));
-    auto getUdfEntries = reinterpret_cast<void (*)(UdfEntry*)>(getUdfEntriesSym);
-    getUdfEntries(udfEntry);
+    // Handle UDFs.
+    void* getNumUdfSym = loadSymFromLibrary(handle, libPath, GLUTEN_TOSTRING(GLUTEN_GET_NUM_UDF), false);
+    if (getNumUdfSym) {
+      auto getNumUdf = reinterpret_cast<int (*)()>(getNumUdfSym);
+      int numUdf = getNumUdf();
+      // allocate
+      UdfEntry* udfEntries = static_cast<UdfEntry*>(malloc(sizeof(UdfEntry) * numUdf));
 
-    for (auto i = 0; i < numUdf; ++i) {
-      const auto& entry = udfEntry[i];
-      auto dataType = toSubstraitTypeStr(entry.dataType);
-      auto argTypes = toSubstraitTypeStr(entry.numArgs, entry.argTypes);
-      if (entry.intermediateType) {
-        auto intermediateType = toSubstraitTypeStr(entry.intermediateType);
-        signatures_.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes, intermediateType));
-      } else {
+      void* getUdfEntriesSym = loadSymFromLibrary(handle, libPath, GLUTEN_TOSTRING(GLUTEN_GET_UDF_ENTRIES));
+      auto getUdfEntries = reinterpret_cast<void (*)(UdfEntry*)>(getUdfEntriesSym);
+      getUdfEntries(udfEntries);
+
+      for (auto i = 0; i < numUdf; ++i) {
+        const auto& entry = udfEntries[i];
+        auto dataType = toSubstraitTypeStr(entry.dataType);
+        auto argTypes = toSubstraitTypeStr(entry.numArgs, entry.argTypes);
         signatures_.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes));
       }
+      free(udfEntries);
+    } else {
+      LOG(INFO) << "No UDFs found in " << libPath;
     }
-    free(udfEntry);
+
+    // Handle UDAFs.
+    void* getNumUdafSym = loadSymFromLibrary(handle, libPath, GLUTEN_TOSTRING(GLUTEN_GET_NUM_UDAF), false);
+    if (getNumUdafSym) {
+      auto getNumUdaf = reinterpret_cast<int (*)()>(getNumUdafSym);
+      int numUdaf = getNumUdaf();
+      // allocate
+      UdafEntry* udafEntries = static_cast<UdafEntry*>(malloc(sizeof(UdafEntry) * numUdaf));
+
+      void* getUdafEntriesSym = loadSymFromLibrary(handle, libPath, GLUTEN_TOSTRING(GLUTEN_GET_UDAF_ENTRIES));
+      auto getUdafEntries = reinterpret_cast<void (*)(UdafEntry*)>(getUdafEntriesSym);
+      getUdafEntries(udafEntries);
+
+      for (auto i = 0; i < numUdaf; ++i) {
+        const auto& entry = udafEntries[i];
+        auto dataType = toSubstraitTypeStr(entry.dataType);
+        auto argTypes = toSubstraitTypeStr(entry.numArgs, entry.argTypes);
+        auto intermediateType = toSubstraitTypeStr(entry.intermediateType);
+        signatures_.insert(std::make_shared<UdfSignature>(entry.name, dataType, argTypes, intermediateType));
+      }
+      free(udafEntries);
+    } else {
+      LOG(INFO) << "No UDAFs found in " << libPath;
+    }
   }
   return signatures_;
 }
@@ -114,21 +144,6 @@ void UdfLoader::registerUdf() {
     auto registerUdf = reinterpret_cast<void (*)()>(sym);
     registerUdf();
   }
-}
-
-bool UdfLoader::validateUdf(const std::string& name, const std::vector<facebook::velox::TypePtr>& argTypes) {
-  const auto& functionMap = facebook::velox::exec::vectorFunctionFactories();
-  auto got = functionMap->find(name);
-  if (got != functionMap->end()) {
-    const auto& entry = got->second;
-    for (auto& signature : entry.signatures) {
-      facebook::velox::exec::SignatureBinder binder(*signature, argTypes);
-      if (binder.tryBind()) {
-        return true;
-      }
-    }
-  }
-  return false;
 }
 
 std::shared_ptr<UdfLoader> UdfLoader::getInstance() {

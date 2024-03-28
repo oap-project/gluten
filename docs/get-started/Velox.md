@@ -4,6 +4,7 @@ title: Gluten with Velox Backend
 nav_order: 1
 parent: Getting-Started
 ---
+
 # Supported Version
 
 | Type  | Version                         |
@@ -15,10 +16,10 @@ parent: Getting-Started
 
 # Prerequisite
 
-Currently, Gluten+Velox backend is only tested on **Ubuntu20.04/Ubuntu22.04/Centos7/Centos8**. Other kinds of OS support are still in progress. The long term goal is to support several
-common OS and conda env deployment.
+Currently, Gluten+Velox backend is only tested on **Ubuntu20.04/Ubuntu22.04/Centos7/Centos8**.
+Other kinds of OS support are still in progress. The long term goal is to support several common OS and conda env deployment.
 
-Gluten only fully tested in CI with 3.2.2, 3.3.1 and 3.4.2. We will add/update supported/tested versions according to the upstream changes. 
+Gluten only fully tested in CI with 3.2.2, 3.3.1 and 3.4.2. We will add/update supported/tested versions according to the upstream changes.
 
 We need to set up the `JAVA_HOME` env. Currently, Gluten supports **java 8** and **java 17**.
 
@@ -120,6 +121,7 @@ With config `enable_vcpkg=OFF`, the dependency libraries won't be statically lin
 Hadoop hdfs support is ready via the [libhdfs3](https://github.com/apache/hawq/tree/master/depends/libhdfs3) library. The libhdfs3 provides native API for Hadoop I/O without the drawbacks of JNI. It also provides advanced authentication like Kerberos based. Please note this library has several dependencies which may require extra installations on Driver and Worker node.
 
 ### Build with HDFS support
+
 To build Gluten with HDFS support, below command is suggested:
 
 ```bash
@@ -128,7 +130,7 @@ cd /path/to/gluten
 ```
 
 ### Configuration about HDFS support
- 
+
 HDFS uris (hdfs://host:port) will be extracted from a valid hdfs file path to initialize hdfs client, you do not need to specify it explicitly.
 
 libhdfs3 need a configuration file and [example here](https://github.com/apache/hawq/blob/e9d43144f7e947e071bba48871af9da354d177d0/src/backend/utils/misc/etc/hdfs-client.xml), this file is a bit different from hdfs-site.xml and core-site.xml.
@@ -159,12 +161,12 @@ You also need to add configuration to the "hdfs-site.xml" as below:
 
 ```
 <property>
-   <name>dfs.client.read.shortcircuit</name>
-   <value>true</value>
+  <name>dfs.client.read.shortcircuit</name>
+  <value>true</value>
 </property>
 <property>
-   <name>dfs.domain.socket.path</name>
-   <value>/var/lib/hadoop-hdfs/dn_socket</value>
+  <name>dfs.domain.socket.path</name>
+  <value>/var/lib/hadoop-hdfs/dn_socket</value>
 </property>
 ```
 
@@ -174,10 +176,10 @@ Here are two steps to enable kerberos.
 
 - Make sure the hdfs-client.xml contains
 
-```xml
+```
 <property>
-    <name>hadoop.security.authentication</name>
-    <value>kerberos</value>
+  <name>hadoop.security.authentication</name>
+  <value>kerberos</value>
 </property>
 ```
 
@@ -290,6 +292,7 @@ The gluten-iceberg jar is in `gluten-iceberg/target` directory.
 After the two steps, you can query iceberg table by gluten/velox without scan's fallback.
 
 # Coverage
+
 Spark3.3 has 387 functions in total. ~240 are commonly used. Velox's functions have two category, Presto and Spark. Presto has 124 functions implemented. Spark has 62 functions. Spark functions are verified to have the same result as Vanilla Spark. Some Presto functions have the same result as Vanilla Spark but some others have different. Gluten prefer to use Spark functions firstly. If it's not in Spark's list but implemented in Presto, we currently offload to Presto one until we noted some result mismatch, then we need to reimplement the function in Spark category. Gluten currently offloads 94 functions and 14 operators, more details refer to [Velox Backend's Supported Operators & Functions](../velox-backend-support-progress.md).
 
 > Velox doesn't support [ANSI mode](https://spark.apache.org/docs/latest/sql-ref-ansi-compliance.html)), so as Gluten. Once ANSI mode is enabled in Spark config, Gluten will fallback to Vanilla Spark.
@@ -348,32 +351,45 @@ Using the following configuration options to customize spilling:
 | spark.gluten.sql.columnar.backend.velox.spillPartitionBits               | 2             | The number of bits used to calculate the spilling partition number. The number of spilling partitions will be power of two                                                        |
 | spark.gluten.sql.columnar.backend.velox.spillableReservationGrowthPct    | 25            | The spillable memory reservation growth percentage of the previous memory reservation size                                                                                        |
 | spark.gluten.sql.columnar.backend.velox.spillThreadNum                   | 0             | (Experimental) The thread num of a dedicated thread pool to do spill
+
 # Velox User-Defined Functions (UDF)
 
 ## Introduction
 
-Velox backend supports User-Defined Functions (UDF). Users can create their own functions using the UDF interface provided in Velox backend and build libraries for these functions. At runtime, the UDF are registered at the start of applications. Once registered, Gluten will be able to parse and offload these UDF into Velox during execution.
+Velox backend supports User-Defined Functions (UDF) and User-Defined Aggregate Functions (UDAF).
+Users can create their own functions using the UDF interface provided in Velox backend and build libraries for these functions.
+At runtime, the UDF are registered at the start of applications.
+Once registered, Gluten will be able to parse and offload these UDF into Velox during execution.
 
-## Creating a UDF library
+## Create and Build UDF/UDAF library
 
 The following steps demonstrate how to set up a UDF library project:
 
-- **Include the UDF Interface Header:** First, include the UDF interface header file [Udf.h](../../cpp/velox/udf/Udf.h) in the project file. The header file defines the `UdfEntry` struct, along with the macros for declaring the necessary functions to integrate the UDF into Gluten and Velox.
+- **Include the UDF Interface Header:**
+  First, include the UDF interface header file [Udf.h](../../cpp/velox/udf/Udf.h) in the project file.
+  The header file defines the `UdfEntry` struct, along with the macros for declaring the necessary functions to integrate the UDF into Gluten and Velox.
 
-- **Implement the UDF:** Implement UDF. These functions should be able to register to Velox.
+- **Implement the UDF:**
+  Implement UDF. These functions should be able to register to Velox.
 
-- **Implement the Interface Functions:** Implement the following interface functions that integrate UDF into Project Gluten:
+- **Implement the Interface Functions:**
+  Implement the following interface functions that integrate UDF into Project Gluten:
 
-  - `getNumUdf()`: This function should return the number of UDF in the library. This is used to allocating udfEntries array as the argument for the next function `getUdfEntries`.
+  - `getNumUdf()`:
+    This function should return the number of UDF in the library.
+    This is used to allocating udfEntries array as the argument for the next function `getUdfEntries`.
 
-  - `getUdfEntries(gluten::UdfEntry* udfEntries)`: This function should populate the provided udfEntries array with the details of the UDF, including function names and signatures.
+  - `getUdfEntries(gluten::UdfEntry* udfEntries)`:
+    This function should populate the provided udfEntries array with the details of the UDF, including function names and signatures.
 
-  - `registerUdf()`: This function is called to register the UDF to Velox function registry. This is where users should register functions by calling `facebook::velox::exec::registerVecotorFunction` or other Velox APIs.
+  - `registerUdf()`:
+    This function is called to register the UDF to Velox function registry.
+    This is where users should register functions by calling `facebook::velox::exec::registerVecotorFunction` or other Velox APIs.
 
-  - The interface functions are mapping to marcos in [Udf.h](../../cpp/velox/udf/Udf.h). Here's an example of how to implement these functions:
+  - The interface functions are mapped to marcos in [Udf.h](../../cpp/velox/udf/Udf.h). Here's an example of how to implement these functions:
 
   ```
-  // Filename MyUDF.cpp
+  // Filename MyUDF.cc
 
   #include <velox/expression/VectorFunction.h>
   #include <velox/udf/Udf.h>
@@ -410,9 +426,9 @@ The following steps demonstrate how to set up a UDF library project:
 
   ```
 
-## Building the UDF library
+To build the UDF library, users need to compile the C++ code and link to `libvelox.so`.
+It's recommended to create a CMakeLists.txt for the project. Here's an example:
 
-To build the UDF library, users need to compile the C++ code and link to `libvelox.so`. It's recommended to create a CMakeLists.txt for the project. Here's an example:
 ```
 project(myudf)
 
@@ -429,13 +445,25 @@ target_include_directories(myudf PRIVATE ${GLUTEN_HOME}/cpp ${GLUTEN_HOME}/ep/bu
 target_link_libraries(myudf PRIVATE ${VELOX_LIBRARY})
 ```
 
-## Using UDF in Gluten
+The steps for creating and building a UDAF library are quite similar to those for a UDF library.
+The major difference lies in including and defining specific functions within the UDAF header file [Udaf.h](../../cpp/velox/udf/Udaf.h)
 
-Gluten loads the UDF libraries at runtime. You can upload UDF libraries via `--files` or `--archives`, and configure the libray paths using the provided Spark configuration, which accepts comma separated list of library paths.
+- `getNumUdaf()`
+- `getUdafEntries(gluten::UdafEntry* udafEntries)`
+- `registerUdaf()`
 
-Note if running on Yarn client mode, the uploaded files are not reachable on driver side. Users should copy those files to somewhere reachable for driver and set `spark.gluten.sql.columnar.backend.velox.driver.udfLibraryPaths`. This configuration is also useful when the `udfLibraryPaths` is different between driver side and executor side.
+`gluten::UdafEntry` requires an additional field `intermediateType`, to specify the output type from partial aggregation.
+For detailed implementation, you can refer to the example code in [MyUDAF.cc](../../cpp/velox/udf/examples/MyUDAF.cc)
+
+## Using UDF/UDAF in Gluten
+
+Gluten loads the UDF libraries at runtime. You can upload UDF libraries via `--files` or `--archives`, and configure the library paths using the provided Spark configuration, which accepts comma separated list of library paths.
+
+Note if running on Yarn client mode, the uploaded files are not reachable on driver side. Users should copy those files to somewhere reachable for driver and set `spark.gluten.sql.columnar.backend.velox.driver.udfLibraryPaths`.
+This configuration is also useful when the `udfLibraryPaths` is different between driver side and executor side.
 
 - Use the `--files` option to upload a library and configure its relative path
+
 ```shell
 --files /path/to/gluten/cpp/build/velox/udf/examples/libmyudf.so
 --conf spark.gluten.sql.columnar.backend.velox.udfLibraryPaths=libmyudf.so
@@ -444,6 +472,7 @@ Note if running on Yarn client mode, the uploaded files are not reachable on dri
 ```
 
 - Use the `--archives` option to upload an archive and configure its relative path
+
 ```shell
 --archives /path/to/udf_archives.zip#udf_archives
 --conf spark.gluten.sql.columnar.backend.velox.udfLibraryPaths=udf_archives
@@ -451,34 +480,42 @@ Note if running on Yarn client mode, the uploaded files are not reachable on dri
 --conf spark.gluten.sql.columnar.backend.velox.driver.udfLibraryPaths=file:///path/to/udf_archives.zip
 ```
 
-- Only configure URI
+- Configure URI
 
 You can also specify the local or HDFS URIs to the UDF libraries or archives. Local URIs should exist on driver and every worker nodes.
+
 ```shell
---conf spark.gluten.sql.columnar.backend.velox.udfLibraryPaths=hdfs://path/to/library_or_archive
+--conf spark.gluten.sql.columnar.backend.velox.udfLibraryPaths=file:///path/to/library_or_archive
 ```
 
 ## Try the example
 
-We provided an Velox UDF example file [MyUDF.cpp](../../cpp/velox/udf/examples/MyUDF.cpp). After building gluten cpp, you can find the example library at /path/to/gluten/cpp/build/velox/udf/examples/libmyudf.so
+We provided Velox UDF examples in file [MyUDF.cc](../../cpp/velox/udf/examples/MyUDF.cc) and UDAF examples in file [MyUDAF.cc](../../cpp/velox/udf/examples/MyUDAF.cc).
+After building gluten cpp, you can find the example libraries at /path/to/gluten/cpp/build/velox/udf/examples/
 
-Start spark-shell or spark-sql with below configuration 
+Start spark-shell or spark-sql with below configuration
+
 ```shell
 # Use the `--files` option to upload a library and configure its relative path
 --files /path/to/gluten/cpp/build/velox/udf/examples/libmyudf.so
 --conf spark.gluten.sql.columnar.backend.velox.udfLibraryPaths=libmyudf.so
 ```
+
 or
+
 ```shell
 # Only configure URI
 --conf spark.gluten.sql.columnar.backend.velox.udfLibraryPaths=file:///path/to/gluten/cpp/build/velox/udf/examples/libmyudf.so
 ```
 
 Run query. The functions `myudf1` and `myudf2` increment the input value by a constant of 5
+
 ```
 select myudf1(1), myudf2(100L)
 ```
+
 The output from spark-shell will be like
+
 ```
 +----------------+------------------+
 |udfexpression(1)|udfexpression(100)|
@@ -519,6 +556,7 @@ Gluten supports using Intel® QuickAssist Technology (QAT) for data compression 
 This feature is based on QAT driver library and [QATzip](https://github.com/intel/QATzip) library. Please manually download QAT driver for your system, and follow its README to build and install on all Driver and Worker node: [Intel® QuickAssist Technology Driver for Linux* – HW Version 2.0](https://www.intel.com/content/www/us/en/download/765501/intel-quickassist-technology-driver-for-linux-hw-version-2-0.html?wapkw=quickassist).
 
 ## Software Requirements
+
 - Download QAT driver for your system, and follow its README to build and install on all Driver and Worker nodes: [Intel® QuickAssist Technology Driver for Linux* – HW Version 2.0](https://www.intel.com/content/www/us/en/download/765501/intel-quickassist-technology-driver-for-linux-hw-version-2-0.html?wapkw=quickassist).
 - Below compression libraries need to be installed on all Driver and Worker nodes:
   - Zlib* library of version 1.2.7 or higher
@@ -527,9 +565,7 @@ This feature is based on QAT driver library and [QATzip](https://github.com/inte
 
 ## Build Gluten with QAT
 
-1. Setup ICP_ROOT environment variable to the directory where QAT driver is extracted.
-This environment variable is required during building Gluten and running Spark applications.
-It's recommended to put it in .bashrc on Driver and Worker nodes.
+1. Setup ICP_ROOT environment variable to the directory where QAT driver is extracted. This environment variable is required during building Gluten and running Spark applications. It's recommended to put it in .bashrc on Driver and Worker nodes.
 
 ```bash
 echo "export ICP_ROOT=/path/to/QAT_driver" >> ~/.bashrc
@@ -541,9 +577,8 @@ echo "export ICP_ROOT=/path/to/QAT_driver" >> ~/.bashrc
 exit
 ```
 
-2. **This step is required if your application is running as Non-root user**.
-The users must be added to the 'qat' group after QAT drvier is installed.
-And change the amount of max locked memory for the username that is included in the group name. This can be done by specifying the limit in /etc/security/limits.conf.
+2. **This step is required if your application is running as Non-root user.**
+   The users must be added to the 'qat' group after QAT drvier is installed. And change the amount of max locked memory for the username that is included in the group name. This can be done by specifying the limit in /etc/security/limits.conf.
 
 ```bash
 sudo su -
@@ -555,9 +590,7 @@ echo "@qat - memlock 500000" >> /etc/security/limits.conf
 exit
 ```
 
-3. Enable huge page. This step is required to execute each time after system reboot. We recommend using systemctl to manage at system startup.
-You change the values for "max_huge_pages" and "max_huge_pages_per_process" to make sure there are enough resources for your workload.
-As for Spark applications, one process matches one executor. Within the executor, every task is allocated a maximum of 5 huge pages.
+3. Enable huge page. This step is required to execute each time after system reboot. We recommend using systemctl to manage at system startup. You change the values for "max_huge_pages" and "max_huge_pages_per_process" to make sure there are enough resources for your workload. As for Spark applications, one process matches one executor. Within the executor, every task is allocated a maximum of 5 huge pages.
 
 ```bash
 sudo su -
@@ -639,7 +672,7 @@ There is 8 QAT acceleration device(s) in the system:
 --conf spark.gluten.sql.columnar.shuffle.codecBackend=qat
 ```
 
-4. You can use below command to check whether QAT is working normally at run-time. The value of fw_counters should continue to increase during shuffle. 
+4. You can use below command to check whether QAT is working normally at run-time. The value of fw_counters should continue to increase during shuffle.
 
 ```
 while :; do cat /sys/kernel/debug/qat_4xxx_0000:6b:00.0/fw_counters; sleep 1; done
@@ -675,7 +708,8 @@ This feature is based on Intel® [QPL](https://github.com/intel/qpl).
 
 Gluten will internally build and link to a specific version of QPL library, but extra environment setup is still required. Please refer to [QPL Installation Guide](https://intel.github.io/qpl/documentation/get_started_docs/installation.html) to install dependencies and configure accelerators.
 
-**This step is required if your application is running as Non-root user**. Create a group for the users who have privilege to use IAA, and grant group iaa read/write access to the IAA Work-Queues.
+**This step is required if your application is running as Non-root user.**
+Create a group for the users who have privilege to use IAA, and grant group iaa read/write access to the IAA Work-Queues.
 
 ```bash
 sudo groupadd iaa
@@ -683,7 +717,7 @@ sudo usermod -aG iaa username # need to relogin
 sudo chgrp -R iaa /dev/iax
 sudo chmod -R g+rw /dev/iax
 ```
- 
+
 After the set-up, you can now build Gluten with QAT. Below command is used to enable this feature
 
 ```bash
@@ -702,6 +736,7 @@ sudo ls -l /dev/iax
 ```
 
 The output should be like:
+
 ```
 total 0
 crw-rw---- 1 root iaa 509, 0 Apr  5 18:54 wq1.0
@@ -733,7 +768,7 @@ Check out the [Intel® Query Processing Library (Intel® QPL) Documentation](htt
 
 # Test TPC-H or TPC-DS on Gluten with Velox backend
 
-All TPC-H and TPC-DS queries are supported in Gluten Velox backend.  
+All TPC-H and TPC-DS queries are supported in Gluten Velox backend.
 
 ## Data preparation
 
@@ -744,6 +779,7 @@ The used TPC-H and TPC-DS queries are the original ones, and can be accessed fro
 and [TPC-H queries](../../gluten-core/src/test/resources/tpch-queries).
 
 Some other versions of TPC-DS queries are also provided, but are **not** recommended for testing, including:
+
 - the modified TPC-DS queries with "Decimal-to-Double": [TPC-DS non-decimal queries](../../gluten-core/src/test/resources/tpcds-queries/tpcds.queries.no-decimal) (outdated).
 
 ## Submit the Spark SQL job
@@ -756,7 +792,7 @@ var parquet_file_path = "/PATH/TO/TPCH_PARQUET_PATH"
 var gluten_root = "/PATH/TO/GLUTEN"
 ```
 
-Below script shows an example about how to run the testing, you should modify the parameters such as executor cores, memory, offHeap size based on your environment. 
+Below script shows an example about how to run the testing, you should modify the parameters such as executor cores, memory, offHeap size based on your environment.
 
 ```bash
 export GLUTEN_JAR = /PATH/TO/GLUTEN/package/target/<gluten-jar>
@@ -780,6 +816,7 @@ cat tpch_parquet.scala | spark-shell --name tpch_powertest_velox \
 Refer to [Gluten configuration](../Configuration.md) for more details.
 
 ## Result
+
 *wholestagetransformer* indicates that the offload works.
 
 ![TPC-H Q6](../image/TPC-H_Q6_DAG.png)
@@ -909,7 +946,7 @@ ashProbe: Input: 9 rows (864B, 3 batches), Output: 27 rows (3.56KB, 3 batches), 
 
 # Gluten Implicits
 
-Gluten provides a helper class to get the fallback summary from a Spark Dataset. 
+Gluten provides a helper class to get the fallback summary from a Spark Dataset.
 
 ```
 import org.apache.spark.sql.execution.GlutenImplicits._

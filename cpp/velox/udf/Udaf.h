@@ -19,21 +19,22 @@
 
 namespace gluten {
 
-struct UdfEntry {
+struct UdafEntry {
   const char* name;
   const char* dataType;
 
   size_t numArgs;
   const char** argTypes;
+
+  const char* intermediateType{nullptr};
 };
 
-#define GLUTEN_GET_NUM_UDF getNumUdf
-#define DEFINE_GET_NUM_UDF extern "C" int GLUTEN_GET_NUM_UDF()
+#define GLUTEN_GET_NUM_UDAF getNumUdaf
+#define DEFINE_GET_NUM_UDAF extern "C" int GLUTEN_GET_NUM_UDAF()
 
-#define GLUTEN_GET_UDF_ENTRIES getUdfEntries
-#define DEFINE_GET_UDF_ENTRIES extern "C" void GLUTEN_GET_UDF_ENTRIES(gluten::UdfEntry* udfEntries)
+#define GLUTEN_GET_UDAF_ENTRIES getUdfEntries
+#define DEFINE_GET_UDAF_ENTRIES extern "C" void GLUTEN_GET_UDAF_ENTRIES(gluten::UdafEntry* udafEntries)
 
-#define GLUTEN_REGISTER_UDF registerUdf
-#define DEFINE_REGISTER_UDF extern "C" void GLUTEN_REGISTER_UDF()
-
+#define GLUTEN_REGISTER_UDAF registerUdf
+#define DEFINE_REGISTER_UDAF extern "C" void GLUTEN_REGISTER_UDAF()
 } // namespace gluten

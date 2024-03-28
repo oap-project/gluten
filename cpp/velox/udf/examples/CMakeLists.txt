@@ -13,8 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(myudf SHARED "MyUDF.cpp")
+add_library(myudf SHARED "MyUDF.cc")
 target_link_libraries(myudf velox)
 
+add_library(myudaf SHARED "MyUDAF.cc")
+target_link_libraries(myudaf velox)
+
 add_executable(test_myudf "TestMyUDF.cc")
-target_link_libraries(test_myudf myudf)
+target_link_libraries(test_myudf velox)

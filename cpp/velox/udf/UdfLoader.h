@@ -55,9 +55,6 @@ class UdfLoader {
 
   void registerUdf();
 
-  // unused
-  bool validateUdf(const std::string& name, const std::vector<facebook::velox::TypePtr>& argTypes);
-
  private:
   void loadUdfLibraries0(const std::vector<std::string>& libPaths);
 

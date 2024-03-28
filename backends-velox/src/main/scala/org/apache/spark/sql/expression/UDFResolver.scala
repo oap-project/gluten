@@ -106,9 +106,11 @@ case class UDFExpression(
 
 object UDFResolver extends Logging {
   private val UDFNames = mutable.HashSet[String]()
+  // (udf_name, arg1, arg2, ...) => return type
   private val UDFMap = mutable.HashMap[(String, Seq[DataType]), ExpressionType]()
 
   private val UDAFNames = mutable.HashSet[String]()
+  // (udaf_name, arg1, arg2, ...) => return type, intermediate attributes
   private val UDAFMap =
     mutable.HashMap[(String, Seq[DataType]), (ExpressionType, Seq[AttributeReference])]()
 
