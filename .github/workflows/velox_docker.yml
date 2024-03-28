@@ -50,7 +50,17 @@ jobs:
     container: inteldpo/gluten-centos-packaging:latest # centos7 with depedencies installed
     steps:
       - uses: actions/checkout@v2
+      - name: Generate cache key
+        run: |
+          echo ${{ hashFiles('./ep/build-velox/src/**', './dev/vcpkg/**') }} > cache-key
+      - name: Cache
+        id: cache
+        uses: actions/cache@v3
+        with:
+          path: ./cpp/build/releases/
+          key: cache-velox-build-${{ hashFiles('./cache-key') }}
       - name: Build Gluten velox third party
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           yum install sudo patch java-1.8.0-openjdk-devel -y && \
           cd $GITHUB_WORKSPACE/ep/build-velox/src && \
@@ -62,7 +72,6 @@ jobs:
           export NUM_THREADS=4
           ./dev/builddeps-veloxbe.sh --build_tests=OFF  --build_benchmarks=OFF --enable_s3=ON \
           --enable_gcs=ON --enable_hdfs=ON --enable_abfs=ON
-
       - uses: actions/upload-artifact@v2
         with:
           path: ./cpp/build/releases/
