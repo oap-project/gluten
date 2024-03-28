@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution.HashAggregateExecBaseTransformer
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution.HashAggregateExecBaseTransformer
 
 import org.apache.spark.sql.execution.adaptive.AdaptiveSparkPlanHelper
 import org.apache.spark.sql.internal.SQLConf

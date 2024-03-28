@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.extension
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.execution.ProjectExecTransformer
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.execution.ProjectExecTransformer
 
 import org.apache.spark.sql.GlutenSQLTestsTrait
 import org.apache.spark.sql.Row

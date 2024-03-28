@@ -16,11 +16,11 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution.ProjectExecTransformer
-import io.glutenproject.test.TestStats
-import io.glutenproject.utils.{BackendTestUtils, SystemParameters}
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution.ProjectExecTransformer
+import org.apache.gluten.test.TestStats
+import org.apache.gluten.utils.{BackendTestUtils, SystemParameters}
 
 import org.apache.spark.sql.GlutenQueryTestUtil.isNaNOrInf
 import org.apache.spark.sql.catalyst.{CatalystTypeConverters, InternalRow}
@@ -101,7 +101,7 @@ trait GlutenTestsTrait extends GlutenTestsCommonTrait {
         .config("spark.sql.files.maxPartitionBytes", "134217728")
         .config("spark.memory.offHeap.enabled", "true")
         .config("spark.memory.offHeap.size", "1024MB")
-        .config("spark.plugins", "io.glutenproject.GlutenPlugin")
+        .config("spark.plugins", "org.apache.gluten.GlutenPlugin")
         .config("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
         .config("spark.sql.warehouse.dir", warehouse)
         // Avoid the code size overflow error in Spark code generation.

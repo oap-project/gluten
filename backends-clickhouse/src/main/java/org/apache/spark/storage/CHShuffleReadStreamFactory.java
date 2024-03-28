@@ -16,11 +16,11 @@
  */
 package org.apache.spark.storage;
 
-import io.glutenproject.exception.GlutenException;
-import io.glutenproject.vectorized.LowCopyFileSegmentShuffleInputStream;
-import io.glutenproject.vectorized.LowCopyNettyShuffleInputStream;
-import io.glutenproject.vectorized.OnHeapCopyShuffleInputStream;
-import io.glutenproject.vectorized.ShuffleInputStream;
+import org.apache.gluten.exception.GlutenException;
+import org.apache.gluten.vectorized.LowCopyFileSegmentShuffleInputStream;
+import org.apache.gluten.vectorized.LowCopyNettyShuffleInputStream;
+import org.apache.gluten.vectorized.OnHeapCopyShuffleInputStream;
+import org.apache.gluten.vectorized.ShuffleInputStream;
 
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
 import com.ning.compress.lzf.LZFInputStream;

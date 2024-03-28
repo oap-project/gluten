@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.hive
 
-import io.glutenproject.exception.GlutenNotSupportException
-import io.glutenproject.expression.{ExpressionConverter, ExpressionTransformer, GenericExpressionTransformer, UDFMappings}
+import org.apache.gluten.exception.GlutenNotSupportException
+import org.apache.gluten.expression.{ExpressionConverter, ExpressionTransformer, GenericExpressionTransformer, UDFMappings}
 
 import org.apache.spark.sql.catalyst.expressions._
 

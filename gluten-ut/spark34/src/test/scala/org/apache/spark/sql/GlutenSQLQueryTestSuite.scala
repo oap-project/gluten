@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.utils.{BackendTestSettings, BackendTestUtils, SystemParameters}
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.utils.{BackendTestSettings, BackendTestUtils, SystemParameters}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.catalyst.expressions.codegen.CodeGenerator
@@ -188,7 +188,7 @@ class GlutenSQLQueryTestSuite
       .set("spark.sql.files.maxPartitionBytes", "134217728")
       .set("spark.memory.offHeap.enabled", "true")
       .set("spark.memory.offHeap.size", "1024MB")
-      .set("spark.plugins", "io.glutenproject.GlutenPlugin")
+      .set("spark.plugins", "org.apache.gluten.GlutenPlugin")
       .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
 
     if (isCHBackend) {

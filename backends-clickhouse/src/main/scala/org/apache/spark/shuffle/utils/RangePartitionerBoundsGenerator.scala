@@ -16,13 +16,13 @@
  */
 package org.apache.spark.shuffle.utils
 
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution.SortExecTransformer
-import io.glutenproject.expression.ExpressionConverter
-import io.glutenproject.substrait.SubstraitContext
-import io.glutenproject.substrait.expression.ExpressionNode
-import io.glutenproject.substrait.plan.{PlanBuilder, PlanNode}
-import io.glutenproject.substrait.rel.{RelBuilder, RelNode}
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution.SortExecTransformer
+import org.apache.gluten.expression.ExpressionConverter
+import org.apache.gluten.substrait.SubstraitContext
+import org.apache.gluten.substrait.expression.ExpressionNode
+import org.apache.gluten.substrait.plan.{PlanBuilder, PlanNode}
+import org.apache.gluten.substrait.rel.{RelBuilder, RelNode}
 
 import org.apache.spark.RangePartitioner
 import org.apache.spark.rdd.{PartitionPruningRDD, RDD}

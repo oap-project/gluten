@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.execution.datasources
 
-import io.glutenproject.execution.{FileSourceScanExecTransformer, FilterExecTransformer}
-import io.glutenproject.utils.BackendTestUtils
+import org.apache.gluten.execution.{FileSourceScanExecTransformer, FilterExecTransformer}
+import org.apache.gluten.utils.BackendTestUtils
 
 import org.apache.spark.sql.{Column, DataFrame, Row}
 import org.apache.spark.sql.GlutenSQLTestsBaseTrait

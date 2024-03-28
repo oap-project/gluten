@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.execution.VeloxWholeStageTransformerSuite
-import io.glutenproject.sql.shims.SparkShimLoader
-import io.glutenproject.utils.FallbackUtil
+import org.apache.gluten.execution.VeloxWholeStageTransformerSuite
+import org.apache.gluten.sql.shims.SparkShimLoader
+import org.apache.gluten.utils.FallbackUtil
 
 import org.apache.spark.SparkConf
 

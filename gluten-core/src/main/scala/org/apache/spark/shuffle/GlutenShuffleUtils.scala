@@ -16,10 +16,10 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.sql.shims.SparkShimLoader
-import io.glutenproject.vectorized.NativePartitioning
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.sql.shims.SparkShimLoader
+import org.apache.gluten.vectorized.NativePartitioning
 
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.config._

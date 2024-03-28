@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources
 
-import io.glutenproject.exception.GlutenException
+import org.apache.gluten.exception.GlutenException
 
 import org.apache.spark.sql.execution.datasources.VeloxWriteQueue.EOS_BATCH
 import org.apache.spark.sql.vectorized.ColumnarBatch

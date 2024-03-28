@@ -56,7 +56,7 @@ ${GLUTEN_HOME}/dev/builddeps-veloxbe.sh --build_tests=ON --build_benchmarks=ON -
 cd ${GLUTEN_HOME}
 mvn clean package -Pspark-3.2 -Pbackends-velox -Prss
 mvn test -Pspark-3.2 -Pbackends-velox -Prss -pl backends-velox \
--am -DtagsToInclude="io.glutenproject.tags.GenerateExample" \
+-am -DtagsToInclude="org.apache.gluten.tags.GenerateExample" \
 -Dtest=none -DfailIfNoTests=false \
 -Dexec.skip
 ```

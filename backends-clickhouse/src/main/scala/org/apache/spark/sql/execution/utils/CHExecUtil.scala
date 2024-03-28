@@ -16,12 +16,12 @@
  */
 package org.apache.spark.sql.execution.utils
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.clickhouse.CHBackendSettings
-import io.glutenproject.expression.ConverterUtils
-import io.glutenproject.row.SparkRowInfo
-import io.glutenproject.vectorized._
-import io.glutenproject.vectorized.BlockSplitIterator.IteratorOptions
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.clickhouse.CHBackendSettings
+import org.apache.gluten.expression.ConverterUtils
+import org.apache.gluten.row.SparkRowInfo
+import org.apache.gluten.vectorized._
+import org.apache.gluten.vectorized.BlockSplitIterator.IteratorOptions
 
 import org.apache.spark.ShuffleDependency
 import org.apache.spark.internal.Logging

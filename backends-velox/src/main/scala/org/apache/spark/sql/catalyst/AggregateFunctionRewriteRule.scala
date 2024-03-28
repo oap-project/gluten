@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.catalyst
 
-import io.glutenproject.GlutenConfig
+import org.apache.gluten.GlutenConfig
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Literal

@@ -16,12 +16,12 @@
  */
 package org.apache.spark.softaffinity
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.execution.GlutenPartition
-import io.glutenproject.softaffinity.SoftAffinityManager
-import io.glutenproject.softaffinity.scheduler.SoftAffinityListener
-import io.glutenproject.sql.shims.SparkShimLoader
-import io.glutenproject.substrait.plan.PlanBuilder
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.execution.GlutenPartition
+import org.apache.gluten.softaffinity.SoftAffinityManager
+import org.apache.gluten.softaffinity.scheduler.SoftAffinityListener
+import org.apache.gluten.sql.shims.SparkShimLoader
+import org.apache.gluten.substrait.plan.PlanBuilder
 
 import org.apache.spark.SparkConf
 import org.apache.spark.scheduler.{SparkListenerExecutorAdded, SparkListenerExecutorRemoved}

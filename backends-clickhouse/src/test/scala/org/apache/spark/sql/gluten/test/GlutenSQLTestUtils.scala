@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.gluten.test
 
-import io.glutenproject.GlutenConfig
+import org.apache.gluten.GlutenConfig
 
 import org.apache.spark.SparkFunSuite
 import org.apache.spark.sql.delta.DeltaLog

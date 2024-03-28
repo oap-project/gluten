@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources.orc
 
-import io.glutenproject.execution.FileSourceScanExecTransformer
+import org.apache.gluten.execution.FileSourceScanExecTransformer
 
 import org.apache.spark.sql.{DataFrame, GlutenSQLTestsBaseTrait}
 import org.apache.spark.sql.catalyst.parser.CatalystSqlParser

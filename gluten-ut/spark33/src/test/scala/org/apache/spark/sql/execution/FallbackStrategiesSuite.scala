@@ -16,11 +16,11 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution.BasicScanExecTransformer
-import io.glutenproject.extension.{ColumnarOverrideRules, GlutenPlan}
-import io.glutenproject.extension.columnar.{FallbackEmptySchemaRelation, InsertTransitions, TRANSFORM_UNSUPPORTED, TransformHints}
-import io.glutenproject.utils.QueryPlanSelector
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution.BasicScanExecTransformer
+import org.apache.gluten.extension.{ColumnarOverrideRules, GlutenPlan}
+import org.apache.gluten.extension.columnar.{FallbackEmptySchemaRelation, InsertTransitions, TRANSFORM_UNSUPPORTED, TransformHints}
+import org.apache.gluten.utils.QueryPlanSelector
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{GlutenSQLTestsTrait, SparkSession}

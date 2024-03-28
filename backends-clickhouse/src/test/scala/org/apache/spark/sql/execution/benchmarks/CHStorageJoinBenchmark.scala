@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.execution.benchmarks
 
-import io.glutenproject.utils.IteratorUtil
-import io.glutenproject.vectorized.{BlockOutputStream, CHBlockWriterJniWrapper, CHStreamReader}
+import org.apache.gluten.utils.IteratorUtil
+import org.apache.gluten.vectorized.{BlockOutputStream, CHBlockWriterJniWrapper, CHStreamReader}
 
 import org.apache.spark.benchmark.Benchmark
 import org.apache.spark.sql.SparkSession

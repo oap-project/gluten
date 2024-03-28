@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.execution.SortExecTransformer
+import org.apache.gluten.execution.SortExecTransformer
 
 import org.apache.spark.sql.{catalyst, GlutenQueryTestUtil, GlutenSQLTestsBaseTrait, Row}
 import org.apache.spark.sql.catalyst.analysis.{Resolver, UnresolvedAttribute}

@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources.v1
 
-import io.glutenproject.execution.datasource.GlutenFormatWriterInjects
+import org.apache.gluten.execution.datasource.GlutenFormatWriterInjects
 
 object GlutenMergeTreeWriterInjects {
   private var INSTANCE: GlutenFormatWriterInjects = _

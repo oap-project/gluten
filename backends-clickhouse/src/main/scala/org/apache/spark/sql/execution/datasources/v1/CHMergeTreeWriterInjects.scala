@@ -16,12 +16,12 @@
  */
 package org.apache.spark.sql.execution.datasources.v1
 
-import io.glutenproject.expression.ConverterUtils
-import io.glutenproject.substrait.`type`.ColumnTypeNode
-import io.glutenproject.substrait.SubstraitContext
-import io.glutenproject.substrait.extensions.ExtensionBuilder
-import io.glutenproject.substrait.plan.PlanBuilder
-import io.glutenproject.substrait.rel.{ExtensionTableBuilder, RelBuilder}
+import org.apache.gluten.expression.ConverterUtils
+import org.apache.gluten.substrait.`type`.ColumnTypeNode
+import org.apache.gluten.substrait.SubstraitContext
+import org.apache.gluten.substrait.extensions.ExtensionBuilder
+import org.apache.gluten.substrait.plan.PlanBuilder
+import org.apache.gluten.substrait.rel.{ExtensionTableBuilder, RelBuilder}
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.expressions.Attribute

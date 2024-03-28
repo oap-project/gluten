@@ -1,0 +1,17 @@
+// SPDX-License-Identifier: Apache-2.0
+syntax = "proto3";
+
+package gluten;
+
+option java_package = "org.apache.gluten.proto";
+option java_multiple_files = true;
+
+message MemoryUsageStats {
+  int64 peak = 1;
+  int64 current = 2;
+
+  // <Name, MemoryUsageStats>
+  // This structure stores the memory usage statistics from children.
+  // Each child statistics entry should be identified by "Name" which is the map key.
+  map<string, MemoryUsageStats> children = 3;
+}

@@ -16,7 +16,7 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.backendsapi.BackendsApiManager
+import org.apache.gluten.backendsapi.BackendsApiManager
 
 import org.apache.spark.shuffle.sort.ColumnarShuffleHandle
 

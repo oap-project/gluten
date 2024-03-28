@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 package org.apache.spark.sql.connector
-import io.glutenproject.execution.SortMergeJoinExecTransformer
+import org.apache.gluten.execution.SortMergeJoinExecTransformer
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.GlutenSQLTestsBaseTrait

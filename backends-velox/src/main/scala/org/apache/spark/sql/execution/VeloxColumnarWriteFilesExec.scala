@@ -16,11 +16,11 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.columnarbatch.ColumnarBatches
-import io.glutenproject.extension.GlutenPlan
-import io.glutenproject.memory.arrowalloc.ArrowBufferAllocators
-import io.glutenproject.sql.shims.SparkShimLoader
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.columnarbatch.ColumnarBatches
+import org.apache.gluten.extension.GlutenPlan
+import org.apache.gluten.memory.arrowalloc.ArrowBufferAllocators
+import org.apache.gluten.sql.shims.SparkShimLoader
 
 import org.apache.spark.{Partition, SparkException, TaskContext, TaskOutputFileAlreadyExistException}
 import org.apache.spark.internal.io.FileCommitProtocol.TaskCommitMessage

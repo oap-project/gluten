@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.utils.{BackendTestUtils, SystemParameters}
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.utils.{BackendTestUtils, SystemParameters}
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
@@ -84,7 +84,7 @@ object DummyFilterColmnarHelper {
         .config("spark.driver.memory", "1G")
         .config("spark.memory.offHeap.enabled", "true")
         .config("spark.memory.offHeap.size", "1024MB")
-        .config("spark.plugins", "io.glutenproject.GlutenPlugin")
+        .config("spark.plugins", "org.apache.gluten.GlutenPlugin")
         .config("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
         .config(GlutenConfig.GLUTEN_LIB_PATH, SystemParameters.getClickHouseLibPath)
         .config("spark.io.compression.codec", "LZ4")
@@ -96,7 +96,7 @@ object DummyFilterColmnarHelper {
         .config("spark.driver.memory", "1G")
         .config("spark.memory.offHeap.enabled", "true")
         .config("spark.memory.offHeap.size", "1024MB")
-        .config("spark.plugins", "io.glutenproject.GlutenPlugin")
+        .config("spark.plugins", "org.apache.gluten.GlutenPlugin")
         .config("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
     }
     builders.foreach(builder.withExtensions)

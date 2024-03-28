@@ -16,7 +16,7 @@
  */
 package org.apache.spark.rpc
 
-import io.glutenproject.backendsapi.BackendsApiManager
+import org.apache.gluten.backendsapi.BackendsApiManager
 
 import org.apache.spark.{SparkConf, SparkEnv}
 import org.apache.spark.internal.{config, Logging}

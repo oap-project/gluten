@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources
 
-import io.glutenproject.execution.datasource.GlutenRowSplitter
+import org.apache.gluten.execution.datasource.GlutenRowSplitter
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.internal.io.{FileCommitProtocol, FileNameSpec}

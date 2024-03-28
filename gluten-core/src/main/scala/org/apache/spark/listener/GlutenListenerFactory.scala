@@ -16,8 +16,8 @@
  */
 package org.apache.spark.listener
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.softaffinity.scheduler.SoftAffinityListener
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.softaffinity.scheduler.SoftAffinityListener
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rpc.GlutenDriverEndpoint

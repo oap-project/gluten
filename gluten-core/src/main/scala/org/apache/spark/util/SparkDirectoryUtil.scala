@@ -19,7 +19,7 @@ package org.apache.spark.util
 import org.apache.spark.SparkEnv
 import org.apache.spark.internal.Logging
 
-import _root_.io.glutenproject.exception.GlutenException
+import _root_.org.apache.gluten.exception.GlutenException
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang3.StringUtils
 

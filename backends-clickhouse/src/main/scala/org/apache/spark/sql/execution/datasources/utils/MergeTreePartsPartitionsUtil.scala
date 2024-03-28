@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.execution.datasources.utils
 
-import io.glutenproject.execution.{GlutenMergeTreePartition, MergeTreePartSplit}
-import io.glutenproject.expression.ConverterUtils
+import org.apache.gluten.execution.{GlutenMergeTreePartition, MergeTreePartSplit}
+import org.apache.gluten.expression.ConverterUtils
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.SparkSession

@@ -18,7 +18,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.glutenproject</groupId>
+    <groupId>org.apache.gluten</groupId>
     <artifactId>gluten-parent</artifactId>
     <version>1.2.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
@@ -26,7 +26,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-core</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
@@ -64,7 +64,7 @@
       <id>backends-velox</id>
       <dependencies>
         <dependency>
-          <groupId>io.glutenproject</groupId>
+          <groupId>org.apache.gluten</groupId>
           <artifactId>backends-velox</artifactId>
           <version>${project.version}</version>
         </dependency>
@@ -74,7 +74,7 @@
       <id>rss</id>
       <dependencies>
         <dependency>
-          <groupId>io.glutenproject</groupId>
+          <groupId>org.apache.gluten</groupId>
           <artifactId>gluten-celeborn-package</artifactId>
           <version>${project.version}</version>
         </dependency>

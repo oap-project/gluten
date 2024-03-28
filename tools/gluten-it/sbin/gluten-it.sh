@@ -47,4 +47,4 @@ $JAVA_HOME/bin/java $GLUTEN_IT_JVM_ARGS \
     -Djdk.reflect.useDirectMethodHandle=false \
     -Dio.netty.tryReflectionSetAccessible=true \
     -cp $JAR_PATH \
-    io.glutenproject.integration.tpc.Tpc $@
+    org.apache.gluten.integration.tpc.Tpc $@

@@ -23,7 +23,7 @@ package org.apache.spark.sql.execution.datasources
  * we can move this class to shims-spark32,
  * shims-spark33, etc.
  */
-import io.glutenproject.execution.datasource.GlutenRowSplitter
+import org.apache.gluten.execution.datasource.GlutenRowSplitter
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.internal.io.FileCommitProtocol

@@ -16,15 +16,15 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.columnarbatch.ColumnarBatches
-import io.glutenproject.exec.Runtimes
-import io.glutenproject.execution.{RowToVeloxColumnarExec, VeloxColumnarToRowExec}
-import io.glutenproject.memory.arrowalloc.ArrowBufferAllocators
-import io.glutenproject.memory.nmm.NativeMemoryManagers
-import io.glutenproject.utils.{ArrowAbiUtil, Iterators}
-import io.glutenproject.vectorized.ColumnarBatchSerializerJniWrapper
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.columnarbatch.ColumnarBatches
+import org.apache.gluten.exec.Runtimes
+import org.apache.gluten.execution.{RowToVeloxColumnarExec, VeloxColumnarToRowExec}
+import org.apache.gluten.memory.arrowalloc.ArrowBufferAllocators
+import org.apache.gluten.memory.nmm.NativeMemoryManagers
+import org.apache.gluten.utils.{ArrowAbiUtil, Iterators}
+import org.apache.gluten.vectorized.ColumnarBatchSerializerJniWrapper
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.rdd.RDD

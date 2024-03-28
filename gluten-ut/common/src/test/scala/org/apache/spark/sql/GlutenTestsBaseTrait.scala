@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.utils.BackendTestSettings
+import org.apache.gluten.utils.BackendTestSettings
 
 trait GlutenTestsBaseTrait {
 

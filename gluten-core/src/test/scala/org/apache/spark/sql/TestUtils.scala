@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.exception.GlutenException
+import org.apache.gluten.exception.GlutenException
 
 import org.apache.spark.sql.test.SQLTestUtils
 

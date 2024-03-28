@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.execution.{FileSourceScanExecTransformer, WholeStageTransformer}
+import org.apache.gluten.execution.{FileSourceScanExecTransformer, WholeStageTransformer}
 
 class GlutenSubquerySuite extends SubquerySuite with GlutenSQLTestsTrait {
 

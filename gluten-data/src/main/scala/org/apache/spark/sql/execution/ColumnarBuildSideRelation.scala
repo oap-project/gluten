@@ -16,13 +16,13 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.columnarbatch.ColumnarBatches
-import io.glutenproject.exec.Runtimes
-import io.glutenproject.memory.arrowalloc.ArrowBufferAllocators
-import io.glutenproject.memory.nmm.NativeMemoryManagers
-import io.glutenproject.sql.shims.SparkShimLoader
-import io.glutenproject.utils.{ArrowAbiUtil, Iterators}
-import io.glutenproject.vectorized.{ColumnarBatchSerializerJniWrapper, NativeColumnarToRowJniWrapper}
+import org.apache.gluten.columnarbatch.ColumnarBatches
+import org.apache.gluten.exec.Runtimes
+import org.apache.gluten.memory.arrowalloc.ArrowBufferAllocators
+import org.apache.gluten.memory.nmm.NativeMemoryManagers
+import org.apache.gluten.sql.shims.SparkShimLoader
+import org.apache.gluten.utils.{ArrowAbiUtil, Iterators}
+import org.apache.gluten.vectorized.{ColumnarBatchSerializerJniWrapper, NativeColumnarToRowJniWrapper}
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, AttributeReference, BoundReference, Expression, UnsafeProjection, UnsafeRow}

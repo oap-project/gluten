@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.extension
 
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution.FileSourceScanExecTransformerBase
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution.FileSourceScanExecTransformerBase
 
 import org.apache.spark.sql.catalyst.TableIdentifier
 import org.apache.spark.sql.catalyst.expressions.{Attribute, Expression}

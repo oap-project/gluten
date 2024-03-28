@@ -17,7 +17,7 @@ GLUTEN_JAR=/PATH_TO_GLUTEN_HOME/package/target/<gluten-jar>
 SPARK_HOME=/PATH_TO_SPARK_HOME/
 cat tpch_parquet.scala | ${SPARK_HOME}/bin/spark-shell \
   --master yarn --deploy-mode client \
-  --conf spark.plugins=io.glutenproject.GlutenPlugin \
+  --conf spark.plugins=org.apache.gluten.GlutenPlugin \
   --conf spark.driver.extraClassPath=${GLUTEN_JAR} \
   --conf spark.executor.extraClassPath=${GLUTEN_JAR} \
   --conf spark.memory.offHeap.enabled=true \

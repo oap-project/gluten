@@ -16,8 +16,8 @@
  */
 package org.apache.spark.shuffle.gluten.celeborn;
 
-import io.glutenproject.backendsapi.BackendsApiManager;
-import io.glutenproject.exception.GlutenException;
+import org.apache.gluten.backendsapi.BackendsApiManager;
+import org.apache.gluten.exception.GlutenException;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;

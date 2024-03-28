@@ -18,7 +18,7 @@ package org.apache.spark.util
 
 import org.apache.spark.{SparkContext, SparkEnv}
 
-import _root_.io.glutenproject._
+import _root_.org.apache.gluten._
 
 import java.lang.management.ManagementFactory
 

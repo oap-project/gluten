@@ -16,13 +16,13 @@
  */
 package org.apache.spark.sql.expression
 
-import io.glutenproject.backendsapi.velox.BackendSettings
-import io.glutenproject.exception.GlutenException
-import io.glutenproject.expression.{ConverterUtils, ExpressionTransformer, ExpressionType, Transformable}
-import io.glutenproject.expression.ConverterUtils.FunctionConfig
-import io.glutenproject.substrait.expression.ExpressionBuilder
-import io.glutenproject.udf.UdfJniWrapper
-import io.glutenproject.vectorized.JniWorkspace
+import org.apache.gluten.backendsapi.velox.BackendSettings
+import org.apache.gluten.exception.GlutenException
+import org.apache.gluten.expression.{ConverterUtils, ExpressionTransformer, ExpressionType, Transformable}
+import org.apache.gluten.expression.ConverterUtils.FunctionConfig
+import org.apache.gluten.substrait.expression.ExpressionBuilder
+import org.apache.gluten.udf.UdfJniWrapper
+import org.apache.gluten.vectorized.JniWorkspace
 
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv, SparkFiles}
 import org.apache.spark.deploy.SparkHadoopUtil

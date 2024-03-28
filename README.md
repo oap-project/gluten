@@ -70,7 +70,7 @@ One way is to use released jar. Here is a simple example. Currently, only centos
 ```
 spark-shell \
  --master yarn --deploy-mode client \
- --conf spark.plugins=io.glutenproject.GlutenPlugin \
+ --conf spark.plugins=org.apache.gluten.GlutenPlugin \
  --conf spark.memory.offHeap.enabled=true \
  --conf spark.memory.offHeap.size=20g \
  --conf spark.shuffle.manager=org.apache.spark.shuffle.sort.ColumnarShuffleManager \
@@ -85,7 +85,7 @@ Alternatively, you can build gluten from source, then do some configurations to 
 export gluten_jar = /PATH/TO/GLUTEN/backends-velox/target/<gluten-jar>
 spark-shell 
   --master yarn --deploy-mode client \
-  --conf spark.plugins=io.glutenproject.GlutenPlugin \
+  --conf spark.plugins=org.apache.gluten.GlutenPlugin \
   --conf spark.memory.offHeap.enabled=true \
   --conf spark.memory.offHeap.size=20g \
   --conf spark.driver.extraClassPath=${gluten_jar} \

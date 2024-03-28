@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.execution.{BatchScanExecTransformer, FileSourceScanExecTransformer, FilterExecTransformerBase}
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.execution.{BatchScanExecTransformer, FileSourceScanExecTransformer, FilterExecTransformerBase}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.GlutenTestConstants.GLUTEN_TEST
@@ -725,7 +725,7 @@ class GlutenDynamicPartitionPruningV1SuiteAEOff
 
         // By default Gluten pushes more filters than vanilla Spark.
         //
-        // See also io.glutenproject.execution.FilterHandler#applyFilterPushdownToScan
+        // See also org.apache.gluten.execution.FilterHandler#applyFilterPushdownToScan
         // See also DynamicPartitionPruningSuite.scala:1362
         assert(subqueryIds.size == 3, "Whole plan subquery reusing not working correctly")
         assert(reusedSubqueryIds.size == 2, "Whole plan subquery reusing not working correctly")

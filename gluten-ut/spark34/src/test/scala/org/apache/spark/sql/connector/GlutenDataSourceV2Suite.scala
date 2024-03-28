@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.connector
 
-import io.glutenproject.execution.SortExecTransformer
+import org.apache.gluten.execution.SortExecTransformer
 
 import org.apache.spark.sql.{GlutenSQLTestsBaseTrait, Row}
 import org.apache.spark.sql.execution.ColumnarShuffleExchangeExec

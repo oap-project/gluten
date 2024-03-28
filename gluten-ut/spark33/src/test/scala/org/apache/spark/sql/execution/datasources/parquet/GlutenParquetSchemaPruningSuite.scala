@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 package org.apache.spark.sql.execution.datasources.parquet
-import io.glutenproject.execution.{BatchScanExecTransformer, FileSourceScanExecTransformer}
+import org.apache.gluten.execution.{BatchScanExecTransformer, FileSourceScanExecTransformer}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.{DataFrame, GlutenSQLTestsBaseTrait}

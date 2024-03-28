@@ -16,12 +16,12 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution._
-import io.glutenproject.metrics.MetricsUpdater
-import io.glutenproject.substrait.SubstraitContext
-import io.glutenproject.substrait.rel.RelBuilder
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution._
+import org.apache.gluten.metrics.MetricsUpdater
+import org.apache.gluten.substrait.SubstraitContext
+import org.apache.gluten.substrait.rel.RelBuilder
 
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD

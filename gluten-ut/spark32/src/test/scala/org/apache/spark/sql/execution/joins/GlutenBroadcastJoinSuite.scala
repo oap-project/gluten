@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql.execution.joins
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.execution.{BroadcastHashJoinExecTransformerBase, BroadcastNestedLoopJoinExecTransformer, ColumnarToRowExecBase, WholeStageTransformer}
-import io.glutenproject.utils.{BackendTestUtils, SystemParameters}
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.execution.{BroadcastHashJoinExecTransformerBase, BroadcastNestedLoopJoinExecTransformer, ColumnarToRowExecBase, WholeStageTransformer}
+import org.apache.gluten.utils.{BackendTestUtils, SystemParameters}
 
 import org.apache.spark.sql.{GlutenTestsCommonTrait, SparkSession}
 import org.apache.spark.sql.catalyst.optimizer._
@@ -80,7 +80,7 @@ class GlutenBroadcastJoinSuite extends BroadcastJoinSuite with GlutenTestsCommon
       .config("spark.sql.files.maxPartitionBytes", "134217728")
       .config("spark.memory.offHeap.enabled", "true")
       .config("spark.memory.offHeap.size", "1024MB")
-      .config("spark.plugins", "io.glutenproject.GlutenPlugin")
+      .config("spark.plugins", "org.apache.gluten.GlutenPlugin")
       .config("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
       .config("spark.sql.warehouse.dir", warehouse)
       // Avoid the code size overflow error in Spark code generation.

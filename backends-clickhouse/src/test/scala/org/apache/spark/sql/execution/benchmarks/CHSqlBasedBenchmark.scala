@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql.execution.benchmarks
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.utils.UTSystemParameters
-import io.glutenproject.vectorized.JniLibLoader
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.utils.UTSystemParameters
+import org.apache.gluten.vectorized.JniLibLoader
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.delta.DeltaLog
@@ -34,7 +34,7 @@ trait CHSqlBasedBenchmark extends SqlBasedBenchmark {
       .setAppName(appName)
       .setIfMissing(GlutenConfig.GLUTEN_LIB_PATH, UTSystemParameters.clickHouseLibPath)
       .setIfMissing("spark.master", s"local[$thrdNum]")
-      .set("spark.plugins", "io.glutenproject.GlutenPlugin")
+      .set("spark.plugins", "org.apache.gluten.GlutenPlugin")
       .set(
         "spark.sql.catalog.spark_catalog",
         "org.apache.spark.sql.execution.datasources.v2.clickhouse.ClickHouseSparkCatalog")

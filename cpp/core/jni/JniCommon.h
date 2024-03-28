@@ -45,7 +45,7 @@ static inline void checkException(JNIEnv* env) {
   if (env->ExceptionCheck()) {
     jthrowable t = env->ExceptionOccurred();
     env->ExceptionClear();
-    jclass describerClass = env->FindClass("io/glutenproject/exception/JniExceptionDescriber");
+    jclass describerClass = env->FindClass("org/apache/gluten/exception/JniExceptionDescriber");
     jmethodID describeMethod =
         env->GetStaticMethodID(describerClass, "describe", "(Ljava/lang/Throwable;)Ljava/lang/String;");
     std::string description =
