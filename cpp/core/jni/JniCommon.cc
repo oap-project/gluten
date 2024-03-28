@@ -38,7 +38,7 @@ jmethodID gluten::JniCommonState::runtimeAwareCtxHandle() {
 }
 
 void gluten::JniCommonState::initialize(JNIEnv* env) {
-  runtimeAwareClass_ = createGlobalClassReference(env, "Lio/glutenproject/exec/RuntimeAware;");
+  runtimeAwareClass_ = createGlobalClassReference(env, "Lorg/apache/gluten/exec/RuntimeAware;");
   runtimeAwareCtxHandle_ = getMethodIdOrError(env, runtimeAwareClass_, "handle", "()J");
   JavaVM* vm;
   if (env->GetJavaVM(&vm) != JNI_OK) {

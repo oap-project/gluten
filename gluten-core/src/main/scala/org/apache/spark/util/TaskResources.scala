@@ -20,9 +20,9 @@ import org.apache.spark.{TaskContext, TaskFailedReason, TaskKilledException, Unk
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.internal.SQLConf
 
-import _root_.io.glutenproject.memory.SimpleMemoryUsageRecorder
-import _root_.io.glutenproject.sql.shims.SparkShimLoader
-import _root_.io.glutenproject.utils.TaskListener
+import _root_.org.apache.gluten.memory.SimpleMemoryUsageRecorder
+import _root_.org.apache.gluten.sql.shims.SparkShimLoader
+import _root_.org.apache.gluten.utils.TaskListener
 
 import java.util
 import java.util.{Collections, UUID}

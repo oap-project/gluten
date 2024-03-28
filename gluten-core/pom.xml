@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>gluten-parent</artifactId>
-    <groupId>io.glutenproject</groupId>
+    <groupId>org.apache.gluten</groupId>
     <version>1.2.0-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
@@ -20,7 +20,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-ui</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -29,13 +29,13 @@
       <artifactId>caffeine</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>${sparkshim.artifactId}</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-cbo-common</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
@@ -180,7 +180,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>spark-sql-columnar-shims-common</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
@@ -316,7 +316,7 @@
               <protocArtifact>
                 com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
               </protocArtifact>
-              <protoSourceRoot>src/main/resources/io/glutenproject/proto</protoSourceRoot>
+              <protoSourceRoot>src/main/resources/org/apache/gluten/proto</protoSourceRoot>
               <clearOutputDirectory>false</clearOutputDirectory>
             </configuration>
           </execution>

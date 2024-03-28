@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql.execution.joins
 
-import io.glutenproject.execution.{BroadCastHashJoinContext, ColumnarNativeIterator}
-import io.glutenproject.utils.{IteratorUtil, PlanNodesUtil}
-import io.glutenproject.vectorized._
+import org.apache.gluten.execution.{BroadCastHashJoinContext, ColumnarNativeIterator}
+import org.apache.gluten.utils.{IteratorUtil, PlanNodesUtil}
+import org.apache.gluten.vectorized._
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.catalyst.InternalRow

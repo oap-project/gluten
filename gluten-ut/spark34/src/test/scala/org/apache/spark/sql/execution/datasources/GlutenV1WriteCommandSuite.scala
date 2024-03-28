@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources
 
-import io.glutenproject.execution.SortExecTransformer
+import org.apache.gluten.execution.SortExecTransformer
 
 import org.apache.spark.sql.GlutenSQLTestsBaseTrait
 import org.apache.spark.sql.catalyst.expressions.{Ascending, AttributeReference, NullsFirst, SortOrder}

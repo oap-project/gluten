@@ -49,7 +49,7 @@ class GlutenCoalesceShufflePartitionsSuite
         .set(SQLConf.ADVISORY_PARTITION_SIZE_IN_BYTES.key, targetPostShuffleInputSize.toString)
         .set(SQLConf.COALESCE_PARTITIONS_ENABLED.key, "true")
         // Gluten config
-        .set("spark.plugins", "io.glutenproject.GlutenPlugin")
+        .set("spark.plugins", "org.apache.gluten.GlutenPlugin")
         .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
         .set("spark.memory.offHeap.enabled", "true")
         .set("spark.memory.offHeap.size", "5g")

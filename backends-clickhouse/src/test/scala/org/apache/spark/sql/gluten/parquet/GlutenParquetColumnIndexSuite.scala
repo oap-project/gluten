@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.gluten.parquet
 
-import io.glutenproject.execution.{FileSourceScanExecTransformer, GlutenClickHouseWholeStageTransformerSuite}
-import io.glutenproject.utils.UTSystemParameters
+import org.apache.gluten.execution.{FileSourceScanExecTransformer, GlutenClickHouseWholeStageTransformerSuite}
+import org.apache.gluten.utils.UTSystemParameters
 
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging

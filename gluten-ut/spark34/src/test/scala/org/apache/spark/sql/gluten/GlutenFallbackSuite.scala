@@ -16,10 +16,10 @@
  */
 package org.apache.spark.sql.gluten
 
-import io.glutenproject.{GlutenConfig, VERSION}
-import io.glutenproject.events.GlutenPlanFallbackEvent
-import io.glutenproject.execution.FileSourceScanExecTransformer
-import io.glutenproject.utils.BackendTestUtils
+import org.apache.gluten.{GlutenConfig, VERSION}
+import org.apache.gluten.events.GlutenPlanFallbackEvent
+import org.apache.gluten.execution.FileSourceScanExecTransformer
+import org.apache.gluten.utils.BackendTestUtils
 
 import org.apache.spark.scheduler.{SparkListener, SparkListenerEvent}
 import org.apache.spark.sql.{GlutenSQLTestsTrait, Row}

@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.execution.ColumnarToRowExecBase
+import org.apache.gluten.execution.ColumnarToRowExecBase
 
 import org.apache.spark.sql.catalyst.rules.Rule
 

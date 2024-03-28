@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.hive.execution
 
-import io.glutenproject.execution.TransformSupport
+import org.apache.gluten.execution.TransformSupport
 
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.config
@@ -96,7 +96,7 @@ class GlutenHiveSQLQuerySuite extends GlutenSQLTestsTrait {
 
   override def sparkConf: SparkConf = {
     defaultSparkConf
-      .set("spark.plugins", "io.glutenproject.GlutenPlugin")
+      .set("spark.plugins", "org.apache.gluten.GlutenPlugin")
       .set("spark.default.parallelism", "1")
       .set("spark.memory.offHeap.enabled", "true")
       .set("spark.memory.offHeap.size", "1024MB")

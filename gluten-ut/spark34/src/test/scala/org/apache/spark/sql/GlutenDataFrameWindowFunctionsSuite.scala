@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.execution.WindowExecTransformer
+import org.apache.gluten.execution.WindowExecTransformer
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql.catalyst.expressions.{AttributeReference, Expression}

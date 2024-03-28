@@ -399,18 +399,21 @@ void gluten::initVeloxJniFileSystem(JNIEnv* env) {
   }
 
   // classes
-  jniFileSystemClass = createGlobalClassReferenceOrError(env, "Lio/glutenproject/fs/JniFilesystem;");
-  jniReadFileClass = createGlobalClassReferenceOrError(env, "Lio/glutenproject/fs/JniFilesystem$ReadFile;");
-  jniWriteFileClass = createGlobalClassReferenceOrError(env, "Lio/glutenproject/fs/JniFilesystem$WriteFile;");
+  jniFileSystemClass = createGlobalClassReferenceOrError(env, "Lorg/apache/gluten/fs/JniFilesystem;");
+  jniReadFileClass = createGlobalClassReferenceOrError(env, "Lorg/apache/gluten/fs/JniFilesystem$ReadFile;");
+  jniWriteFileClass = createGlobalClassReferenceOrError(env, "Lorg/apache/gluten/fs/JniFilesystem$WriteFile;");
 
   // methods in JniFilesystem
   jniGetFileSystem =
-      getStaticMethodIdOrError(env, jniFileSystemClass, "getFileSystem", "()Lio/glutenproject/fs/JniFilesystem;");
+      getStaticMethodIdOrError(env, jniFileSystemClass, "getFileSystem", "()Lorg/apache/gluten/fs/JniFilesystem;");
   jniIsCapableForNewFile = getStaticMethodIdOrError(env, jniFileSystemClass, "isCapableForNewFile", "(J)Z");
   jniFileSystemOpenFileForRead = getMethodIdOrError(
-      env, jniFileSystemClass, "openFileForRead", "(Ljava/lang/String;)Lio/glutenproject/fs/JniFilesystem$ReadFile;");
+      env, jniFileSystemClass, "openFileForRead", "(Ljava/lang/String;)Lorg/apache/gluten/fs/JniFilesystem$ReadFile;");
   jniFileSystemOpenFileForWrite = getMethodIdOrError(
-      env, jniFileSystemClass, "openFileForWrite", "(Ljava/lang/String;)Lio/glutenproject/fs/JniFilesystem$WriteFile;");
+      env,
+      jniFileSystemClass,
+      "openFileForWrite",
+      "(Ljava/lang/String;)Lorg/apache/gluten/fs/JniFilesystem$WriteFile;");
   jniFileSystemRemove = getMethodIdOrError(env, jniFileSystemClass, "remove", "(Ljava/lang/String;)V");
   jniFileSystemRename =
       getMethodIdOrError(env, jniFileSystemClass, "rename", "(Ljava/lang/String;Ljava/lang/String;Z)V");

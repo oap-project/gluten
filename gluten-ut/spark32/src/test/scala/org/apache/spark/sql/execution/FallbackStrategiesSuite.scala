@@ -16,10 +16,10 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.execution.BasicScanExecTransformer
-import io.glutenproject.extension.{ColumnarOverrideRules, GlutenPlan}
-import io.glutenproject.extension.columnar.InsertTransitions
-import io.glutenproject.utils.QueryPlanSelector
+import org.apache.gluten.execution.BasicScanExecTransformer
+import org.apache.gluten.extension.{ColumnarOverrideRules, GlutenPlan}
+import org.apache.gluten.extension.columnar.InsertTransitions
+import org.apache.gluten.utils.QueryPlanSelector
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{GlutenSQLTestsTrait, SparkSession}

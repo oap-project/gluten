@@ -65,7 +65,7 @@ void JNI_OnUnload(JavaVM* vm, void*) {
   google::ShutdownGoogleLogging();
 }
 
-JNIEXPORT void JNICALL Java_io_glutenproject_init_NativeBackendInitializer_initialize( // NOLINT
+JNIEXPORT void JNICALL Java_org_apache_gluten_init_NativeBackendInitializer_initialize( // NOLINT
     JNIEnv* env,
     jclass,
     jbyteArray conf) {
@@ -76,7 +76,7 @@ JNIEXPORT void JNICALL Java_io_glutenproject_init_NativeBackendInitializer_initi
   JNI_METHOD_END()
 }
 
-JNIEXPORT void JNICALL Java_io_glutenproject_udf_UdfJniWrapper_getFunctionSignatures( // NOLINT
+JNIEXPORT void JNICALL Java_org_apache_gluten_udf_UdfJniWrapper_getFunctionSignatures( // NOLINT
     JNIEnv* env,
     jclass) {
   JNI_METHOD_START
@@ -85,7 +85,7 @@ JNIEXPORT void JNICALL Java_io_glutenproject_udf_UdfJniWrapper_getFunctionSignat
 }
 
 JNIEXPORT jobject JNICALL
-Java_io_glutenproject_vectorized_PlanEvaluatorJniWrapper_nativeValidateWithFailureReason( // NOLINT
+Java_org_apache_gluten_vectorized_PlanEvaluatorJniWrapper_nativeValidateWithFailureReason( // NOLINT
     JNIEnv* env,
     jobject wrapper,
     jbyteArray planArray) {
@@ -117,7 +117,7 @@ Java_io_glutenproject_vectorized_PlanEvaluatorJniWrapper_nativeValidateWithFailu
   velox::core::ExecCtx execCtx(pool, &queryCtx);
 
   gluten::SubstraitToVeloxPlanValidator planValidator(pool, &execCtx);
-  jclass infoCls = env->FindClass("Lio/glutenproject/validate/NativePlanValidationInfo;");
+  jclass infoCls = env->FindClass("Lorg/apache/gluten/validate/NativePlanValidationInfo;");
   if (infoCls == nullptr) {
     std::string errorMessage = "Unable to CreateGlobalClassReferenceOrError for NativePlanValidationInfo";
     throw gluten::GlutenException(errorMessage);

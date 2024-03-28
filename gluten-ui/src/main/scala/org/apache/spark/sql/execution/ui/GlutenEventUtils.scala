@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.ui
 
-import io.glutenproject.events.GlutenEvent
+import org.apache.gluten.events.GlutenEvent
 
 import org.apache.spark.SparkContext
 import org.apache.spark.status.ElementTrackingStore

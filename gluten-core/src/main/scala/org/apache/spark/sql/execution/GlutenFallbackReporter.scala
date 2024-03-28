@@ -16,11 +16,11 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.events.GlutenPlanFallbackEvent
-import io.glutenproject.extension.GlutenPlan
-import io.glutenproject.extension.columnar.{TRANSFORM_UNSUPPORTED, TransformHints}
-import io.glutenproject.utils.LogLevelUtil
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.events.GlutenPlanFallbackEvent
+import org.apache.gluten.extension.GlutenPlan
+import org.apache.gluten.extension.columnar.{TRANSFORM_UNSUPPORTED, TransformHints}
+import org.apache.gluten.utils.LogLevelUtil
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.rules.Rule

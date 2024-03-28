@@ -16,13 +16,13 @@
  */
 package org.apache.spark.sql.execution.benchmarks
 
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution.{FileSourceScanExecTransformer, WholeStageTransformContext}
-import io.glutenproject.expression.ConverterUtils
-import io.glutenproject.sql.shims.SparkShimLoader
-import io.glutenproject.substrait.SubstraitContext
-import io.glutenproject.substrait.plan.PlanBuilder
-import io.glutenproject.vectorized.{CHBlockConverterJniWrapper, CHNativeBlock}
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution.{FileSourceScanExecTransformer, WholeStageTransformContext}
+import org.apache.gluten.expression.ConverterUtils
+import org.apache.gluten.sql.shims.SparkShimLoader
+import org.apache.gluten.substrait.SubstraitContext
+import org.apache.gluten.substrait.plan.PlanBuilder
+import org.apache.gluten.vectorized.{CHBlockConverterJniWrapper, CHNativeBlock}
 
 import org.apache.spark.benchmark.Benchmark
 import org.apache.spark.rdd.RDD

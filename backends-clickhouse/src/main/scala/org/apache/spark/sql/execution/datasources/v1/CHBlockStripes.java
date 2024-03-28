@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql.execution.datasources.v1;
 
-import io.glutenproject.row.SparkRowInfo;
-import io.glutenproject.vectorized.CHBlockConverterJniWrapper;
-import io.glutenproject.vectorized.CHNativeBlock;
+import org.apache.gluten.row.SparkRowInfo;
+import org.apache.gluten.vectorized.CHBlockConverterJniWrapper;
+import org.apache.gluten.vectorized.CHNativeBlock;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.execution.datasources.BlockStripe;
 import org.apache.spark.sql.execution.datasources.BlockStripes;

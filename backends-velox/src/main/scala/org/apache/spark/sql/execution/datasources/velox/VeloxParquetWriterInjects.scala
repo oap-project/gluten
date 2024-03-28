@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources.velox
 
-import io.glutenproject.GlutenConfig
+import org.apache.gluten.GlutenConfig
 
 import org.apache.spark.sql.internal.SQLConf
 

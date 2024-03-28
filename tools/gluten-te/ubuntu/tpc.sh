@@ -136,7 +136,7 @@ then
 fi
 JAVA_ARGS="$JAVA_ARGS $EXTRA_JAVA_OPTIONS"
 JAVA_ARGS="$JAVA_ARGS -cp '/opt/gluten/tools/gluten-it/package/target/lib/*'"
-JAVA_ARGS="$JAVA_ARGS io.glutenproject.integration.tpc.Tpc $TPC_CMD_ARGS"
+JAVA_ARGS="$JAVA_ARGS org.apache.gluten.integration.tpc.Tpc $TPC_CMD_ARGS"
 
 BASH_ARGS=
 if [ "$RUN_GDB" == "ON" ]

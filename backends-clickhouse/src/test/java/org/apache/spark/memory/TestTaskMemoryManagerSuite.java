@@ -16,11 +16,11 @@
  */
 package org.apache.spark.memory;
 
-import io.glutenproject.memory.SimpleMemoryUsageRecorder;
-import io.glutenproject.memory.alloc.CHManagedCHReservationListener;
-import io.glutenproject.memory.alloc.CHNativeMemoryAllocator;
-import io.glutenproject.memory.alloc.CHNativeMemoryAllocatorManagerImpl;
-import io.glutenproject.memory.memtarget.MemoryTargets;
+import org.apache.gluten.memory.SimpleMemoryUsageRecorder;
+import org.apache.gluten.memory.alloc.CHManagedCHReservationListener;
+import org.apache.gluten.memory.alloc.CHNativeMemoryAllocator;
+import org.apache.gluten.memory.alloc.CHNativeMemoryAllocatorManagerImpl;
+import org.apache.gluten.memory.memtarget.MemoryTargets;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.internal.config.package$;

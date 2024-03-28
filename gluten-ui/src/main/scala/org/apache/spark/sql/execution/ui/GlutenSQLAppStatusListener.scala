@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.ui
 
-import io.glutenproject.events.{GlutenBuildInfoEvent, GlutenPlanFallbackEvent}
+import org.apache.gluten.events.{GlutenBuildInfoEvent, GlutenPlanFallbackEvent}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.internal.Logging

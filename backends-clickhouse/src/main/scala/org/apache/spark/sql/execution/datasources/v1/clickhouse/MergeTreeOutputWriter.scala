@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources.v1.clickhouse
 
-import io.glutenproject.vectorized.CHColumnVector
+import org.apache.gluten.vectorized.CHColumnVector
 
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.delta.actions.AddFile

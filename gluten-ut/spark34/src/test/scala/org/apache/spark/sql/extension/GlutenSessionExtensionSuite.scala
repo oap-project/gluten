@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.extension
 
-import io.glutenproject.extension.{ColumnarOverrideRules, JoinSelectionOverrides}
+import org.apache.gluten.extension.{ColumnarOverrideRules, JoinSelectionOverrides}
 
 import org.apache.spark.SparkConf
 import org.apache.spark.sql._

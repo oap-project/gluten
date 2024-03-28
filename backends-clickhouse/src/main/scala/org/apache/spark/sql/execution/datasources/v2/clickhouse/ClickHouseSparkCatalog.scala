@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 package org.apache.spark.sql.execution.datasources.v2.clickhouse
-import io.glutenproject.sql.shims.SparkShimLoader
+import org.apache.gluten.sql.shims.SparkShimLoader
 
 import org.apache.spark.sql.{AnalysisException, DataFrame, SparkSession}
 import org.apache.spark.sql.catalyst.TableIdentifier

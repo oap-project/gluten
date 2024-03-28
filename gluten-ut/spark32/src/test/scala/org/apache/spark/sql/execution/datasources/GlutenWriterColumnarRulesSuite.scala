@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution.datasources
 
-import io.glutenproject.GlutenConfig
+import org.apache.gluten.GlutenConfig
 
 import org.apache.spark.sql.{GlutenSQLTestsBaseTrait, SaveMode}
 import org.apache.spark.sql.execution.QueryExecution

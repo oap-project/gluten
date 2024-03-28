@@ -16,9 +16,9 @@
  */
 package org.apache.spark.affinity
 
-import io.glutenproject.backendsapi.clickhouse.CHBackendSettings
-import io.glutenproject.execution.GlutenMergeTreePartition
-import io.glutenproject.softaffinity.{AffinityManager, SoftAffinityManager}
+import org.apache.gluten.backendsapi.clickhouse.CHBackendSettings
+import org.apache.gluten.execution.GlutenMergeTreePartition
+import org.apache.gluten.softaffinity.{AffinityManager, SoftAffinityManager}
 
 import org.apache.spark.softaffinity.Affinity
 

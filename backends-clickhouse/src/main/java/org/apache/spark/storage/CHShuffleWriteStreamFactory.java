@@ -16,7 +16,7 @@
  */
 package org.apache.spark.storage;
 
-import io.glutenproject.exception.GlutenException;
+import org.apache.gluten.exception.GlutenException;
 
 import com.github.luben.zstd.ZstdOutputStreamNoFinalizer;
 import com.ning.compress.lzf.LZFOutputStream;

@@ -27,7 +27,7 @@ cat tpch_convert_parquet_dwrf.scala  | ${SPARK_HOME}/bin/spark-shell            
  --executor-cores 8                                      \
  --num-executors 14                                       \
  --executor-memory 30g                                   \
- --conf spark.plugins=io.glutenproject.GlutenPlugin        \
+ --conf spark.plugins=org.apache.gluten.GlutenPlugin        \
  --conf spark.driver.extraClassPath=${GLUTEN_JVM_JAR}      \
  --conf spark.executor.extraClassPath=${GLUTEN_JVM_JAR}    \
  --conf spark.memory.offHeap.size=30g                      \

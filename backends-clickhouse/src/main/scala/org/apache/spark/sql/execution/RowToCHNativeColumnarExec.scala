@@ -16,10 +16,10 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.execution.{RowToColumnarExecBase, SparkRowIterator}
-import io.glutenproject.expression.ConverterUtils
-import io.glutenproject.metrics.GlutenTimeMetric
-import io.glutenproject.vectorized.{CHBlockConverterJniWrapper, CHNativeBlock}
+import org.apache.gluten.execution.{RowToColumnarExecBase, SparkRowIterator}
+import org.apache.gluten.expression.ConverterUtils
+import org.apache.gluten.metrics.GlutenTimeMetric
+import org.apache.gluten.vectorized.{CHBlockConverterJniWrapper, CHNativeBlock}
 
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD

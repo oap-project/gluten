@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>io.glutenproject</groupId>
+    <groupId>org.apache.gluten</groupId>
     <artifactId>gluten-it</artifactId>
     <version>1.2.0-SNAPSHOT</version>
   </parent>
@@ -21,7 +21,7 @@
       <version>${scala.library.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-package</artifactId>
       <scope>test</scope>
     </dependency>
@@ -136,13 +136,13 @@
               <include>io.trino.tpcds:tpcds</include>
               <include>io.trino.tpch:tpch</include>
               <include>com.google.guava:guava</include>
-              <include>io.glutenproject:gluten-it-common</include>
+              <include>org.apache.gluten:gluten-it-common</include>
             </includes>
           </artifactSet>
           <relocations>
             <relocation>
               <pattern>com.google.common</pattern>
-              <shadedPattern>io.glutenproject.it.com.google.common</shadedPattern>
+              <shadedPattern>org.apache.gluten.it.com.google.common</shadedPattern>
               <includes>
                 <include>com.google.common.**</include>
               </includes>

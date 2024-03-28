@@ -60,7 +60,7 @@ void JniErrorsGlobalState::destroy(JNIEnv * env)
 void JniErrorsGlobalState::initialize(JNIEnv * env_)
 {
     io_exception_class = CreateGlobalExceptionClassReference(env_, "Ljava/io/IOException;");
-    runtime_exception_class = CreateGlobalExceptionClassReference(env_, "Lio/glutenproject/exception/GlutenException;");
+    runtime_exception_class = CreateGlobalExceptionClassReference(env_, "Lorg/apache/gluten/exception/GlutenException;");
     unsupportedoperation_exception_class = CreateGlobalExceptionClassReference(env_, "Ljava/lang/UnsupportedOperationException;");
     illegal_access_exception_class = CreateGlobalExceptionClassReference(env_, "Ljava/lang/IllegalAccessException;");
     illegal_argument_exception_class = CreateGlobalExceptionClassReference(env_, "Ljava/lang/IllegalArgumentException;");

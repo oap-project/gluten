@@ -16,9 +16,9 @@
  */
 package org.apache.spark.memory
 
-import io.glutenproject.memory.memtarget.{KnownNameAndStats, LoggingMemoryTarget, MemoryTarget, MemoryTargetVisitor, NoopMemoryTarget, OverAcquire, ThrowOnOomMemoryTarget, TreeMemoryTargets}
-import io.glutenproject.memory.memtarget.spark.{RegularMemoryConsumer, TreeMemoryConsumer}
-import io.glutenproject.proto.MemoryUsageStats
+import org.apache.gluten.memory.memtarget.{KnownNameAndStats, LoggingMemoryTarget, MemoryTarget, MemoryTargetVisitor, NoopMemoryTarget, OverAcquire, ThrowOnOomMemoryTarget, TreeMemoryTargets}
+import org.apache.gluten.memory.memtarget.spark.{RegularMemoryConsumer, TreeMemoryConsumer}
+import org.apache.gluten.proto.MemoryUsageStats
 
 import org.apache.spark.SparkEnv
 import org.apache.spark.util.Utils

@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.execution.{ProjectExecTransformer, WholeStageTransformer}
+import org.apache.gluten.execution.{ProjectExecTransformer, WholeStageTransformer}
 
 import org.apache.spark.SparkException
 import org.apache.spark.sql.catalyst.expressions.{EqualTo, Expression}

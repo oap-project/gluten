@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.delta
 
-import io.glutenproject.execution.ColumnarToRowExecBase
+import org.apache.gluten.execution.ColumnarToRowExecBase
 
 import org.apache.spark.SparkException
 import org.apache.spark.sql.Dataset

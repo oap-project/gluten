@@ -16,7 +16,7 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.backendsapi.clickhouse.CHBackend
+import org.apache.gluten.backendsapi.clickhouse.CHBackend
 
 import org.apache.spark.TaskContext
 import org.apache.spark.shuffle.celeborn.CelebornShuffleHandle

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>gluten-celeborn</artifactId>
-    <groupId>io.glutenproject</groupId>
+    <groupId>org.apache.gluten</groupId>
     <version>1.2.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
@@ -16,19 +16,19 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>backends-velox</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-data</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-celeborn-common</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>

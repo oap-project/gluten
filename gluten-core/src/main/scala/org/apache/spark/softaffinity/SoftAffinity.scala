@@ -16,8 +16,8 @@
  */
 package org.apache.spark.softaffinity
 
-import io.glutenproject.softaffinity.{AffinityManager, SoftAffinityManager}
-import io.glutenproject.utils.LogLevelUtil
+import org.apache.gluten.softaffinity.{AffinityManager, SoftAffinityManager}
+import org.apache.gluten.utils.LogLevelUtil
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.scheduler.ExecutorCacheTaskLocation

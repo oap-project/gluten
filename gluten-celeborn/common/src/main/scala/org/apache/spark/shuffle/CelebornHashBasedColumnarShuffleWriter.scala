@@ -16,7 +16,7 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.GlutenConfig
+import org.apache.gluten.GlutenConfig
 
 import org.apache.spark._
 import org.apache.spark.internal.Logging

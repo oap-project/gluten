@@ -16,11 +16,11 @@
  */
 package org.apache.spark.sql.hive
 
-import io.glutenproject.backendsapi.BackendsApiManager
-import io.glutenproject.execution.BasicScanExecTransformer
-import io.glutenproject.extension.ValidationResult
-import io.glutenproject.metrics.MetricsUpdater
-import io.glutenproject.substrait.rel.LocalFilesNode.ReadFileFormat
+import org.apache.gluten.backendsapi.BackendsApiManager
+import org.apache.gluten.execution.BasicScanExecTransformer
+import org.apache.gluten.extension.ValidationResult
+import org.apache.gluten.metrics.MetricsUpdater
+import org.apache.gluten.substrait.rel.LocalFilesNode.ReadFileFormat
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.SparkSession

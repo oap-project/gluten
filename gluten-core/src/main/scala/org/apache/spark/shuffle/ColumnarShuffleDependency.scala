@@ -16,7 +16,7 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.vectorized.NativePartitioning
+import org.apache.gluten.vectorized.NativePartitioning
 
 import org.apache.spark.{Aggregator, Partitioner, ShuffleDependency, SparkEnv}
 import org.apache.spark.rdd.RDD

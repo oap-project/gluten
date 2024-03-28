@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql.statistics
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.extension.GlutenPlan
-import io.glutenproject.utils.{BackendTestUtils, SystemParameters}
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.extension.GlutenPlan
+import org.apache.gluten.utils.{BackendTestUtils, SystemParameters}
 
 import org.apache.spark.sql.{GlutenTestConstants, QueryTest, SparkSession}
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry
@@ -53,7 +53,7 @@ class SparkFunctionStatistics extends QueryTest {
         .config("spark.sql.files.maxPartitionBytes", "134217728")
         .config("spark.memory.offHeap.enabled", "true")
         .config("spark.memory.offHeap.size", "1024MB")
-        .config("spark.plugins", "io.glutenproject.GlutenPlugin")
+        .config("spark.plugins", "org.apache.gluten.GlutenPlugin")
         .config("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
         // Avoid the code size overflow error in Spark code generation.
         .config("spark.sql.codegen.wholeStage", "false")

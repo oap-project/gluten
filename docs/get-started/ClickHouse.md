@@ -190,7 +190,7 @@ cd spark-3.2.2-bin-hadoop2.7
   --conf spark.sql.columnVector.offheap.enabled=true \
   --conf spark.memory.offHeap.enabled=true \
   --conf spark.memory.offHeap.size=6442450944 \
-  --conf spark.plugins=io.glutenproject.GlutenPlugin \
+  --conf spark.plugins=org.apache.gluten.GlutenPlugin \
   --conf spark.gluten.sql.columnar.columnarToRow=true \
   --conf spark.executorEnv.LD_PRELOAD=/path_to_clickhouse_library/libch.so\
   --conf spark.gluten.sql.columnar.libpath=/path_to_clickhouse_library/libch.so \
@@ -371,7 +371,7 @@ cd spark-3.2.2-bin-hadoop2.7
   --conf spark.sql.columnVector.offheap.enabled=true \
   --conf spark.memory.offHeap.enabled=true \
   --conf spark.memory.offHeap.size=6442450944 \
-  --conf spark.plugins=io.glutenproject.GlutenPlugin \
+  --conf spark.plugins=org.apache.gluten.GlutenPlugin \
   --conf spark.gluten.sql.columnar.columnarToRow=true \
   --conf spark.executorEnv.LD_PRELOAD=/path_to_clickhouse_library/libch.so\
   --conf spark.gluten.sql.columnar.libpath=/path_to_clickhouse_library/libch.so \
@@ -454,7 +454,7 @@ $spark_cmd \
   --conf spark.gluten.sql.columnar.forceShuffledHashJoin=true \
   --conf spark.gluten.sql.columnar.backend.ch.runtime_config.hdfs.libhdfs3_conf=$hdfs_conf \
   --conf spark.gluten.sql.columnar.backend.ch.runtime_config.logger.level=debug \
-  --conf spark.plugins=io.glutenproject.GlutenPlugin \
+  --conf spark.plugins=org.apache.gluten.GlutenPlugin \
   --conf spark.executorEnv.LD_PRELOAD=$LD_PRELOAD \
   --conf spark.hadoop.input.connect.timeout=600000 \
   --conf spark.hadoop.input.read.timeout=600000 \
@@ -563,7 +563,7 @@ cd spark-3.2.2-bin-hadoop2.7
   --conf spark.memory.offHeap.size=42949672960 \
   --conf spark.serializer=org.apache.spark.serializer.JavaSerializer \
   --conf spark.sql.sources.ignoreDataLocality=true \
-  --conf spark.plugins=io.glutenproject.GlutenPlugin \
+  --conf spark.plugins=org.apache.gluten.GlutenPlugin \
   --conf spark.gluten.sql.columnar.columnarToRow=true \
   --conf spark.gluten.sql.columnar.libpath=/path_to_clickhouse_library/libch.so \
   --conf spark.gluten.sql.columnar.iterator=true \

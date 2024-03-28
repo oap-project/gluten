@@ -16,12 +16,12 @@
  */
 package org.apache.spark.sql.execution.datasources.velox;
 
-import io.glutenproject.exec.Runtimes;
+import org.apache.gluten.exec.Runtimes;
 import org.apache.spark.sql.catalyst.InternalRow;
 import org.apache.spark.sql.catalyst.expressions.UnsafeRow;
 import org.apache.spark.sql.execution.datasources.BlockStripe;
 import org.apache.spark.sql.execution.datasources.BlockStripes;
-import io.glutenproject.columnarbatch.ColumnarBatches;
+import org.apache.gluten.columnarbatch.ColumnarBatches;
 
 import org.apache.spark.sql.vectorized.ColumnarBatch;
 import org.jetbrains.annotations.NotNull;

@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.sources
 
-import io.glutenproject.execution.SortExecTransformer
-import io.glutenproject.extension.GlutenPlan
+import org.apache.gluten.execution.SortExecTransformer
+import org.apache.gluten.extension.GlutenPlan
 
 import org.apache.spark.SparkConf
 import org.apache.spark.executor.OutputMetrics

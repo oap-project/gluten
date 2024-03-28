@@ -16,10 +16,10 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.execution.ColumnarToRowExecBase
-import io.glutenproject.extension.ValidationResult
-import io.glutenproject.metrics.GlutenTimeMetric
-import io.glutenproject.vectorized.CHNativeBlock
+import org.apache.gluten.execution.ColumnarToRowExecBase
+import org.apache.gluten.extension.ValidationResult
+import org.apache.gluten.metrics.GlutenTimeMetric
+import org.apache.gluten.vectorized.CHNativeBlock
 
 import org.apache.spark.{OneToOneDependency, Partition, SparkContext, TaskContext}
 import org.apache.spark.broadcast.Broadcast

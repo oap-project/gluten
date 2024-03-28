@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>gluten-ut</artifactId>
-    <groupId>io.glutenproject</groupId>
+    <groupId>org.apache.gluten</groupId>
     <version>1.2.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
@@ -16,7 +16,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-ut-common</artifactId>
       <version>${project.version}</version>
       <scope>compile</scope>
@@ -30,7 +30,7 @@
       <classifier>tests</classifier>
     </dependency>
     <dependency>
-      <groupId>io.glutenproject</groupId>
+      <groupId>org.apache.gluten</groupId>
       <artifactId>gluten-core</artifactId>
       <version>${project.version}</version>
       <type>test-jar</type>
@@ -46,7 +46,7 @@
       </activation>
       <dependencies>
         <dependency>
-          <groupId>io.glutenproject</groupId>
+          <groupId>org.apache.gluten</groupId>
           <artifactId>backends-clickhouse</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
@@ -66,7 +66,7 @@
       </activation>
       <dependencies>
         <dependency>
-          <groupId>io.glutenproject</groupId>
+          <groupId>org.apache.gluten</groupId>
           <artifactId>backends-velox</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>

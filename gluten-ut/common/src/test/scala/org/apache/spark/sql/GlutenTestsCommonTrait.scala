@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql
 
-import io.glutenproject.test.TestStats
+import org.apache.gluten.test.TestStats
 
 import org.apache.spark.SparkFunSuite
 import org.apache.spark.sql.GlutenTestConstants.GLUTEN_TEST

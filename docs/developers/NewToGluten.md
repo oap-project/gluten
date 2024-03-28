@@ -380,7 +380,7 @@ We can run gluten + velox on clean machine by one command (supported OS: Ubuntu2
 ```
 spark-shell --name run_gluten \
  --master yarn --deploy-mode client \
- --conf spark.plugins=io.glutenproject.GlutenPlugin \
+ --conf spark.plugins=org.apache.gluten.GlutenPlugin \
  --conf spark.memory.offHeap.enabled=true \
  --conf spark.memory.offHeap.size=20g \
  --jars https://github.com/apache/incubator-gluten/releases/download/v1.1.1/gluten-velox-bundle-spark3.2_2.12-1.1.1.jar \

@@ -16,10 +16,10 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.clickhouse.CHBackendSettings
-import io.glutenproject.vectorized.BlockOutputStream
-import io.glutenproject.vectorized.CHStreamReader
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.clickhouse.CHBackendSettings
+import org.apache.gluten.vectorized.BlockOutputStream
+import org.apache.gluten.vectorized.CHStreamReader
 
 import org.apache.spark.SparkEnv
 import org.apache.spark.internal.Logging

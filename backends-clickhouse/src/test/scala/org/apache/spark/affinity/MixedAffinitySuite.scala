@@ -16,9 +16,9 @@
  */
 package org.apache.spark.affinity
 
-import io.glutenproject.execution.{GlutenMergeTreePartition, GlutenPartition, MergeTreePartSplit}
-import io.glutenproject.softaffinity.AffinityManager
-import io.glutenproject.substrait.plan.PlanBuilder
+import org.apache.gluten.execution.{GlutenMergeTreePartition, GlutenPartition, MergeTreePartSplit}
+import org.apache.gluten.softaffinity.AffinityManager
+import org.apache.gluten.substrait.plan.PlanBuilder
 
 import org.apache.spark.sql.QueryTest
 import org.apache.spark.sql.test.SharedSparkSession

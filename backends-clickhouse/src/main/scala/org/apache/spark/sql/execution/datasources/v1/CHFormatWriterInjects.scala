@@ -16,8 +16,8 @@
  */
 package org.apache.spark.sql.execution.datasources.v1
 
-import io.glutenproject.execution.datasource.GlutenRowSplitter
-import io.glutenproject.vectorized.CHColumnVector
+import org.apache.gluten.execution.datasource.GlutenRowSplitter
+import org.apache.gluten.vectorized.CHColumnVector
 
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.InternalRow

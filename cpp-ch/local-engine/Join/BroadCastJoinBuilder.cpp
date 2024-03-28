@@ -119,7 +119,7 @@ void init(JNIEnv * env)
      * Here, we use utility class.
      */
 
-    const char * classSig = "Lio/glutenproject/execution/CHBroadcastBuildSideCache;";
+    const char * classSig = "Lorg/apache/gluten/execution/CHBroadcastBuildSideCache;";
     Java_CHBroadcastBuildSideCache = CreateGlobalClassReference(env, classSig);
     Java_get = GetStaticMethodID(env, Java_CHBroadcastBuildSideCache, "get", "(Ljava/lang/String;)J");
 }

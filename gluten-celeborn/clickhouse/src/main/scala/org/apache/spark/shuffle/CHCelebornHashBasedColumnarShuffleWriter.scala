@@ -16,13 +16,13 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.GlutenConfig
-import io.glutenproject.backendsapi.clickhouse.CHBackendSettings
-import io.glutenproject.memory.alloc.CHNativeMemoryAllocators
-import io.glutenproject.memory.memtarget.MemoryTarget
-import io.glutenproject.memory.memtarget.Spiller
-import io.glutenproject.memory.memtarget.Spillers
-import io.glutenproject.vectorized._
+import org.apache.gluten.GlutenConfig
+import org.apache.gluten.backendsapi.clickhouse.CHBackendSettings
+import org.apache.gluten.memory.alloc.CHNativeMemoryAllocators
+import org.apache.gluten.memory.memtarget.MemoryTarget
+import org.apache.gluten.memory.memtarget.Spiller
+import org.apache.gluten.memory.memtarget.Spillers
+import org.apache.gluten.vectorized._
 
 import org.apache.spark._
 import org.apache.spark.scheduler.MapStatus

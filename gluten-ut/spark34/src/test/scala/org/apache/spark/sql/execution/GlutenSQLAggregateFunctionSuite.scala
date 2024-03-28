@@ -16,7 +16,7 @@
  */
 package org.apache.spark.sql.execution
 
-import io.glutenproject.execution.HashAggregateExecBaseTransformer
+import org.apache.gluten.execution.HashAggregateExecBaseTransformer
 
 import org.apache.spark.sql.{GlutenSQLTestsTrait, Row}
 

@@ -16,11 +16,11 @@
  */
 package org.apache.spark.sql.execution.utils
 
-import io.glutenproject.columnarbatch.ColumnarBatches
-import io.glutenproject.memory.arrowalloc.ArrowBufferAllocators
-import io.glutenproject.memory.nmm.NativeMemoryManagers
-import io.glutenproject.utils.Iterators
-import io.glutenproject.vectorized.{ArrowWritableColumnVector, NativeColumnarToRowInfo, NativeColumnarToRowJniWrapper, NativePartitioning}
+import org.apache.gluten.columnarbatch.ColumnarBatches
+import org.apache.gluten.memory.arrowalloc.ArrowBufferAllocators
+import org.apache.gluten.memory.nmm.NativeMemoryManagers
+import org.apache.gluten.utils.Iterators
+import org.apache.gluten.vectorized.{ArrowWritableColumnVector, NativeColumnarToRowInfo, NativeColumnarToRowJniWrapper, NativePartitioning}
 
 import org.apache.spark.{Partitioner, RangePartitioner, ShuffleDependency}
 import org.apache.spark.rdd.RDD

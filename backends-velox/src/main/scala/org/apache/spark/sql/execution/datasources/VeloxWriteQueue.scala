@@ -16,9 +16,9 @@
  */
 package org.apache.spark.sql.execution.datasources
 
-import io.glutenproject.datasource.DatasourceJniWrapper
-import io.glutenproject.utils.Iterators
-import io.glutenproject.vectorized.ColumnarBatchInIterator
+import org.apache.gluten.datasource.DatasourceJniWrapper
+import org.apache.gluten.utils.Iterators
+import org.apache.gluten.vectorized.ColumnarBatchInIterator
 
 import org.apache.spark.TaskContext
 import org.apache.spark.sql.execution.datasources.VeloxWriteQueue.EOS_BATCH

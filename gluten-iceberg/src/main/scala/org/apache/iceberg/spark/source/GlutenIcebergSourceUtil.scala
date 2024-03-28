@@ -16,8 +16,8 @@
  */
 package org.apache.iceberg.spark.source
 
-import io.glutenproject.substrait.rel.{IcebergLocalFilesBuilder, SplitInfo}
-import io.glutenproject.substrait.rel.LocalFilesNode.ReadFileFormat
+import org.apache.gluten.substrait.rel.{IcebergLocalFilesBuilder, SplitInfo}
+import org.apache.gluten.substrait.rel.LocalFilesNode.ReadFileFormat
 
 import org.apache.spark.softaffinity.SoftAffinity
 import org.apache.spark.sql.catalyst.catalog.ExternalCatalogUtils

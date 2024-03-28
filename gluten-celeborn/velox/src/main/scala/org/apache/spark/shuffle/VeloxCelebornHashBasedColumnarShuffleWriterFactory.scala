@@ -16,7 +16,7 @@
  */
 package org.apache.spark.shuffle
 
-import io.glutenproject.backendsapi.velox.VeloxBackend
+import org.apache.gluten.backendsapi.velox.VeloxBackend
 
 import org.apache.spark.TaskContext
 import org.apache.spark.shuffle.celeborn.CelebornShuffleHandle
