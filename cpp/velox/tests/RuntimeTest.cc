@@ -25,8 +25,7 @@ class DummyRuntime final : public Runtime {
  public:
   DummyRuntime(const std::unordered_map<std::string, std::string>& conf) : Runtime(conf) {}
 
-  void parsePlan(const uint8_t* data, int32_t size, SparkTaskInfo taskInfo, std::optional<std::string> dumpFile)
-      override {}
+  void parsePlan(const uint8_t* data, int32_t size, std::optional<std::string> dumpFile) override {}
 
   void parseSplitInfo(const uint8_t* data, int32_t size, std::optional<std::string> dumpFile) override {}
 

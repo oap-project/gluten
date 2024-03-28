@@ -45,12 +45,7 @@ VeloxRuntime::VeloxRuntime(const std::unordered_map<std::string, std::string>& c
   FLAGS_v = veloxCfg_->get<uint32_t>(kGlogVerboseLevel, FLAGS_v);
 }
 
-void VeloxRuntime::parsePlan(
-    const uint8_t* data,
-    int32_t size,
-    SparkTaskInfo taskInfo,
-    std::optional<std::string> dumpFile) {
-  taskInfo_ = taskInfo;
+void VeloxRuntime::parsePlan(const uint8_t* data, int32_t size, std::optional<std::string> dumpFile) {
   if (debugModeEnabled_ || dumpFile.has_value()) {
     try {
       auto planJson = substraitFromPbToJson("Plan", data, size, dumpFile);
