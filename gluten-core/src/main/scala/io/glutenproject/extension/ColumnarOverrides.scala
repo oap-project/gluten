@@ -227,6 +227,11 @@ case class ColumnarOverrideRules(session: SparkSession)
 
     def maybeCbo(outputsColumnar: Boolean): List[SparkSession => Rule[SparkPlan]] = {
       if (GlutenConfig.getConf.enableAdvancedCbo) {
+        if (!BackendsApiManager.getSettings.supportAdvancedCbo()) {
+          throw new UnsupportedOperationException(
+            s"Advanced CBO support is currently not added for backend: " +
+              s"${BackendsApiManager.getBackendName}")
+        }
         return List(
           (_: SparkSession) => TransformPreOverrides(List(ImplementFilter()), List.empty),
           (session: SparkSession) => EnumeratedTransform(session, outputsColumnar),
