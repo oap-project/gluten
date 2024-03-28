@@ -581,4 +581,14 @@ class ScalarFunctionsValidateSuite extends FunctionsValidateTest {
     }
   }
 
+  test("Test map_concat function") {
+    runQueryAndCompare("select map_concat(map(4, 6), map(7, 8))") {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+    runQueryAndCompare(
+      "select map_concat(map(l_returnflag, l_comment), map(l_shipmode, l_comment)) " +
+        "from lineitem limit 1") {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+  }
 }

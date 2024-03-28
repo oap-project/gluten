@@ -265,6 +265,8 @@ class VeloxTestSettings extends BackendTestSettings {
     // blocked by Velox-5768
     .exclude("aggregate function - array for primitive type containing null")
     .exclude("aggregate function - array for non-primitive type")
+    // Velox by default removes duplicates from map_concat and does not throw exception
+    .exclude("map_concat function")
   enableSuite[GlutenDataFrameTungstenSuite]
   enableSuite[GlutenDataFrameSetOperationsSuite]
     // Result depends on the implementation for nondeterministic expression rand.
