@@ -81,10 +81,10 @@ object QueryRunner {
       val sql = resourceToString(queryPath)
       val prev = System.nanoTime()
       val df = spark.sql(sql)
+      val rows = df.collect()
       if (explain) {
         df.explain(extended = true)
       }
-      val rows = df.collect()
       val millis = (System.nanoTime() - prev) / 1000000L
       val collectedMetrics = metrics.map(name => (name, em.getMetricValue(name))).toMap
       RunResult(rows, millis, collectedMetrics)

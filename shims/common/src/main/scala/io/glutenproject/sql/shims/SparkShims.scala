@@ -19,6 +19,7 @@ package io.glutenproject.sql.shims
 import io.glutenproject.expression.Sig
 
 import org.apache.spark.{SparkContext, TaskContext}
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.internal.io.FileCommitProtocol
 import org.apache.spark.scheduler.TaskInfo
 import org.apache.spark.shuffle.ShuffleHandle
@@ -46,6 +47,8 @@ import org.apache.hadoop.fs.{FileStatus, Path}
 
 import java.util.{ArrayList => JArrayList, Map => JMap}
 
+import scala.reflect.ClassTag
+
 sealed abstract class ShimDescriptor
 
 case class SparkShimDescriptor(major: Int, minor: Int, patch: Int) extends ShimDescriptor {
@@ -61,7 +64,9 @@ trait SparkShims {
   // https://github.com/apache/spark/pull/32875
   def getDistribution(leftKeys: Seq[Expression], rightKeys: Seq[Expression]): Seq[Distribution]
 
-  def expressionMappings: Seq[Sig]
+  def scalarExpressionMappings: Seq[Sig]
+
+  def aggregateExpressionMappings: Seq[Sig]
 
   def convertPartitionTransforms(partitions: Seq[Transform]): (Seq[String], Option[BucketSpec])
 
@@ -120,6 +125,13 @@ trait SparkShims {
   def enableNativeWriteFilesByDefault(): Boolean = false
 
   def createTestTaskContext(): TaskContext
+
+  def broadcastInternal[T: ClassTag](sc: SparkContext, value: T): Broadcast[T] = {
+    // Since Spark 3.4, the `sc.broadcast` has been optimized to use `sc.broadcastInternal`.
+    // More details see SPARK-39983.
+    // TODO, remove this shim once we drop Spark3.3 and previous
+    sc.broadcast(value)
+  }
 
   // To be compatible with Spark-3.5 and later
   // See https://github.com/apache/spark/pull/41440
@@ -180,4 +192,7 @@ trait SparkShims {
 
   def extractExpressionTimestampAddUnit(timestampAdd: Expression): Option[Seq[String]] =
     Option.empty
+
+  def supportsRowBased(plan: SparkPlan): Boolean = !plan.supportsColumnar
+
 }

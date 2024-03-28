@@ -61,7 +61,7 @@ class Spark33Shims extends SparkShims {
     ClusteredDistribution(leftKeys) :: ClusteredDistribution(rightKeys) :: Nil
   }
 
-  override def expressionMappings: Seq[Sig] = {
+  override def scalarExpressionMappings: Seq[Sig] = {
     val list = if (GlutenConfig.getConf.enableNativeBloomFilter) {
       Seq(
         Sig[BloomFilterMightContain](ExpressionNames.MIGHT_CONTAIN),
@@ -75,6 +75,8 @@ class Spark33Shims extends SparkShims {
       Sig[TimestampAdd](TIMESTAMP_ADD)
     )
   }
+
+  override def aggregateExpressionMappings: Seq[Sig] = Seq.empty
 
   override def convertPartitionTransforms(
       partitions: Seq[Transform]): (Seq[String], Option[BucketSpec]) = {
@@ -272,4 +274,6 @@ class Spark33Shims extends SparkShims {
       case _ => Option.empty
     }
   }
+
+  override def supportsRowBased(plan: SparkPlan): Boolean = plan.supportsRowBased
 }

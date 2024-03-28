@@ -31,6 +31,7 @@ import scala.collection.mutable.ArrayBuffer
 class Parameterized(
     scale: Double,
     queryIds: Array[String],
+    excludedQueryIds: Array[String],
     iterations: Int,
     warmupIterations: Int,
     configDimensions: Seq[Dim],
@@ -104,19 +105,7 @@ class Parameterized(
         sessionSwitcher.registerSession(coordinate.toString, conf)
     }
 
-    val runQueryIds = queryIds match {
-      case Array() =>
-        allQueries
-      case _ =>
-        queryIds
-    }
-    val allQueriesSet = allQueries.toSet
-    runQueryIds.foreach {
-      queryId =>
-        if (!allQueriesSet.contains(queryId)) {
-          throw new IllegalArgumentException(s"Query ID doesn't exist: $queryId")
-        }
-    }
+    val runQueryIds = tpcSuite.selectQueryIds(queryIds, excludedQueryIds)
 
     // warm up
     (0 until warmupIterations).foreach {

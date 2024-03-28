@@ -17,7 +17,7 @@
 package io.glutenproject.extension.columnar
 
 import org.apache.spark.sql.catalyst.rules.Rule
-import org.apache.spark.sql.execution.{ApplyColumnarRulesAndInsertTransitions, ColumnarToRowExec, RowToColumnarExec, SparkPlan}
+import org.apache.spark.sql.execution.{ApplyColumnarRulesAndInsertTransitions, ColumnarToRowExec, ColumnarToRowTransition, RowToColumnarExec, RowToColumnarTransition, SparkPlan}
 
 /** See rule code from vanilla Spark: [[ApplyColumnarRulesAndInsertTransitions]]. */
 case class InsertTransitions(outputsColumnar: Boolean) extends Rule[SparkPlan] {
@@ -37,14 +37,37 @@ case class InsertTransitions(outputsColumnar: Boolean) extends Rule[SparkPlan] {
 }
 
 object RemoveTransitions extends Rule[SparkPlan] {
+  import ColumnarTransitions._
   override def apply(plan: SparkPlan): SparkPlan = plan.transformUp {
-    case ColumnarToRowExec(child) => child
-    case RowToColumnarExec(child) => child
+    case ColumnarToRowLike(child) => child
+    case RowToColumnarLike(child) => child
   }
 }
 
 object ColumnarTransitions {
   def insertTransitions(plan: SparkPlan, outputsColumnar: Boolean): SparkPlan = {
     InsertTransitions(outputsColumnar).apply(plan)
+  }
+
+  // Extractor for Spark/Gluten's C2R
+  object ColumnarToRowLike {
+    def unapply(plan: SparkPlan): Option[SparkPlan] = {
+      plan match {
+        case c2r: ColumnarToRowTransition =>
+          Some(c2r.child)
+        case _ => None
+      }
+    }
+  }
+
+  // Extractor for Spark/Gluten's R2C
+  object RowToColumnarLike {
+    def unapply(plan: SparkPlan): Option[SparkPlan] = {
+      plan match {
+        case c2r: RowToColumnarTransition =>
+          Some(c2r.child)
+        case _ => None
+      }
+    }
   }
 }

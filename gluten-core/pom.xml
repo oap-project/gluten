@@ -34,6 +34,12 @@
       <version>${project.version}</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+      <groupId>io.glutenproject</groupId>
+      <artifactId>gluten-cbo-common</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+    </dependency>
     <!-- Prevent our dummy JAR from being included in Spark distributions or uploaded to YARN -->
     <dependency>
       <groupId>org.apache.spark</groupId>

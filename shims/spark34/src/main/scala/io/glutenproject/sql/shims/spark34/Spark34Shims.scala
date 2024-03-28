@@ -20,7 +20,8 @@ import io.glutenproject.GlutenConfig
 import io.glutenproject.expression.{ExpressionNames, Sig}
 import io.glutenproject.sql.shims.{ShimDescriptor, SparkShims}
 
-import org.apache.spark.{ShuffleUtils, SparkContext, SparkException, TaskContext, TaskContextUtils}
+import org.apache.spark.{ShuffleUtils, SparkContext, SparkContextUtils, SparkException, TaskContext, TaskContextUtils}
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.internal.io.FileCommitProtocol
 import org.apache.spark.paths.SparkPath
 import org.apache.spark.scheduler.TaskInfo
@@ -53,6 +54,8 @@ import org.apache.hadoop.fs.{FileStatus, Path}
 import java.time.ZoneOffset
 import java.util.{HashMap => JHashMap, Map => JMap}
 
+import scala.reflect.ClassTag
+
 class Spark34Shims extends SparkShims {
   override def getShimDescriptor: ShimDescriptor = SparkShimProvider.DESCRIPTOR
 
@@ -62,7 +65,7 @@ class Spark34Shims extends SparkShims {
     ClusteredDistribution(leftKeys) :: ClusteredDistribution(rightKeys) :: Nil
   }
 
-  override def expressionMappings: Seq[Sig] = {
+  override def scalarExpressionMappings: Seq[Sig] = {
     val list = if (GlutenConfig.getConf.enableNativeBloomFilter) {
       Seq(
         Sig[BloomFilterMightContain](ExpressionNames.MIGHT_CONTAIN),
@@ -73,8 +76,9 @@ class Spark34Shims extends SparkShims {
       Sig[Sec](ExpressionNames.SEC),
       Sig[Csc](ExpressionNames.CSC),
       Sig[Empty2Null](ExpressionNames.EMPTY2NULL))
-
   }
+
+  override def aggregateExpressionMappings: Seq[Sig] = Seq.empty
 
   override def convertPartitionTransforms(
       partitions: Seq[Transform]): (Seq[String], Option[BucketSpec]) = {
@@ -240,6 +244,10 @@ class Spark34Shims extends SparkShims {
     TaskContextUtils.createTestTaskContext()
   }
 
+  override def broadcastInternal[T: ClassTag](sc: SparkContext, value: T): Broadcast[T] = {
+    SparkContextUtils.broadcastInternal(sc, value)
+  }
+
   def setJobDescriptionOrTagForBroadcastExchange(
       sc: SparkContext,
       broadcastExchange: BroadcastExchangeLike): Unit = {
@@ -344,4 +352,6 @@ class Spark34Shims extends SparkShims {
         filteredPartitions.flatten
     }
   }
+
+  override def supportsRowBased(plan: SparkPlan): Boolean = plan.supportsRowBased
 }

@@ -1004,7 +1004,6 @@ class VeloxTestSettings extends BackendTestSettings {
     .exclude("unbounded preceding/following range between with aggregation")
     .exclude("sliding range between with aggregation")
     .exclude("store and retrieve column stats in different time zones")
-    .exclude("rows between should accept int/long values as boundary")
   enableSuite[GlutenDataFrameWriterV2Suite]
   enableSuite[GlutenDatasetAggregatorSuite]
   enableSuite[GlutenDatasetCacheSuite]

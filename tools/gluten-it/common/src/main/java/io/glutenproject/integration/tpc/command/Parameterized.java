@@ -49,6 +49,9 @@ public class Parameterized implements Callable<Integer> {
   @CommandLine.Option(names = {"--queries"}, description = "Set a comma-separated list of query IDs to run, run all queries if not specified. Example: --queries=q1,q6", split = ",")
   private String[] queries = new String[0];
 
+  @CommandLine.Option(names = {"--excluded-queries"}, description = "Set a comma-separated list of query IDs to exclude. Example: --exclude-queries=q1,q6", split = ",")
+  private String[] excludedQueries = new String[0];
+
   @CommandLine.Option(names = {"--iterations"}, description = "How many iterations to run", defaultValue = "1")
   private int iterations;
 
@@ -119,7 +122,7 @@ public class Parameterized implements Callable<Integer> {
             )).collect(Collectors.toList())).asScala();
 
     io.glutenproject.integration.tpc.action.Parameterized parameterized =
-        new io.glutenproject.integration.tpc.action.Parameterized(dataGenMixin.getScale(), this.queries, iterations, warmupIterations, parsedDims, metrics);
+        new io.glutenproject.integration.tpc.action.Parameterized(dataGenMixin.getScale(), this.queries, excludedQueries, iterations, warmupIterations, parsedDims, metrics);
     return mixin.runActions(ArrayUtils.addAll(dataGenMixin.makeActions(), parameterized));
   }
 }

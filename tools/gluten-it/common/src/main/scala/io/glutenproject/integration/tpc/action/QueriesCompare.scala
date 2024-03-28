@@ -23,27 +23,22 @@ import org.apache.spark.sql.{SparkSessionSwitcher, TestUtils}
 
 import org.apache.commons.lang3.exception.ExceptionUtils
 
-case class QueriesCompare(scale: Double, queryIds: Array[String], explain: Boolean, iterations: Int)
+case class QueriesCompare(
+    scale: Double,
+    queryIds: Array[String],
+    excludedQueryIds: Array[String],
+    explain: Boolean,
+    iterations: Int)
   extends Action {
 
   override def execute(tpcSuite: TpcSuite): Boolean = {
     val runner: TpcRunner = new TpcRunner(tpcSuite.queryResource(), tpcSuite.dataWritePath(scale))
-    val allQueries = tpcSuite.allQueryIds()
+    val runQueryIds = tpcSuite.selectQueryIds(queryIds, excludedQueryIds)
     val results = (0 until iterations).flatMap {
       iteration =>
         println(s"Running tests (iteration $iteration)...")
-        val runQueryIds = queryIds match {
-          case Array() =>
-            allQueries
-          case _ =>
-            queryIds
-        }
-        val allQueriesSet = allQueries.toSet
         runQueryIds.map {
           queryId =>
-            if (!allQueriesSet.contains(queryId)) {
-              throw new IllegalArgumentException(s"Query ID doesn't exist: $queryId")
-            }
             QueriesCompare.runTpcQuery(
               queryId,
               explain,
@@ -194,6 +189,7 @@ object QueriesCompare {
       val result = runner.runTpcQuery(sessionSwitcher.spark(), testDesc, id, explain = explain)
       val resultRows = result.rows
       val error = TestUtils.compareAnswers(resultRows, expectedRows, sort = true)
+      // FIXME: This is too hacky
       // A list of query ids whose corresponding query results can differ because of order.
       val unorderedQueries = Seq("q65")
       if (error.isEmpty || unorderedQueries.contains(id)) {

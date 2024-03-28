@@ -60,6 +60,12 @@ case class LimitTransformer(child: SparkPlan, offset: Long, count: Long)
       case c: TransformSupport => c.doTransform(context).root
       case _ => null
     }
+    // If ACBO is enabled and is capable to move limit operators up and down among the plan nodes,
+    // It might become possible that an independent limit gets to be transited to a order-by-limit.
+    // In that case, we should tuning on the validation procedure. Either to move limit validation
+    // To ACBO, or re-validate it in ACBO, or add properties or rules in ACBO to avoid such moves.
+    //
+    // It's not a issue for now since ACBO doesn't do such moves.
     val relNode = getRelNode(context, operatorId, offset, count, child.output, input, true)
 
     doNativeValidation(context, relNode)

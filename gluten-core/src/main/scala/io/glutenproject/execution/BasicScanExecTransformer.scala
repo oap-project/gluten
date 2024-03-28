@@ -28,6 +28,7 @@ import io.glutenproject.substrait.rel.LocalFilesNode.ReadFileFormat
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.expressions._
+import org.apache.spark.sql.connector.read.InputPartition
 import org.apache.spark.sql.hive.HiveTableScanExecTransformer
 import org.apache.spark.sql.types.{BooleanType, StringType, StructField, StructType}
 import org.apache.spark.sql.vectorized.ColumnarBatch
@@ -65,7 +66,11 @@ trait BasicScanExecTransformer extends LeafTransformSupport with BaseDataSource 
 
   /** Returns the split infos that will be processed by the underlying native engine. */
   def getSplitInfos: Seq[SplitInfo] = {
-    getPartitions.map(
+    getSplitInfosFromPartitions(getPartitions)
+  }
+
+  def getSplitInfosFromPartitions(partitions: Seq[InputPartition]): Seq[SplitInfo] = {
+    partitions.map(
       BackendsApiManager.getIteratorApiInstance
         .genSplitInfo(_, getPartitionSchema, fileFormat, getMetadataColumns.map(_.name)))
   }

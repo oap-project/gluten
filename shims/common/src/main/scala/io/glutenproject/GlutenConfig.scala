@@ -41,6 +41,8 @@ class GlutenConfig(conf: SQLConf) extends Logging {
 
   def enableGluten: Boolean = conf.getConf(GLUTEN_ENABLED)
 
+  def enableAdvancedCbo: Boolean = conf.getConf(ADVANCED_CBO_ENABLED)
+
   // FIXME the option currently controls both JVM and native validation against a Substrait plan.
   def enableNativeValidation: Boolean = conf.getConf(NATIVE_VALIDATION_ENABLED)
 
@@ -664,6 +666,19 @@ object GlutenConfig {
         " Recommend to enable/disable Gluten through the setting for spark.plugins.")
       .booleanConf
       .createWithDefault(GLUTEN_ENABLE_BY_DEFAULT)
+
+  val ADVANCED_CBO_ENABLED =
+    buildConf("spark.gluten.sql.advanced.cbo.enabled")
+      .doc(
+        "Experimental: Enables Gluten's advanced CBO features during physical planning. " +
+          "E.g, More efficient fallback strategy, etc. The option can be turned on and off " +
+          "individually despite vanilla Spark's CBO settings. Note, Gluten's query optimizer " +
+          "may still adopt a subset of its advanced CBO capabilities even this option " +
+          "is off. Enabling it would cause Gluten consider using CBO for optimization " +
+          "more aggressively. Note, this feature is still in development and may not bring " +
+          "performance profits.")
+      .booleanConf
+      .createWithDefault(false)
 
   // FIXME the option currently controls both JVM and native validation against a Substrait plan.
   val NATIVE_VALIDATION_ENABLED =

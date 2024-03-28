@@ -43,6 +43,7 @@ public class TpcMixin {
 
   @CommandLine.Option(names = {"--log-level"}, description = "Set log level: 0 for DEBUG, 1 for INFO, 2 for WARN", defaultValue = "2")
   private int logLevel;
+
   @CommandLine.Option(names = {"--error-on-memleak"}, description = "Fail the test when memory leak is detected by Spark's memory manager", defaultValue = "false")
   private boolean errorOnMemLeak;
 
@@ -152,7 +153,7 @@ public class TpcMixin {
     return 0;
   }
 
-  private <K,V> Map<K, V> mergeMapSafe(Map<K, V> conf, Map<? extends K, ? extends V> other) {
+  private <K, V> Map<K, V> mergeMapSafe(Map<K, V> conf, Map<? extends K, ? extends V> other) {
     other.keySet().forEach(k -> {
       if (conf.containsKey(k)) {
         throw new IllegalArgumentException("Key already exists in conf: " + k);

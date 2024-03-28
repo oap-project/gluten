@@ -34,6 +34,7 @@
     <module>gluten-ui</module>
     <module>package</module>
     <module>shims</module>
+    <module>gluten-cbo</module>
   </modules>
 
   <properties>

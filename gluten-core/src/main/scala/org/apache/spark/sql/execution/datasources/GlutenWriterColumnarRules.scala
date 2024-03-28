@@ -156,7 +156,8 @@ object GlutenWriterColumnarRules {
           if write.getClass.getName == NOOP_WRITE &&
             BackendsApiManager.getSettings.enableNativeWriteFiles() =>
         injectFakeRowAdaptor(rc, rc.child)
-      case rc @ DataWritingCommandExec(cmd, child) =>
+      case rc @ DataWritingCommandExec(cmd, child)
+          if BackendsApiManager.getSettings.supportNativeWrite(child.output.toStructType.fields) =>
         val format = getNativeFormat(cmd)
         session.sparkContext.setLocalProperty(
           "staticPartitionWriteOnly",

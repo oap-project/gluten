@@ -203,11 +203,11 @@ Currently there are several ways to asscess S3 in Spark. Please refer [Velox S3]
 
 ## Celeborn support
 
-Gluten with velox backend supports [Celeborn](https://github.com/apache/incubator-celeborn) as remote shuffle service. Currently, the supported Celeborn versions are `0.3.x` and `0.4.0`.
+Gluten with velox backend supports [Celeborn](https://github.com/apache/celeborn) as remote shuffle service. Currently, the supported Celeborn versions are `0.3.x` and `0.4.0`.
 
 Below introduction is used to enable this feature
 
-First refer to this URL(https://github.com/apache/incubator-celeborn) to setup a celeborn cluster.
+First refer to this URL(https://github.com/apache/celeborn) to setup a celeborn cluster.
 
 When compiling the Gluten Java module, it's required to enable `rss` profile, as follows:
 
@@ -217,7 +217,7 @@ mvn clean package -Pbackends-velox -Pspark-3.3 -Prss -DskipTests
 
 Then add the Gluten and Spark Celeborn Client packages to your Spark application's classpath(usually add them into `$SPARK_HOME/jars`).
 
-- Celeborn: celeborn-client-spark-3-shaded_2.12-0.3.0-incubating.jar
+- Celeborn: celeborn-client-spark-3-shaded_2.12-[celebornVersion].jar
 - Gluten: gluten-velox-bundle-spark3.x_2.12-xx_xx_xx-SNAPSHOT.jar, gluten-thirdparty-lib-xx-xx.jar
 
 Currently to use Gluten following configurations are required in `spark-defaults.conf`
@@ -248,7 +248,7 @@ spark.sql.adaptive.localShuffleReader.enabled false
 spark.celeborn.storage.hdfs.dir hdfs://<namenode>/celeborn
 
 # If you want to use dynamic resource allocation,
-# please refer to this URL (https://github.com/apache/incubator-celeborn/tree/main/assets/spark-patch) to apply the patch into your own Spark.
+# please refer to this URL (https://github.com/apache/celeborn/tree/main/assets/spark-patch) to apply the patch into your own Spark.
 spark.dynamicAllocation.enabled false
 ```
 

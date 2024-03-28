@@ -248,9 +248,9 @@ object ExpressionMappings {
     Sig[SparkPartitionID](SPARK_PARTITION_ID),
     // Decimal
     Sig[UnscaledValue](UNSCALED_VALUE)
-  ) ++ SparkShimLoader.getSparkShims.expressionMappings
+  ) ++ SparkShimLoader.getSparkShims.scalarExpressionMappings
 
-  /** Mapping Spark aggregation expression to Substrait function name */
+  /** Mapping Spark aggregate expression to Substrait function name */
   private val AGGREGATE_SIGS: Seq[Sig] = Seq(
     Sig[Sum](SUM),
     Sig[Average](AVG),
@@ -275,7 +275,7 @@ object ExpressionMappings {
     Sig[Last](LAST),
     Sig[First](FIRST),
     Sig[Skewness](SKEWNESS)
-  )
+  ) ++ SparkShimLoader.getSparkShims.aggregateExpressionMappings
 
   /** Mapping Spark window expression to Substrait function name */
   private val WINDOW_SIGS: Seq[Sig] = Seq(

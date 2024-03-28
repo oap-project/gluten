@@ -80,7 +80,9 @@ case class ColumnarBroadcastExchangeExec(mode: BroadcastMode, child: SparkPlan)
         val broadcasted = GlutenTimeMetric.millis(longMetric("broadcastTime")) {
           _ =>
             // Broadcast the relation
-            sparkContext.broadcast(relation.asInstanceOf[Any])
+            SparkShimLoader.getSparkShims.broadcastInternal(
+              sparkContext,
+              relation.asInstanceOf[Any])
         }
 
         // Update driver metrics

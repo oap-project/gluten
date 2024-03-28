@@ -20,6 +20,7 @@ import io.glutenproject.{GlutenConfig, GlutenSparkExtensionsInjector}
 import io.glutenproject.backendsapi.BackendsApiManager
 import io.glutenproject.extension.columnar._
 import io.glutenproject.extension.columnar.MiscColumnarRules.{RemoveGlutenTableCacheColumnarToRow, RemoveTopmostColumnarToRow, TransformPostOverrides, TransformPreOverrides}
+import io.glutenproject.extension.columnar.transform._
 import io.glutenproject.metrics.GlutenTimeMetric
 import io.glutenproject.utils.{LogLevelUtil, PhysicalPlanSelector, PlanUtil}
 
@@ -223,6 +224,19 @@ case class ColumnarOverrideRules(session: SparkSession)
    * the plan will be breakdown and decided to be fallen back or not.
    */
   private def transformRules(outputsColumnar: Boolean): List[SparkSession => Rule[SparkPlan]] = {
+
+    def maybeCbo(outputsColumnar: Boolean): List[SparkSession => Rule[SparkPlan]] = {
+      if (GlutenConfig.getConf.enableAdvancedCbo) {
+        return List(
+          (_: SparkSession) => TransformPreOverrides(List(ImplementFilter()), List.empty),
+          (session: SparkSession) => EnumeratedTransform(session, outputsColumnar),
+          (_: SparkSession) => RemoveTransitions,
+          (_: SparkSession) => TransformPreOverrides(List.empty, List(ImplementAggregate()))
+        )
+      }
+      List((_: SparkSession) => TransformPreOverrides())
+    }
+
     List(
       (_: SparkSession) => RemoveTransitions,
       (spark: SparkSession) => FallbackOnANSIMode(spark),
@@ -235,23 +249,18 @@ case class ColumnarOverrideRules(session: SparkSession)
         (spark: SparkSession) => MergeTwoPhasesHashBaseAggregate(spark),
         (_: SparkSession) => rewriteSparkPlanRule(),
         (_: SparkSession) => AddTransformHintRule(),
-        (_: SparkSession) => FallbackBloomFilterAggIfNeeded(),
-        // We are planning to merge rule "TransformPreOverrides" and "InsertTransitions"
-        // together. So temporarily have both `InsertTransitions` and `RemoveTransitions`
-        // set in there to make sure the rule list (after insert transitions) is compatible
-        // with input plans that have C2Rs/R2Cs inserted.
-        (_: SparkSession) => TransformPreOverrides(),
-        (_: SparkSession) => InsertTransitions(outputsColumnar),
-        (_: SparkSession) => RemoveTransitions,
+        (_: SparkSession) => FallbackBloomFilterAggIfNeeded()
+      ) :::
+      maybeCbo(outputsColumnar) :::
+      List(
         (_: SparkSession) => RemoveNativeWriteFilesSortAndProject(),
         (spark: SparkSession) => RewriteTransformer(spark),
         (_: SparkSession) => EnsureLocalSortRequirements,
         (_: SparkSession) => CollapseProjectExecTransformer
       ) :::
       BackendsApiManager.getSparkPlanExecApiInstance.genExtendedColumnarTransformRules() :::
-      SparkRuleUtil.extendedColumnarRules(
-        session,
-        GlutenConfig.getConf.extendedColumnarTransformRules) :::
+      SparkRuleUtil
+        .extendedColumnarRules(session, GlutenConfig.getConf.extendedColumnarTransformRules) :::
       List((_: SparkSession) => InsertTransitions(outputsColumnar))
   }
 

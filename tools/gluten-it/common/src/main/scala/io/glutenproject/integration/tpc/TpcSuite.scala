@@ -179,3 +179,36 @@ abstract class TpcSuite(
   private[tpc] def desc(): String
 
 }
+
+object TpcSuite {
+  implicit class TpcSuiteImplicits(suite: TpcSuite) {
+    def selectQueryIds(queryIds: Array[String], excludedQueryIds: Array[String]): Array[String] = {
+      if (queryIds.nonEmpty && excludedQueryIds.nonEmpty) {
+        throw new IllegalArgumentException(
+          "Should not specify queries and excluded queries at the same time")
+      }
+      val all = suite.allQueryIds()
+      val allSet = all.toSet
+      if (queryIds.nonEmpty) {
+        assert(
+          queryIds.forall(id => allSet.contains(id)),
+          "Invalid query ID: " + queryIds.collectFirst {
+            case id if !allSet.contains(id)=>
+              id
+          }.get)
+        return queryIds
+      }
+      if (excludedQueryIds.nonEmpty) {
+        assert(
+          excludedQueryIds.forall(id => allSet.contains(id)),
+          "Invalid query ID to exclude: " + excludedQueryIds.collectFirst {
+            case id if !allSet.contains(id)=>
+              id
+          }.get)
+        val excludedSet = excludedQueryIds.toSet
+        return all.filterNot(excludedSet.contains)
+      }
+      all
+    }
+  }
+}

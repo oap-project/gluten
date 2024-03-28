@@ -45,39 +45,7 @@ trait GlutenSQLTestsBaseTrait extends SharedSparkSession with GlutenTestsBaseTra
   }
 
   override def sparkConf: SparkConf = {
-    // Native SQL configs
-    val conf = super.sparkConf
-      .setAppName("Gluten-UT")
-      .set("spark.driver.memory", "1G")
-      .set("spark.sql.adaptive.enabled", "true")
-      .set("spark.sql.shuffle.partitions", "1")
-      .set("spark.sql.files.maxPartitionBytes", "134217728")
-      .set("spark.memory.offHeap.enabled", "true")
-      .set("spark.memory.offHeap.size", "1024MB")
-      .set("spark.plugins", "io.glutenproject.GlutenPlugin")
-      .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
-      .set("spark.sql.warehouse.dir", warehouse)
-      .set("spark.ui.enabled", "false")
-      .set("spark.gluten.ui.enabled", "false")
-    // Avoid static evaluation by spark catalyst. But there are some UT issues
-    // coming from spark, e.g., expecting SparkException is thrown, but the wrapped
-    // exception is thrown.
-    // .set("spark.sql.optimizer.excludedRules", ConstantFolding.ruleName + "," +
-    //     NullPropagation.ruleName)
-
-    if (BackendTestUtils.isCHBackendLoaded()) {
-      conf
-        .set("spark.io.compression.codec", "LZ4")
-        .set("spark.gluten.sql.columnar.backend.ch.worker.id", "1")
-        .set("spark.gluten.sql.enable.native.validation", "false")
-        .set(GlutenConfig.GLUTEN_LIB_PATH, SystemParameters.getClickHouseLibPath)
-        .set("spark.sql.files.openCostInBytes", "134217728")
-        .set("spark.unsafe.exceptionOnMemoryLeak", "true")
-    } else {
-      conf.set("spark.unsafe.exceptionOnMemoryLeak", "true")
-    }
-
-    conf
+    GlutenSQLTestsBaseTrait.nativeSparkConf(super.sparkConf, warehouse)
   }
 
   /**
@@ -123,6 +91,42 @@ trait GlutenSQLTestsBaseTrait extends SharedSparkSession with GlutenTestsBaseTra
         getChildrenPlan(Seq(exec.executedPlan))
       case plan =>
         getChildrenPlan(Seq(plan))
+    }
+  }
+}
+
+object GlutenSQLTestsBaseTrait {
+  def nativeSparkConf(origin: SparkConf, warehouse: String): SparkConf = {
+    // Native SQL configs
+    val conf = origin
+      .setAppName("Gluten-UT")
+      .set("spark.driver.memory", "1G")
+      .set("spark.sql.adaptive.enabled", "true")
+      .set("spark.sql.shuffle.partitions", "1")
+      .set("spark.sql.files.maxPartitionBytes", "134217728")
+      .set("spark.memory.offHeap.enabled", "true")
+      .set("spark.memory.offHeap.size", "1024MB")
+      .set("spark.plugins", "io.glutenproject.GlutenPlugin")
+      .set("spark.shuffle.manager", "org.apache.spark.shuffle.sort.ColumnarShuffleManager")
+      .set("spark.sql.warehouse.dir", warehouse)
+      .set("spark.ui.enabled", "false")
+      .set("spark.gluten.ui.enabled", "false")
+    // Avoid static evaluation by spark catalyst. But there are some UT issues
+    // coming from spark, e.g., expecting SparkException is thrown, but the wrapped
+    // exception is thrown.
+    // .set("spark.sql.optimizer.excludedRules", ConstantFolding.ruleName + "," +
+    //     NullPropagation.ruleName)
+
+    if (BackendTestUtils.isCHBackendLoaded()) {
+      conf
+        .set("spark.io.compression.codec", "LZ4")
+        .set("spark.gluten.sql.columnar.backend.ch.worker.id", "1")
+        .set("spark.gluten.sql.enable.native.validation", "false")
+        .set(GlutenConfig.GLUTEN_LIB_PATH, SystemParameters.getClickHouseLibPath)
+        .set("spark.sql.files.openCostInBytes", "134217728")
+        .set("spark.unsafe.exceptionOnMemoryLeak", "true")
+    } else {
+      conf.set("spark.unsafe.exceptionOnMemoryLeak", "true")
     }
   }
 }

@@ -51,6 +51,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.glutenproject</groupId>
+      <artifactId>gluten-cbo-common</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_${scala.binary.version}</artifactId>
       <scope>provided</scope>

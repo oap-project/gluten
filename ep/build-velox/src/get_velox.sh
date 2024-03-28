@@ -17,7 +17,7 @@
 set -exu
 
 VELOX_REPO=https://github.com/oap-project/velox.git
-VELOX_BRANCH=2024_03_26
+VELOX_BRANCH=2024_03_27
 VELOX_HOME=""
 
 #Set on run gluten on HDFS
@@ -83,8 +83,6 @@ function process_setup_ubuntu {
 
   # No need to re-install git.
   sed -i '/git \\/d' scripts/setup-ubuntu.sh
-  # need set BUILD_SHARED_LIBS flag for thrift
-  sed -i  "/facebook\/fbthrift/{n;s/cmake_install -DBUILD_TESTS=OFF/cmake_install -DBUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF/;}" scripts/setup-ubuntu.sh
   # Do not install libunwind which can cause interruption when catching native exception.
   sed -i 's/${SUDO} apt install -y libunwind-dev//' scripts/setup-ubuntu.sh
   sed -i '/ccache/a\  *thrift* \\' scripts/setup-ubuntu.sh
@@ -317,8 +315,6 @@ function setup_macos {
   fi
 
   sed -i '' $'/^  run_and_time install_double_conversion/a\\\n  run_and_time install_folly\\\n' scripts/setup-macos.sh
-  # need set BUILD_SHARED_LIBS flag for thrift
-  sed -i '' "/facebook\/fbthrift/{n;s/cmake_install -DBUILD_TESTS=OFF/cmake_install -DBUILD_TESTS=OFF -DBUILD_SHARED_LIBS=OFF/;}" scripts/setup-macos.sh
 }
 
 if [ $OS == 'Linux' ]; then

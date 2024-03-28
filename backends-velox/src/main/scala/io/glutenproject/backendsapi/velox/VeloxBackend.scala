@@ -255,6 +255,17 @@ object BackendSettings extends BackendSettingsApi {
     }
   }
 
+  override def supportNativeWrite(fields: Array[StructField]): Boolean = {
+    fields.map {
+      field =>
+        field.dataType match {
+          case _: TimestampType | _: StructType | _: ArrayType | _: MapType => return false
+          case _ =>
+        }
+    }
+    true
+  }
+
   override def supportNativeMetadataColumns(): Boolean = true
 
   override def supportExpandExec(): Boolean = true

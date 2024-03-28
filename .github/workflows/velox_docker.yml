@@ -80,8 +80,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["ubuntu:20.04", "ubuntu:22.04"]
-        spark: ["spark-3.2", "spark-3.3", "spark-3.4", "spark-3.5"]
+        os: [ "ubuntu:20.04", "ubuntu:22.04" ]
+        spark: [ "spark-3.2", "spark-3.3", "spark-3.4", "spark-3.5" ]
         java: [ "java-8", "java-17" ]
         # Spark supports JDK17 since 3.3 and later, see https://issues.apache.org/jira/browse/SPARK-33772
         exclude:
@@ -115,9 +115,9 @@ jobs:
           cd $GITHUB_WORKSPACE/
           export JAVA_HOME=/usr/lib/jvm/${{ matrix.java }}-openjdk-amd64
           echo "JAVA_HOME: $JAVA_HOME"
-          mvn clean install -P${{ matrix.spark }} -P${{ matrix.java }} -Pbackends-velox -DskipTests
+          mvn -ntp clean install -P${{ matrix.spark }} -P${{ matrix.java }} -Pbackends-velox -DskipTests
           cd $GITHUB_WORKSPACE/tools/gluten-it
-          mvn clean install -P${{ matrix.spark }} -P${{ matrix.java }} \
+          mvn -ntp clean install -P${{ matrix.spark }} -P${{ matrix.java }} \
           && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
             --local --preset=velox --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
           && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
@@ -128,9 +128,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ["centos:7", "centos:8"]
-        spark: ["spark-3.2", "spark-3.3", "spark-3.4", "spark-3.5"]
-        java: ["java-8", "java-17"]
+        os: [ "centos:7", "centos:8" ]
+        spark: [ "spark-3.2", "spark-3.3", "spark-3.4", "spark-3.5" ]
+        java: [ "java-8", "java-17" ]
         # Spark supports JDK17 since 3.3 and later, see https://issues.apache.org/jira/browse/SPARK-33772
         exclude:
           - spark: spark-3.2
@@ -165,24 +165,40 @@ jobs:
           wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
           tar -xvf apache-maven-3.8.8-bin.tar.gz
           mv apache-maven-3.8.8 /usr/lib/maven
-      - name: Build and run TPCH/DS
+      - name: Set environment variables
         run: |
-          cd $GITHUB_WORKSPACE/
-          export MAVEN_HOME=/usr/lib/maven
-          export PATH=${PATH}:${MAVEN_HOME}/bin
+          echo "MAVEN_HOME=/usr/lib/maven" >> $GITHUB_ENV
+          echo "PATH=${PATH}:/usr/lib/maven/bin" >> $GITHUB_ENV
           if [ "${{ matrix.java }}" = "java-17" ]; then
-            export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+            echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk" >> $GITHUB_ENV
           else
-            export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+            echo "JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk" >> $GITHUB_ENV
           fi
+      - name: Build gluten-it
+        run: |
           echo "JAVA_HOME: $JAVA_HOME"
-          mvn clean install -P${{ matrix.spark }} -P${{ matrix.java }} -Pbackends-velox -DskipTests
-          cd $GITHUB_WORKSPACE/tools/gluten-it 
-          mvn clean install -P${{ matrix.spark }} -P${{ matrix.java }} \
-          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+          cd $GITHUB_WORKSPACE/
+          mvn -ntp clean install -P${{ matrix.spark }} -P${{ matrix.java }} -Pbackends-velox -DskipTests
+          cd $GITHUB_WORKSPACE/tools/gluten-it
+          mvn -ntp clean install -P${{ matrix.spark }} -P${{ matrix.java }}
+      - name: Run TPC-H / TPC-DS
+        run: |
+          echo "JAVA_HOME: $JAVA_HOME"
+          cd $GITHUB_WORKSPACE/tools/gluten-it
+          GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
             --local --preset=velox --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
           && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
             --local --preset=velox --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1
+      - name: Run TPC-H / TPC-DS with ACBO
+        run: |
+          echo "JAVA_HOME: $JAVA_HOME"
+          cd $GITHUB_WORKSPACE/tools/gluten-it
+          GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
+            --extra-conf=spark.gluten.sql.advanced.cbo.enabled=true \
+          && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
+            --extra-conf=spark.gluten.sql.advanced.cbo.enabled=true 
 
   # run-tpc-test-centos8-oom-randomkill:
   #   needs: build-native-lib
@@ -214,13 +230,13 @@ jobs:
   #         cd $GITHUB_WORKSPACE/ 
   #         export MAVEN_HOME=/usr/lib/maven
   #         export PATH=${PATH}:${MAVEN_HOME}/bin
-  #         mvn clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
+  #         mvn -ntp clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
   #     - name: TPC-DS SF30.0 Parquet local spark3.2 Q67/Q95 low memory, memory isolation off
   #       run: |
   #         export MAVEN_HOME=/usr/lib/maven
   #         export PATH=${PATH}:${MAVEN_HOME}/bin
   #         cd tools/gluten-it && \
-  #         mvn clean install -Pspark-3.2 \
+  #         mvn -ntp clean install -Pspark-3.2 \
   #         && GLUTEN_IT_JVM_ARGS=-Xmx50G sbin/gluten-it.sh parameterized \
   #           --local --preset=velox --benchmark-type=ds --error-on-memleak --queries=q67,q95 -s=30.0 --threads=12 --shuffle-partitions=72 --iterations=1 \
   #           --skip-data-gen -m=OffHeapExecutionMemory \
@@ -234,7 +250,7 @@ jobs:
   #         export MAVEN_HOME=/usr/lib/maven
   #         export PATH=${PATH}:${MAVEN_HOME}/bin
   #         cd tools/gluten-it && \
-  #         mvn clean install -Pspark-3.2 \
+  #         mvn -ntp clean install -Pspark-3.2 \
   #         && GLUTEN_IT_JVM_ARGS=-Xmx50G sbin/gluten-it.sh parameterized \
   #           --local --preset=velox --benchmark-type=ds --error-on-memleak --queries=q67,q95 -s=30.0 --threads=12 --shuffle-partitions=72 --iterations=1 \
   #           --skip-data-gen -m=OffHeapExecutionMemory \
@@ -296,7 +312,7 @@ jobs:
   #         cd $GITHUB_WORKSPACE/ 
   #         export MAVEN_HOME=/usr/lib/maven
   #         export PATH=${PATH}:${MAVEN_HOME}/bin
-  #         mvn clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
+  #         mvn -ntp clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
   #     - name: TPC-H SF1.0 && TPC-DS SF1.0 Parquet local spark3.2 with Celeborn 0.4.0
   #       run: |
   #         export MAVEN_HOME=/usr/lib/maven
@@ -308,7 +324,7 @@ jobs:
   #         echo -e "CELEBORN_MASTER_MEMORY=4g\nCELEBORN_WORKER_MEMORY=4g\nCELEBORN_WORKER_OFFHEAP_MEMORY=8g" > ./conf/celeborn-env.sh && \
   #         echo -e "celeborn.worker.commitFiles.threads 128\nceleborn.worker.sortPartition.threads 64" > ./conf/celeborn-defaults.conf \
   #         && bash ./sbin/start-master.sh && bash ./sbin/start-worker.sh && \
-  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss,celeborn-0.4 \
+  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn -ntp clean install -Pspark-3.2,rss,celeborn-0.4 \
   #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
   #           --local --preset=velox-with-celeborn --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
   #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
@@ -326,7 +342,7 @@ jobs:
   #         echo -e "CELEBORN_MASTER_MEMORY=4g\nCELEBORN_WORKER_MEMORY=4g\nCELEBORN_WORKER_OFFHEAP_MEMORY=8g" > ./conf/celeborn-env.sh && \
   #         echo -e "celeborn.worker.commitFiles.threads 128\nceleborn.worker.sortPartition.threads 64" > ./conf/celeborn-defaults.conf \
   #         && bash ./sbin/start-master.sh && bash ./sbin/start-worker.sh && \
-  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss \
+  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn -ntp clean install -Pspark-3.2,rss \
   #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
   #           --local --preset=velox-with-celeborn --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
   #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
@@ -375,8 +391,8 @@ jobs:
           export SPARK_SCALA_VERSION=2.12
           export MAVEN_HOME=/usr/lib/maven 
           export PATH=${PATH}:${MAVEN_HOME}/bin
-          mvn clean install -Pspark-3.2 -Pspark-ut -Pbackends-velox -Prss -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark32/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
-          mvn test -Pspark-3.2 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
+          mvn -ntp clean install -Pspark-3.2 -Pspark-ut -Pbackends-velox -Prss -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark32/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
+          mvn -ntp test -Pspark-3.2 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
 
   run-spark-test-spark32-slow:
     runs-on: ubuntu-20.04
@@ -412,7 +428,7 @@ jobs:
           cd $GITHUB_WORKSPACE/ && \
           export MAVEN_HOME=/usr/lib/maven 
           export PATH=${PATH}:${MAVEN_HOME}/bin
-          mvn clean install -Pspark-3.2 -Pspark-ut -Pbackends-velox -Prss -Piceberg -Pdelta -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark32/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
+          mvn -ntp clean install -Pspark-3.2 -Pspark-ut -Pbackends-velox -Prss -Piceberg -Pdelta -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark32/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
 
   run-spark-test-spark33:
     runs-on: ubuntu-20.04
@@ -455,8 +471,8 @@ jobs:
           export SPARK_SCALA_VERSION=2.12 && \
           export MAVEN_HOME=/usr/lib/maven 
           export PATH=${PATH}:${MAVEN_HOME}/bin
-          mvn clean install -Pspark-3.3 -Pbackends-velox -Prss -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark33/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
-          mvn test -Pspark-3.3 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
+          mvn -ntp clean install -Pspark-3.3 -Pbackends-velox -Prss -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark33/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
+          mvn -ntp test -Pspark-3.3 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
 
   run-spark-test-spark33-slow:
     runs-on: ubuntu-20.04
@@ -492,7 +508,7 @@ jobs:
           cd $GITHUB_WORKSPACE/ && \
           export MAVEN_HOME=/usr/lib/maven 
           export PATH=${PATH}:${MAVEN_HOME}/bin
-          mvn clean install -Pspark-3.3 -Pbackends-velox -Prss -Piceberg -Pdelta -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark33/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
+          mvn -ntp clean install -Pspark-3.3 -Pbackends-velox -Prss -Piceberg -Pdelta -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark33/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
 
 
 
@@ -537,8 +553,8 @@ jobs:
           export SPARK_SCALA_VERSION=2.12 && \
           export MAVEN_HOME=/usr/lib/maven 
           export PATH=${PATH}:${MAVEN_HOME}/bin
-          mvn clean install -Pspark-3.4 -Pbackends-velox -Prss  -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark34/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
-          mvn test -Pspark-3.4 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
+          mvn -ntp clean install -Pspark-3.4 -Pbackends-velox -Prss  -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark34/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
+          mvn -ntp test -Pspark-3.4 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
 
 
   run-spark-test-spark34-slow:
@@ -575,4 +591,4 @@ jobs:
           cd $GITHUB_WORKSPACE/
           export MAVEN_HOME=/usr/lib/maven
           export PATH=${PATH}:${MAVEN_HOME}/bin
-          mvn clean install -Pspark-3.4 -Pbackends-velox -Prss -Piceberg -Pdelta -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark34/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
+          mvn -ntp clean install -Pspark-3.4 -Pbackends-velox -Prss -Piceberg -Pdelta -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark34/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest

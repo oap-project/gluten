@@ -34,6 +34,7 @@ import org.apache.spark.softaffinity.SoftAffinity
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.expressions.{Attribute, SortOrder}
 import org.apache.spark.sql.catalyst.plans.physical.Partitioning
+import org.apache.spark.sql.connector.read.InputPartition
 import org.apache.spark.sql.execution._
 import org.apache.spark.sql.execution.datasources.FilePartition
 import org.apache.spark.sql.execution.metric.SQLMetric
@@ -267,7 +268,9 @@ case class WholeStageTransformer(child: SparkPlan, materializeInput: Boolean = f
        * care of SCAN there won't be any other RDD for SCAN. As a result, genFirstStageIterator
        * rather than genFinalStageIterator will be invoked
        */
-      val allScanSplitInfos = getSplitInfosFromScanTransformer(basicScanExecTransformers)
+      val allScanPartitions = basicScanExecTransformers.map(_.getPartitions)
+      val allScanSplitInfos =
+        getSplitInfosFromPartitions(basicScanExecTransformers, allScanPartitions)
 
       val (wsCtx, inputPartitions) = GlutenTimeMetric.withMillisTime {
         val wsCtx = doWholeStageTransform()
@@ -297,7 +300,6 @@ case class WholeStageTransformer(child: SparkPlan, materializeInput: Boolean = f
           wsCtx.substraitContext.registeredAggregationParams
         )
       )
-      val allScanPartitions = basicScanExecTransformers.map(_.getPartitions)
       (0 until allScanPartitions.head.size).foreach(
         i => {
           val currentPartitions = allScanPartitions.map(_(i))
@@ -361,8 +363,9 @@ case class WholeStageTransformer(child: SparkPlan, materializeInput: Boolean = f
   override protected def withNewChildInternal(newChild: SparkPlan): WholeStageTransformer =
     copy(child = newChild, materializeInput = materializeInput)(transformStageId)
 
-  private def getSplitInfosFromScanTransformer(
-      basicScanExecTransformers: Seq[BasicScanExecTransformer]): Seq[Seq[SplitInfo]] = {
+  private def getSplitInfosFromPartitions(
+      basicScanExecTransformers: Seq[BasicScanExecTransformer],
+      allScanPartitions: Seq[Seq[InputPartition]]): Seq[Seq[SplitInfo]] = {
     // If these are two scan transformers, they must have same partitions,
     // otherwise, exchange will be inserted. We should combine the two scan
     // transformers' partitions with same index, and set them together in
@@ -378,7 +381,10 @@ case class WholeStageTransformer(child: SparkPlan, materializeInput: Boolean = f
     //  p14  |  p24
     //      ...
     //  p1n  |  p2n    => substraitContext.setSplitInfo([p1n, p2n])
-    val allScanSplitInfos = basicScanExecTransformers.map(_.getSplitInfos)
+    val allScanSplitInfos =
+      allScanPartitions.zip(basicScanExecTransformers).map {
+        case (partition, transformer) => transformer.getSplitInfosFromPartitions(partition)
+      }
     val partitionLength = allScanSplitInfos.head.size
     if (allScanSplitInfos.exists(_.size != partitionLength)) {
       throw new GlutenException(
