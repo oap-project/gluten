@@ -39,7 +39,9 @@ class MergeTreeRelParser : public RelParser
 public:
     static std::shared_ptr<CustomStorageMergeTree> parseStorage(
         const substrait::ReadRel::ExtensionTable & extension_table,
-        ContextMutablePtr context);
+        ContextMutablePtr context,
+        UUID uuid = UUIDHelpers::Nil
+        );
 
     explicit MergeTreeRelParser(
         SerializedPlanParser * plan_paser_, ContextPtr & context_, QueryContext & query_context_, ContextMutablePtr & global_context_)

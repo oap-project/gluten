@@ -29,6 +29,14 @@ public class CHDatasourceJniWrapper {
       String partition_dir,
       String bucket_dir);
 
+  public native String nativeMergeMTParts(
+      byte[] plan,
+      byte[] splitInfo,
+      String uuid,
+      String taskId,
+      String partition_dir,
+      String bucket_dir);
+
   public native void write(long instanceId, long blockAddress);
 
   public native void writeToMergeTree(long instanceId, long blockAddress);

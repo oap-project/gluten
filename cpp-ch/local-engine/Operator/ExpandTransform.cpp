@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 #include <memory>
+
+#include "Columns/ColumnSparse.h"
 #include <Columns/ColumnNullable.h>
 #include <Columns/ColumnsNumber.h>
 #include <Columns/IColumn.h>

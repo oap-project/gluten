@@ -89,6 +89,7 @@ CustomStorageMergeTree::CustomStorageMergeTree(
           attach ? LoadingStrictnessLevel::ATTACH : LoadingStrictnessLevel::FORCE_RESTORE)
     , writer(*this)
     , reader(*this)
+    , merger_mutator(*this)
 {
     relative_data_path = relative_data_path_;
     format_version = 1;
@@ -107,6 +108,7 @@ DataPartsVector CustomStorageMergeTree::loadDataPartsWithNames(std::unordered_se
         auto res = loadDataPart(part_info, name, disk, MergeTreeDataPartState::Active);
         data_parts.emplace_back(res.part);
     }
+    calculateColumnAndSecondaryIndexSizesImpl(); // without it "test mergetree optimize partitioned by one low card column" will log ERROR
     return data_parts;
 }
 

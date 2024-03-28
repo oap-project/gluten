@@ -48,43 +48,6 @@ import java.util.{Date, UUID}
 object MergeTreeFileFormatWriter extends Logging {
 
   // scalastyle:off argcount
-  def write(
-      sparkSession: SparkSession,
-      plan: SparkPlan,
-      fileFormat: FileFormat,
-      committer: FileCommitProtocol,
-      outputSpec: OutputSpec,
-      hadoopConf: Configuration,
-      orderByKeyOption: Option[Seq[String]],
-      lowCardKeyOption: Option[Seq[String]],
-      minmaxIndexKeyOption: Option[Seq[String]],
-      bfIndexKeyOption: Option[Seq[String]],
-      setIndexKeyOption: Option[Seq[String]],
-      primaryKeyOption: Option[Seq[String]],
-      partitionColumns: Seq[Attribute],
-      bucketSpec: Option[BucketSpec],
-      statsTrackers: Seq[WriteJobStatsTracker],
-      options: Map[String, String],
-      constraints: Seq[Constraint]): Set[String] = write(
-    sparkSession = sparkSession,
-    plan = plan,
-    fileFormat = fileFormat,
-    committer = committer,
-    outputSpec = outputSpec,
-    hadoopConf = hadoopConf,
-    orderByKeyOption = orderByKeyOption,
-    lowCardKeyOption = lowCardKeyOption,
-    minmaxIndexKeyOption = minmaxIndexKeyOption,
-    bfIndexKeyOption = bfIndexKeyOption,
-    setIndexKeyOption = setIndexKeyOption,
-    primaryKeyOption = primaryKeyOption,
-    partitionColumns = partitionColumns,
-    bucketSpec = bucketSpec,
-    statsTrackers = statsTrackers,
-    options = options,
-    constraints,
-    numStaticPartitionCols = 0
-  )
 
   def write(
       sparkSession: SparkSession,

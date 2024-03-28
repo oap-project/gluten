@@ -52,6 +52,9 @@
 #include <Common/ExceptionUtils.h>
 #include <Common/JNIUtils.h>
 #include <Common/QueryContext.h>
+#include <google/protobuf/wrappers.pb.h>
+#include <Storages/StorageMergeTreeFactory.h>
+#include <Storages/Mergetree/MergeSparkMergeTreeTask.h>
 
 
 #ifdef __cplusplus
@@ -60,6 +63,7 @@ namespace DB
 namespace ErrorCodes
 {
 extern const int CANNOT_PARSE_PROTOBUF_SCHEMA;
+extern const int UNKNOWN_EXCEPTION;
 }
 }
 static DB::ColumnWithTypeAndName getColumnFromColumnVector(JNIEnv * /*env*/, jobject /*obj*/, jlong block_address, jint column_position)
@@ -1072,6 +1076,114 @@ JNIEXPORT jstring Java_org_apache_spark_sql_execution_datasources_CHDatasourceJn
     return stringTojstring(env, json_info.c_str());
     LOCAL_ENGINE_JNI_METHOD_END(env, nullptr)
 }
+
+JNIEXPORT jstring Java_org_apache_spark_sql_execution_datasources_CHDatasourceJniWrapper_nativeMergeMTParts(
+    JNIEnv * env, jobject, jbyteArray plan_, jbyteArray split_info_, jstring uuid_, jstring task_id_, jstring partition_dir_, jstring bucket_dir_)
+{
+    LOCAL_ENGINE_JNI_METHOD_START
+
+    // without this line, subsequent executeHere will throw an exception
+    auto status = std::make_shared<ThreadStatus>(true);
+
+
+    const auto uuid_str = jstring2string(env, uuid_);
+    const auto task_id = jstring2string(env, task_id_);
+    const auto partition_dir = jstring2string(env, partition_dir_);
+    const auto bucket_dir = jstring2string(env, bucket_dir_);
+
+    jsize plan_buf_size = env->GetArrayLength(plan_);
+    jbyte * plan_buf_addr = env->GetByteArrayElements(plan_, nullptr);
+    std::string plan_str;
+    plan_str.assign(reinterpret_cast<const char *>(plan_buf_addr), plan_buf_size);
+
+    jsize split_info_size = env->GetArrayLength(split_info_);
+    jbyte * split_info_addr = env->GetByteArrayElements(split_info_, nullptr);
+    std::string split_info_str;
+    split_info_str.assign(reinterpret_cast<const char *>(split_info_addr), split_info_size);
+
+    auto plan_ptr = std::make_unique<substrait::Plan>();
+    /// https://stackoverflow.com/questions/52028583/getting-error-parsing-protobuf-data
+    /// Parsing may fail when the number of recursive layers is large.
+    /// Here, set a limit large enough to avoid this problem.
+    /// Once this problem occurs, it is difficult to troubleshoot, because the pb of c++ will not provide any valid information
+    google::protobuf::io::CodedInputStream coded_in(
+        reinterpret_cast<const uint8_t *>(plan_str.data()), static_cast<int>(plan_str.size()));
+    coded_in.SetRecursionLimit(100000);
+
+    auto ok = plan_ptr->ParseFromCodedStream(&coded_in);
+    if (!ok)
+        throw DB::Exception(DB::ErrorCodes::CANNOT_PARSE_PROTOBUF_SCHEMA, "Parse substrait::Plan from string failed");
+
+    substrait::ReadRel::ExtensionTable extension_table =
+        local_engine::SerializedPlanParser::parseExtensionTable(split_info_str);
+
+    UUID uuid = UUIDHelpers::generateV4(); // each task using its own CustomStorageMergeTree, don't reuse
+    auto storage = local_engine::MergeTreeRelParser::parseStorage(
+        extension_table, local_engine::SerializedPlanParser::global_context,uuid);
+
+    google::protobuf::StringValue table;
+    table.ParseFromString(extension_table.detail().value());
+    auto merge_tree_table = local_engine::parseMergeTreeTableString(table.value());
+    DB::StorageID table_id(merge_tree_table.database, merge_tree_table.table, uuid);
+    local_engine::TempStorageFreer freer {table_id}; // to release temp CustomStorageMergeTree with RAII
+    auto storage_factory = local_engine::StorageMergeTreeFactory::instance();
+    std::vector<DB::DataPartPtr> selected_parts = storage_factory.getDataParts(table_id, merge_tree_table.getPartNames());
+
+    auto future_part = std::make_shared<DB::FutureMergedMutatedPart>();
+    future_part->uuid = DB::UUIDHelpers::generateV4();
+
+    future_part->assign(std::move(selected_parts));
+
+    future_part->name = "";
+    std::unordered_map<String, String> partition_values;
+    if(!partition_dir.empty())
+    {
+        future_part->name =  partition_dir + "/";
+        Poco::StringTokenizer partitions(partition_dir, "/");
+        for (const auto & partition : partitions)
+        {
+            Poco::StringTokenizer key_value(partition, "=");
+            chassert(key_value.count() == 2);
+            partition_values.emplace(key_value[0], key_value[1]);
+        }
+    }
+    if(!bucket_dir.empty())
+    {
+        future_part->name = future_part->name + bucket_dir + "/";
+    }
+    future_part->name = future_part->name +  uuid_str + "-merged";
+
+    auto entry = std::make_shared<DB::MergeMutateSelectedEntry>(future_part, DB::CurrentlyMergingPartsTaggerPtr{}, std::make_shared<DB::MutationCommands>());
+
+
+    // Copying a vector of columns `deduplicate by columns.
+    DB::IExecutableTask::TaskResultCallback f = [](bool) {};
+    auto task = std::make_shared<local_engine::MergeSparkMergeTreeTask>(
+        *storage, storage->getInMemoryMetadataPtr(), false,  std::vector<std::string>{}, false, entry,
+        DB::TableLockHolder{}, f);
+
+    task->setCurrentTransaction(DB::MergeTreeTransactionHolder{}, DB::MergeTreeTransactionPtr{});
+
+    executeHere(task);
+
+    std::unordered_set<std::string> to_load{future_part->name};
+    std::vector<DataPartPtr> loaded = storage->loadDataPartsWithNames(to_load);
+    std::vector<local_engine::PartInfo> res;
+    for (const MergeTreeDataPartPtr & partPtr : loaded)
+        res.emplace_back(
+            local_engine::PartInfo{partPtr->name, partPtr->getMarksCount(), partPtr->getBytesOnDisk(), partPtr->rows_count,
+                                   /*partition_value*/ partition_values,
+                                   bucket_dir});
+
+    auto json_info = local_engine::SparkMergeTreeWriter::partInfosToJson(res);
+
+    env->ReleaseByteArrayElements(plan_, plan_buf_addr, JNI_ABORT);
+    env->ReleaseByteArrayElements(split_info_, split_info_addr, JNI_ABORT);
+
+    return stringTojstring(env, json_info.c_str());
+    LOCAL_ENGINE_JNI_METHOD_END(env, nullptr)
+}
+
 
 JNIEXPORT jobject Java_org_apache_spark_sql_execution_datasources_CHDatasourceJniWrapper_splitBlockByPartitionAndBucket(
     JNIEnv * env, jclass, jlong blockAddress, jintArray partitionColIndice, jboolean hasBucket, jboolean reserve_partition_columns)

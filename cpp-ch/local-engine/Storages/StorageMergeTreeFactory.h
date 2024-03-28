@@ -27,6 +27,7 @@ class StorageMergeTreeFactory
 {
 public:
     static StorageMergeTreeFactory & instance();
+    static void freeStorage(StorageID id);
     static CustomStorageMergeTreePtr
     getStorage(StorageID id, ColumnsDescription columns, std::function<CustomStorageMergeTreePtr()> creator);
     static StorageInMemoryMetadataPtr getMetadata(StorageID id, std::function<StorageInMemoryMetadataPtr()> creator);
@@ -49,5 +50,14 @@ private:
 
     static std::unordered_map<std::string, StorageInMemoryMetadataPtr> metadata_map;
     static std::mutex metadata_map_mutex;
+};
+
+struct TempStorageFreer
+{
+    StorageID id;
+    ~TempStorageFreer()
+    {
+        StorageMergeTreeFactory::instance().freeStorage(id);
+    }
 };
 }

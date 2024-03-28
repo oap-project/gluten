@@ -36,12 +36,10 @@ import com.google.protobuf.{Any, StringValue}
 import org.apache.hadoop.fs.FileStatus
 import org.apache.hadoop.mapreduce.TaskAttemptContext
 
-import java.lang.{Long => JLong}
 import java.util.{ArrayList => JList, Map => JMap, UUID}
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-
 case class PlanWithSplitInfo(plan: Array[Byte], splitInfo: Array[Byte])
 
 class CHMergeTreeWriterInjects extends GlutenFormatWriterInjectsBase {
@@ -90,6 +88,7 @@ class CHMergeTreeWriterInjects extends GlutenFormatWriterInjectsBase {
       setIndexKeyOption,
       primaryKeyOption,
       partitionColumns,
+      Seq(),
       ConverterUtils.convertNamedStructJson(tableSchema),
       clickhouseTableConfigs,
       tableSchema.toAttributes // use table schema instead of data schema
@@ -136,6 +135,7 @@ object CHMergeTreeWriterInjects {
       setIndexKeyOption: Option[Seq[String]],
       primaryKeyOption: Option[Seq[String]],
       partitionColumns: Seq[String],
+      partList: Seq[String],
       tableSchemaJson: String,
       clickhouseTableConfigs: Map[String, String],
       output: Seq[Attribute]): PlanWithSplitInfo = {
@@ -187,9 +187,11 @@ object CHMergeTreeWriterInjects {
       bfIndexKey,
       setIndexKey,
       primaryKey,
-      new JList[String](),
-      new JList[JLong](),
-      new JList[JLong](),
+      scala.collection.JavaConverters.seqAsJavaList(partList),
+      scala.collection.JavaConverters.seqAsJavaList(
+        Seq.range(0L, partList.length).map(long2Long)
+      ), // starts and lengths is useless for write
+      scala.collection.JavaConverters.seqAsJavaList(Seq.range(0L, partList.length).map(long2Long)),
       tableSchemaJson,
       clickhouseTableConfigs.asJava,
       new JList[String]()
