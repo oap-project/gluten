@@ -58,7 +58,7 @@ jobs:
           path: ./cpp/build/releases/
           key: cache-velox-build-${{ hashFiles('./cache-key') }}
       - name: Build Gluten velox third party
-        if: ${{ steps.cache.cache-hit != 'true' }}
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           yum install sudo patch java-1.8.0-openjdk-devel -y && \
           cd $GITHUB_WORKSPACE/ep/build-velox/src && \
