@@ -42,7 +42,7 @@ object MemoTable {
   def create[T <: AnyRef](cbo: Cbo[T]): Writable[T] = ForwardMemoTable(cbo)
 
   trait Writable[T <: AnyRef] extends MemoTable[T] {
-    def newCluster(): CboClusterKey
+    def newCluster(metadata: Metadata): CboClusterKey
     def groupOf(key: CboClusterKey, propertySet: PropertySet[T]): CboGroup[T]
 
     def addToCluster(key: CboClusterKey, node: CanonicalNode[T]): Unit

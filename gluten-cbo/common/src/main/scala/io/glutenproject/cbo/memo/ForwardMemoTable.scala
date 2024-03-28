@@ -44,11 +44,11 @@ class ForwardMemoTable[T <: AnyRef] private (override val cbo: Cbo[T])
     clusterBuffer(ancestor)
   }
 
-  override def newCluster(): CboClusterKey = {
+  override def newCluster(metadata: Metadata): CboClusterKey = {
     checkBufferSizes()
-    val key = IntClusterKey(clusterBuffer.size)
+    val key = IntClusterKey(clusterBuffer.size, metadata)
     clusterKeyBuffer += key
-    clusterBuffer += MutableCboCluster(cbo)
+    clusterBuffer += MutableCboCluster(cbo, metadata)
     clusterDisjointSet.grow()
     groupLookup += mutable.Map()
     key
@@ -62,7 +62,7 @@ class ForwardMemoTable[T <: AnyRef] private (override val cbo: Cbo[T])
     }
     val gid = groupBuffer.size
     val newGroup =
-      CboGroup(cbo, IntClusterKey(ancestor), gid, propSet)
+      CboGroup(cbo, IntClusterKey(ancestor, key.metadata), gid, propSet)
     lookup += propSet -> newGroup
     groupBuffer += newGroup
     memoWriteCount += 1
@@ -88,19 +88,21 @@ class ForwardMemoTable[T <: AnyRef] private (override val cbo: Cbo[T])
       return
     }
 
-    case class Merge(from: Int, to: Int)
-
-    val merge = if (oneAncestor > otherAncestor) {
-      Merge(oneAncestor, otherAncestor)
-    } else {
-      Merge(otherAncestor, oneAncestor)
+    case class Merge(from: CboClusterKey, to: CboClusterKey) {
+      cbo.metadataModel.verify(from.metadata, to.metadata)
     }
 
-    val fromKey = IntClusterKey(merge.from)
-    val toKey = IntClusterKey(merge.to)
+    val merge = if (oneAncestor > otherAncestor) {
+      Merge(clusterKeyBuffer(oneAncestor), clusterKeyBuffer(otherAncestor))
+    } else {
+      Merge(clusterKeyBuffer(otherAncestor), clusterKeyBuffer(oneAncestor))
+    }
 
-    val fromCluster = clusterBuffer(merge.from)
-    val toCluster = clusterBuffer(merge.to)
+    val fromKey = merge.from
+    val toKey = merge.to
+
+    val fromCluster = clusterBuffer(fromKey.id())
+    val toCluster = clusterBuffer(toKey.id())
 
     // Add absent nodes.
     fromCluster.nodes().foreach {
@@ -111,8 +113,8 @@ class ForwardMemoTable[T <: AnyRef] private (override val cbo: Cbo[T])
     }
 
     // Add absent groups.
-    val fromGroups = groupLookup(merge.from)
-    val toGroups = groupLookup(merge.to)
+    val fromGroups = groupLookup(fromKey.id())
+    val toGroups = groupLookup(toKey.id())
     fromGroups.foreach {
       case (fromPropSet, _) =>
         if (!toGroups.contains(fromPropSet)) {
@@ -121,8 +123,8 @@ class ForwardMemoTable[T <: AnyRef] private (override val cbo: Cbo[T])
     }
 
     // Forward the element in disjoint set.
-    clusterDisjointSet.forward(merge.from, merge.to)
-    clusterMergeLog += (merge.from -> merge.to)
+    clusterDisjointSet.forward(fromKey.id(), toKey.id())
+    clusterMergeLog += (fromKey.id() -> toKey.id())
     memoWriteCount += 1
   }
 
@@ -150,7 +152,7 @@ class ForwardMemoTable[T <: AnyRef] private (override val cbo: Cbo[T])
 object ForwardMemoTable {
   def apply[T <: AnyRef](cbo: Cbo[T]): MemoTable.Writable[T] = new ForwardMemoTable[T](cbo)
 
-  private case class IntClusterKey(id: Int) extends CboClusterKey
+  private case class IntClusterKey(id: Int, metadata: Metadata) extends CboClusterKey
 
   private class Probe[T <: AnyRef](table: ForwardMemoTable[T]) extends MemoTable.Probe[T] {
     private val probedClusterCount: Int = table.clusterKeyBuffer.size

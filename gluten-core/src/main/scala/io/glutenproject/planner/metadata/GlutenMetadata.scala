@@ -14,19 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.glutenproject.cbo
+package io.glutenproject.planner.metadata
 
-import io.glutenproject.cbo.property.PropertySet
+import io.glutenproject.cbo.Metadata
 
-trait PlanModel[T <: AnyRef] {
-  // Trivial tree operations.
-  def childrenOf(node: T): Seq[T]
-  def withNewChildren(node: T, children: Seq[T]): T
-  def hashCode(node: T): Int
-  def equals(one: T, other: T): Boolean
+import org.apache.spark.sql.catalyst.expressions.Attribute
 
-  // Group operations.
-  def newGroupLeaf(groupId: Int, meta: Metadata, propSet: PropertySet[T]): T
-  def isGroupLeaf(node: T): Boolean
-  def getGroupId(node: T): Int
+sealed trait GlutenMetadata extends Metadata {
+  import GlutenMetadata._
+  def schema(): Schema
+}
+
+object GlutenMetadata {
+  def apply(schema: Schema): Metadata = {
+    Impl(schema)
+  }
+
+  private case class Impl(schema: Schema) extends GlutenMetadata
+  case class Schema(output: Seq[Attribute])
 }

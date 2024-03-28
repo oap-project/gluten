@@ -38,12 +38,13 @@ trait Optimization[T <: AnyRef] {
 
 object Optimization {
   def apply[T <: AnyRef](
-      costModel: CostModel[T],
       planModel: PlanModel[T],
+      costModel: CostModel[T],
+      metadataModel: MetadataModel[T],
       propertyModel: PropertyModel[T],
       explain: CboExplain[T],
       ruleFactory: CboRule.Factory[T]): Optimization[T] = {
-    Cbo(costModel, planModel, propertyModel, explain, ruleFactory)
+    Cbo(planModel, costModel, metadataModel, propertyModel, explain, ruleFactory)
   }
 
   implicit class OptimizationImplicits[T <: AnyRef](opt: Optimization[T]) {
@@ -58,8 +59,9 @@ object Optimization {
 
 class Cbo[T <: AnyRef] private (
     val config: CboConfig,
-    val costModel: CostModel[T],
     val planModel: PlanModel[T],
+    val costModel: CostModel[T],
+    val metadataModel: MetadataModel[T],
     val propertyModel: PropertyModel[T],
     val explain: CboExplain[T],
     val ruleFactory: CboRule.Factory[T])
@@ -67,12 +69,19 @@ class Cbo[T <: AnyRef] private (
   import Cbo._
 
   override def withNewConfig(confFunc: CboConfig => CboConfig): Cbo[T] = {
-    new Cbo(confFunc(config), costModel, planModel, propertyModel, explain, ruleFactory)
+    new Cbo(
+      confFunc(config),
+      planModel,
+      costModel,
+      metadataModel,
+      propertyModel,
+      explain,
+      ruleFactory)
   }
 
   // Normal groups start with ID 0, so it's safe to use -1 to do validation.
   private val dummyGroup: T =
-    planModel.newGroupLeaf(-1, PropertySet(Seq.empty))
+    planModel.newGroupLeaf(-1, metadataModel.dummy(), PropertySet(Seq.empty))
   private val infCost: Cost = costModel.makeInfCost()
 
   validateModels()
@@ -96,6 +105,12 @@ class Cbo[T <: AnyRef] private (
         "getting its cost but not") {
       // Node groups don't have user-defined cost, expect exception here.
       costModel.costOf(dummyGroup)
+    }
+    assertThrows(
+      "Group is not allowed to return its metadata directly to optimizer (optimizer already" +
+        " knew that). It's expected to throw an exception when getting its metadata but not") {
+      // Node groups don't have user-defined cost, expect exception here.
+      metadataModel.metadataOf(dummyGroup)
     }
     propertyModel.propertyDefs.foreach {
       propDef =>
@@ -160,12 +175,20 @@ class Cbo[T <: AnyRef] private (
 
 object Cbo {
   private[cbo] def apply[T <: AnyRef](
-      costModel: CostModel[T],
       planModel: PlanModel[T],
+      costModel: CostModel[T],
+      metadataModel: MetadataModel[T],
       propertyModel: PropertyModel[T],
       explain: CboExplain[T],
       ruleFactory: CboRule.Factory[T]): Cbo[T] = {
-    new Cbo[T](CboConfig(), costModel, planModel, propertyModel, explain, ruleFactory)
+    new Cbo[T](
+      CboConfig(),
+      planModel,
+      costModel,
+      metadataModel,
+      propertyModel,
+      explain,
+      ruleFactory)
   }
 
   trait PropertySetFactory[T <: AnyRef] {

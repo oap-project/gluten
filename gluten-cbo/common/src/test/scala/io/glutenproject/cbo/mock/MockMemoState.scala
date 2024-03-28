@@ -17,6 +17,7 @@
 package io.glutenproject.cbo.mock
 
 import io.glutenproject.cbo._
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.memo.{MemoState, MemoStore}
 import io.glutenproject.cbo.property.PropertySet
 import io.glutenproject.cbo.vis.GraphvizVisualizer
@@ -64,7 +65,7 @@ object MockMemoState {
     def newCluster(): MockMutableCluster[T] = {
       val id = clusterBuffer.size
       val key = MockMutableCluster.DummyIntClusterKey(id)
-      val cluster = MockMutableCluster[T](cbo, key, propSet, groupFactory)
+      val cluster = MockMutableCluster[T](cbo, key, groupFactory)
       clusterBuffer += (key -> cluster)
       cluster
     }
@@ -103,12 +104,13 @@ object MockMemoState {
     def apply[T <: AnyRef](
         cbo: Cbo[T],
         key: CboClusterKey,
-        propSet: PropertySet[T],
         groupFactory: MockMutableGroup.Factory[T]): MockMutableCluster[T] = {
       new MockMutableCluster[T](cbo, key, groupFactory)
     }
 
-    case class DummyIntClusterKey(id: Int) extends CboClusterKey
+    case class DummyIntClusterKey(id: Int) extends CboClusterKey {
+      override def metadata: Metadata = MetadataModelImpl.DummyMetadata
+    }
   }
 
   class MockMutableGroup[T <: AnyRef] private (
@@ -137,7 +139,11 @@ object MockMemoState {
       def newGroup(clusterKey: CboClusterKey): MockMutableGroup[T] = {
         val id = groupBuffer.size
         val group =
-          new MockMutableGroup[T](id, clusterKey, propSet, cbo.planModel.newGroupLeaf(id, propSet))
+          new MockMutableGroup[T](
+            id,
+            clusterKey,
+            propSet,
+            cbo.planModel.newGroupLeaf(id, clusterKey.metadata, propSet))
         groupBuffer += group
         group
       }

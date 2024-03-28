@@ -16,7 +16,8 @@
  */
 package io.glutenproject.cbo.path
 
-import io.glutenproject.cbo.{CanonicalNode, Cbo, CboSuiteBase}
+import io.glutenproject.cbo.{CanonicalNode, Cbo}
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.mock.MockMemoState
 import io.glutenproject.cbo.rule.CboRule
 
@@ -28,8 +29,9 @@ class PathFinderSuite extends AnyFunSuite {
   test("Base") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -82,8 +84,9 @@ class PathFinderSuite extends AnyFunSuite {
   test("Find - multiple depths") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -161,8 +164,9 @@ class PathFinderSuite extends AnyFunSuite {
   test("Dive - basic") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -219,8 +223,9 @@ class PathFinderSuite extends AnyFunSuite {
   test("Find/Dive - binary with different children heights") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -286,7 +291,7 @@ class PathFinderSuite extends AnyFunSuite {
   }
 }
 
-object PathFinderSuite extends CboSuiteBase {
+object PathFinderSuite {
   case class Leaf(name: String, override val selfCost: Long) extends LeafLike {
     override def makeCopy(): LeafLike = this
   }

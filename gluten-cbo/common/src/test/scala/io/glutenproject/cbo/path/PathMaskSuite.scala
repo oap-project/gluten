@@ -16,8 +16,6 @@
  */
 package io.glutenproject.cbo.path
 
-import io.glutenproject.cbo.CboSuiteBase
-
 import org.scalatest.funsuite.AnyFunSuite
 
 class PathMaskSuite extends AnyFunSuite {
@@ -110,4 +108,4 @@ class PathMaskSuite extends AnyFunSuite {
   }
 }
 
-object PathMaskSuite extends CboSuiteBase {}
+object PathMaskSuite {}

@@ -16,11 +16,12 @@
  */
 package io.glutenproject.planner
 
-import io.glutenproject.cbo.{Cbo, CboSuiteBase}
+import io.glutenproject.cbo.Cbo
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.path.CboPath
 import io.glutenproject.cbo.property.PropertySet
 import io.glutenproject.cbo.rule.{CboRule, Shape, Shapes}
-import io.glutenproject.planner.property.GlutenProperties.{Conventions, Schemas}
+import io.glutenproject.planner.property.GlutenProperties.Conventions
 
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.catalyst.InternalRow
@@ -41,7 +42,7 @@ class VeloxCboSuite extends SharedSparkSession {
   test("C2R, R2C - explicitly requires any properties") {
     val in = RowUnary(RowLeaf())
     val planner =
-      newCbo().newPlanner(in, PropertySet(List(Conventions.ANY, Schemas.ANY)))
+      newCbo().newPlanner(in, PropertySet(List(Conventions.ANY)))
     val out = planner.plan()
     assert(out == RowUnary(RowLeaf()))
   }
@@ -49,7 +50,7 @@ class VeloxCboSuite extends SharedSparkSession {
   test("C2R, R2C - requires columnar output") {
     val in = RowUnary(RowLeaf())
     val planner =
-      newCbo().newPlanner(in, PropertySet(List(Conventions.VANILLA_COLUMNAR, Schemas.ANY)))
+      newCbo().newPlanner(in, PropertySet(List(Conventions.VANILLA_COLUMNAR)))
     val out = planner.plan()
     assert(out == RowToColumnarExec(RowUnary(RowLeaf())))
   }
@@ -58,7 +59,7 @@ class VeloxCboSuite extends SharedSparkSession {
     val in =
       ColumnarUnary(RowUnary(RowUnary(ColumnarUnary(RowUnary(RowUnary(ColumnarUnary(RowLeaf())))))))
     val planner =
-      newCbo().newPlanner(in, PropertySet(List(Conventions.ROW_BASED, Schemas.ANY)))
+      newCbo().newPlanner(in, PropertySet(List(Conventions.ROW_BASED)))
     val out = planner.plan()
     assert(out == ColumnarToRowExec(ColumnarUnary(
       RowToColumnarExec(RowUnary(RowUnary(ColumnarToRowExec(ColumnarUnary(RowToColumnarExec(
@@ -82,7 +83,7 @@ class VeloxCboSuite extends SharedSparkSession {
       ColumnarUnary(RowUnary(RowUnary(ColumnarUnary(RowUnary(RowUnary(ColumnarUnary(RowLeaf())))))))
     val planner =
       newCbo(List(ConvertRowUnaryToColumnar))
-        .newPlanner(in, PropertySet(List(Conventions.ROW_BASED, Schemas.ANY)))
+        .newPlanner(in, PropertySet(List(Conventions.ROW_BASED)))
     val out = planner.plan()
     assert(out == ColumnarToRowExec(ColumnarUnary(ColumnarUnary(ColumnarUnary(
       ColumnarUnary(ColumnarUnary(ColumnarUnary(ColumnarUnary(RowToColumnarExec(RowLeaf()))))))))))
@@ -92,7 +93,7 @@ class VeloxCboSuite extends SharedSparkSession {
   }
 }
 
-object VeloxCboSuite extends CboSuiteBase {
+object VeloxCboSuite {
   def newCbo(): Cbo[SparkPlan] = {
     GlutenOptimization().asInstanceOf[Cbo[SparkPlan]]
   }

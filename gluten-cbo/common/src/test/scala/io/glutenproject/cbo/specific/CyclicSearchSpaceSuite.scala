@@ -17,6 +17,7 @@
 package io.glutenproject.cbo.specific
 
 import io.glutenproject.cbo._
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.best.BestFinder
 import io.glutenproject.cbo.memo.MemoState
 import io.glutenproject.cbo.mock.MockMemoState
@@ -39,8 +40,9 @@ abstract class CyclicSearchSpaceSuite extends AnyFunSuite {
   test("Cyclic - find paths, simple self cycle") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -73,8 +75,9 @@ abstract class CyclicSearchSpaceSuite extends AnyFunSuite {
   test("Cyclic - find best, simple self cycle") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -101,8 +104,9 @@ abstract class CyclicSearchSpaceSuite extends AnyFunSuite {
   test("Cyclic - find best, case 1") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -164,8 +168,9 @@ abstract class CyclicSearchSpaceSuite extends AnyFunSuite {
   test("Cyclic - find best, case 2") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -208,7 +213,7 @@ abstract class CyclicSearchSpaceSuite extends AnyFunSuite {
   }
 }
 
-object CyclicSearchSpaceSuite extends CboSuiteBase {
+object CyclicSearchSpaceSuite {
   case class Leaf(name: String, override val selfCost: Long) extends LeafLike {
     override def makeCopy(): LeafLike = this
   }

@@ -18,6 +18,7 @@ package io.glutenproject.cbo
 
 import io.glutenproject.cbo.Best.BestNotFoundException
 import io.glutenproject.cbo.CboConfig.PlannerType
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.property.PropertySet
 import io.glutenproject.cbo.rule.{CboRule, Shape, Shapes}
 
@@ -57,8 +58,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
   test(s"Cannot enforce property") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModelWithOutEnforcerRules,
         ExplainImpl,
         CboRule.Factory.none())
@@ -73,8 +75,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
   test(s"Property enforcement - A to B") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -90,8 +93,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
   test(s"Property convert - (A, B)") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
         CboRule.Factory.reuse(List(ReplaceByTypeARule, ReplaceByTypeBRule)))
@@ -145,8 +149,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModelWithOutEnforcerRules,
         ExplainImpl,
         CboRule.Factory.reuse(List(ReplaceLeafAByLeafBRule, HitCacheOp, FinalOp))
@@ -190,8 +195,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModelWithOutEnforcerRules,
         ExplainImpl,
         CboRule.Factory.reuse(List(ReplaceLeafAByLeafBRule, ReplaceUnaryBByUnaryARule))
@@ -218,8 +224,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
         CboRule.Factory.reuse(List(ConvertEnforcerAndTypeAToTypeB)))
@@ -255,11 +262,13 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
-        CboRule.Factory.reuse(List(ReplaceByTypeARule, ReplaceNonUnaryByTypeBRule)))
+        CboRule.Factory.reuse(List(ReplaceByTypeARule, ReplaceNonUnaryByTypeBRule))
+      )
         .withNewConfig(_ => conf)
     val plan =
       TypedBinary(TypeA, 5, TypedUnary(TypeA, 10, TypedLeaf(TypeA, 10)), TypedLeaf(TypeA, 10))
@@ -305,8 +314,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
         CboRule.Factory.reuse(List(ReduceTypeBCost, ConvertUnaryTypeBToTypeC)))
@@ -356,8 +366,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
         CboRule.Factory.reuse(List(LeftOp, RightOp))
@@ -402,8 +413,9 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
         CboRule.Factory.reuse(List(ConvertTypeBEnforcerAndLeafToTypeC, ConvertTypeATypeCToTypeC))
@@ -454,11 +466,13 @@ abstract class CboPropertySuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         NodeTypePropertyModel,
         ExplainImpl,
-        CboRule.Factory.reuse(List(ReplaceNonUnaryByTypeBRule, ReduceTypeBCost)))
+        CboRule.Factory.reuse(List(ReplaceNonUnaryByTypeBRule, ReduceTypeBCost))
+      )
         .withNewConfig(_ => conf)
     val plan =
       TypedBinary(TypeA, 5, TypedUnary(TypeA, 10, TypedLeaf(TypeA, 10)), TypedLeaf(TypeA, 10))
@@ -473,7 +487,7 @@ abstract class CboPropertySuite extends AnyFunSuite {
   }
 }
 
-object CboPropertySuite extends CboSuiteBase {
+object CboPropertySuite {
 
   case class NoopEnforcerRule[T <: AnyRef]() extends CboRule[T] {
     override def shift(node: T): Iterable[T] = List.empty
@@ -519,7 +533,7 @@ object CboPropertySuite extends CboSuiteBase {
   object DummyPropertyDef extends PropertyDef[TestNode, DummyProperty] {
     override def getProperty(plan: TestNode): DummyProperty = {
       plan match {
-        case Group(_, _) => throw new IllegalStateException()
+        case Group(_, _, _) => throw new IllegalStateException()
         case PUnary(_, prop, _) => prop
         case PLeaf(_, prop) => prop
         case PBinary(_, prop, _, _) => prop

@@ -17,6 +17,7 @@
 package io.glutenproject.cbo
 
 import io.glutenproject.cbo.CboConfig.PlannerType
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.memo.Memo
 import io.glutenproject.cbo.rule.{CboRule, Shape, Shapes}
 
@@ -38,8 +39,9 @@ abstract class CboSuite extends AnyFunSuite {
   test("Group memo - re-memorize") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -53,8 +55,9 @@ abstract class CboSuite extends AnyFunSuite {
   test("Group memo - define equivalence") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -71,8 +74,9 @@ abstract class CboSuite extends AnyFunSuite {
   test("Group memo - define equivalence: binary with similar children, 1") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -91,8 +95,9 @@ abstract class CboSuite extends AnyFunSuite {
   test("Group memo - define equivalence: binary with similar children, 2") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -111,8 +116,9 @@ abstract class CboSuite extends AnyFunSuite {
   test("Group memo - partial canonical") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -155,8 +161,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(DivideUnaryCost, DecreaseUnaryCost)))
@@ -181,8 +188,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(InsertUnary2)))
@@ -213,8 +221,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(DivideBinaryCost)))
@@ -240,8 +249,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(SymmetricRule)))
@@ -270,8 +280,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(BinarySwap)))
@@ -297,8 +308,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(BinarySwap)))
@@ -324,8 +336,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(Unary2Unary3)))
@@ -345,8 +358,9 @@ abstract class CboSuite extends AnyFunSuite {
     val u2u2 = new UnaryToUnary2()
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(l2l2, u2u2)))
@@ -381,8 +395,9 @@ abstract class CboSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(l2l2, u2u2, Unary2Unary2ToUnary3)))
@@ -398,7 +413,7 @@ abstract class CboSuite extends AnyFunSuite {
   }
 }
 
-object CboSuite extends CboSuiteBase {
+object CboSuite {
 
   case class Binary(
       override val selfCost: Long,

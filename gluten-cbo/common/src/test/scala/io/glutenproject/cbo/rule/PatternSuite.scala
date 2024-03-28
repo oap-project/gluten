@@ -16,7 +16,8 @@
  */
 package io.glutenproject.cbo.rule
 
-import io.glutenproject.cbo.{rule, Cbo, CboSuiteBase}
+import io.glutenproject.cbo.Cbo
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.mock.MockCboPath
 import io.glutenproject.cbo.path.{CboPath, Pattern}
 
@@ -27,8 +28,9 @@ class PatternSuite extends AnyFunSuite {
   test("Match any") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -43,8 +45,9 @@ class PatternSuite extends AnyFunSuite {
   test("Match ignore") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -59,8 +62,9 @@ class PatternSuite extends AnyFunSuite {
   test("Match unary") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -81,8 +85,9 @@ class PatternSuite extends AnyFunSuite {
   test("Match binary") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -113,8 +118,9 @@ class PatternSuite extends AnyFunSuite {
   test("Matches above a certain depth") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -169,7 +175,7 @@ class PatternSuite extends AnyFunSuite {
   }
 }
 
-object PatternSuite extends CboSuiteBase {
+object PatternSuite {
   case class Leaf(name: String, override val selfCost: Long) extends LeafLike {
     override def makeCopy(): LeafLike = this
   }
@@ -188,7 +194,7 @@ object PatternSuite extends CboSuiteBase {
   }
 
   case class DummyGroup() extends LeafLike {
-    override def makeCopy(): rule.PatternSuite.LeafLike = throw new UnsupportedOperationException()
+    override def makeCopy(): LeafLike = throw new UnsupportedOperationException()
     override def selfCost(): Long = throw new UnsupportedOperationException()
   }
 

@@ -16,6 +16,7 @@
  */
 package io.glutenproject.cbo
 
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.path.CboPath
 import io.glutenproject.cbo.property.PropertySet
 import io.glutenproject.cbo.rule.{CboRule, Shape, Shapes}
@@ -47,8 +48,9 @@ class CboOperationSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(l2l2, u2u2, Unary2Unary2ToUnary3)))
@@ -68,8 +70,9 @@ class CboOperationSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(l2l2, u2u2, u2u22u3)))
@@ -94,8 +97,9 @@ class CboOperationSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
+        PlanModelImpl,
         CostModelImpl,
-        planModel,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(l2l2, u2u2)))
@@ -123,8 +127,9 @@ class CboOperationSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
+        PlanModelImpl,
         CostModelImpl,
-        planModel,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(l2l2, u2u2, u2u22u3)))
@@ -158,8 +163,9 @@ class CboOperationSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
+        PlanModelImpl,
         CostModelImpl,
-        planModel,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(new UnaryToUnary2(), new LeafToLeaf2(), rule)))
@@ -198,8 +204,9 @@ class CboOperationSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        costModel,
         PlanModelImpl,
+        costModel,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(new UnaryToUnary2, new Unary2ToUnary3)))
@@ -259,8 +266,9 @@ class CboOperationSuite extends AnyFunSuite {
 
     val cbo =
       Cbo[TestNode](
-        costModel,
         PlanModelImpl,
+        costModel,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(new UnaryToUnary2, new Unary2ToUnary3)))
@@ -288,7 +296,7 @@ class CboOperationSuite extends AnyFunSuite {
   }
 }
 
-object CboOperationSuite extends CboSuiteBase {
+object CboOperationSuite {
 
   case class Unary(override val selfCost: Long, override val child: TestNode) extends UnaryLike {
     override def withNewChildren(child: TestNode): UnaryLike = copy(child = child)
@@ -403,9 +411,9 @@ object CboOperationSuite extends CboSuiteBase {
       equalsCount += 1
       delegated.equals(one, other)
     }
-    override def newGroupLeaf(groupId: Int, propSet: PropertySet[T]): T = {
+    override def newGroupLeaf(groupId: Int, metadata: Metadata, propSet: PropertySet[T]): T = {
       newGroupLeafCount += 1
-      delegated.newGroupLeaf(groupId, propSet)
+      delegated.newGroupLeaf(groupId, metadata, propSet)
     }
     override def isGroupLeaf(node: T): Boolean = {
       isGroupLeafCount += 1

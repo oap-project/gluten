@@ -21,26 +21,13 @@ import io.glutenproject.cbo._
 import io.glutenproject.cbo.rule.{CboRule, Shape, Shapes}
 import io.glutenproject.extension.columnar.ColumnarTransitions
 import io.glutenproject.planner.plan.GlutenPlanModel.GroupLeafExec
-import io.glutenproject.planner.property.GlutenProperties.{Convention, CONVENTION_DEF, ConventionEnforcerRule, SCHEMA_DEF}
+import io.glutenproject.planner.property.GlutenProperties.{Convention, CONVENTION_DEF, ConventionEnforcerRule}
 import io.glutenproject.sql.shims.SparkShimLoader
 import io.glutenproject.utils.PlanUtil
 
-import org.apache.spark.sql.catalyst.expressions.Attribute
 import org.apache.spark.sql.execution._
 
 object GlutenProperties {
-  val SCHEMA_DEF: PropertyDef[SparkPlan, Schema] = new PropertyDef[SparkPlan, Schema] {
-    override def getProperty(plan: SparkPlan): Schema = plan match {
-      case _: GroupLeafExec => throw new IllegalStateException()
-      case _ => Schema(plan.output)
-    }
-    override def getChildrenConstraints(
-        constraint: Property[SparkPlan],
-        plan: SparkPlan): Seq[Schema] = {
-      plan.children.map(c => Schema(c.output))
-    }
-  }
-
   val CONVENTION_DEF: PropertyDef[SparkPlan, Convention] = new PropertyDef[SparkPlan, Convention] {
     // TODO: Should the convention-transparent ops (e.g., aqe shuffle read) support
     //  convention-propagation. Probably need to refactor getChildrenPropertyRequirements.
@@ -103,22 +90,6 @@ object GlutenProperties {
     override def shape(): Shape[SparkPlan] = Shapes.fixedHeight(1)
   }
 
-  case class Schema(output: Seq[Attribute]) extends Property[SparkPlan] {
-    override def satisfies(other: Property[SparkPlan]): Boolean = other match {
-      case Schemas.ANY => true
-      case Schema(otherOutput) => output == otherOutput
-      case _ => throw new IllegalStateException()
-    }
-
-    override def definition(): PropertyDef[SparkPlan, _ <: Property[SparkPlan]] = {
-      SCHEMA_DEF
-    }
-  }
-
-  object Schemas {
-    val ANY: Property[SparkPlan] = Schema(List())
-  }
-
   sealed trait Convention extends Property[SparkPlan] {
     override def definition(): PropertyDef[SparkPlan, _ <: Property[SparkPlan]] = {
       CONVENTION_DEF
@@ -148,14 +119,12 @@ object GlutenPropertyModel {
 
   private object PropertyModelImpl extends PropertyModel[SparkPlan] {
     override def propertyDefs: Seq[PropertyDef[SparkPlan, _ <: Property[SparkPlan]]] =
-      Seq(SCHEMA_DEF, CONVENTION_DEF)
+      Seq(CONVENTION_DEF)
 
     override def newEnforcerRuleFactory(
         propertyDef: PropertyDef[SparkPlan, _ <: Property[SparkPlan]])
         : EnforcerRuleFactory[SparkPlan] = (reqProp: Property[SparkPlan]) => {
       propertyDef match {
-        case SCHEMA_DEF =>
-          Seq()
         case CONVENTION_DEF =>
           Seq(ConventionEnforcerRule(reqProp.asInstanceOf[Convention]))
       }

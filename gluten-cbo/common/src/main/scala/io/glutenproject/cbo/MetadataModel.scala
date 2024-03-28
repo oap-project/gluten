@@ -16,17 +16,13 @@
  */
 package io.glutenproject.cbo
 
-import io.glutenproject.cbo.property.PropertySet
-
-trait PlanModel[T <: AnyRef] {
-  // Trivial tree operations.
-  def childrenOf(node: T): Seq[T]
-  def withNewChildren(node: T, children: Seq[T]): T
-  def hashCode(node: T): Int
-  def equals(one: T, other: T): Boolean
-
-  // Group operations.
-  def newGroupLeaf(groupId: Int, meta: Metadata, propSet: PropertySet[T]): T
-  def isGroupLeaf(node: T): Boolean
-  def getGroupId(node: T): Int
+/**
+ * Metadata defines the common traits among nodes in one single cluster. E.g. Schema, statistics.
+ */
+trait MetadataModel[T <: AnyRef] {
+  def metadataOf(node: T): Metadata
+  def dummy(): Metadata
+  def verify(one: Metadata, other: Metadata): Unit
 }
+
+trait Metadata {}

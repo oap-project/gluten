@@ -19,6 +19,7 @@ package io.glutenproject.planner
 import io.glutenproject.cbo.{CboExplain, Optimization}
 import io.glutenproject.cbo.rule.CboRule
 import io.glutenproject.planner.cost.GlutenCostModel
+import io.glutenproject.planner.metadata.GlutenMetadataModel
 import io.glutenproject.planner.plan.GlutenPlanModel
 import io.glutenproject.planner.property.GlutenPropertyModel
 import io.glutenproject.planner.rule.GlutenRules
@@ -32,8 +33,9 @@ object GlutenOptimization {
 
   def apply(): Optimization[SparkPlan] = {
     Optimization[SparkPlan](
-      GlutenCostModel(),
       GlutenPlanModel(),
+      GlutenCostModel(),
+      GlutenMetadataModel(),
       GlutenPropertyModel(),
       GlutenExplain,
       CboRule.Factory.reuse(GlutenRules()))
@@ -41,8 +43,9 @@ object GlutenOptimization {
 
   def apply(rules: Seq[CboRule[SparkPlan]]): Optimization[SparkPlan] = {
     Optimization[SparkPlan](
-      GlutenCostModel(),
       GlutenPlanModel(),
+      GlutenCostModel(),
+      GlutenMetadataModel(),
       GlutenPropertyModel(),
       GlutenExplain,
       CboRule.Factory.reuse(rules))

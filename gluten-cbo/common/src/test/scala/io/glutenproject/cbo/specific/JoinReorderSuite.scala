@@ -16,8 +16,9 @@
  */
 package io.glutenproject.cbo.specific
 
-import io.glutenproject.cbo.{Cbo, CboConfig, CboSuiteBase}
+import io.glutenproject.cbo.{Cbo, CboConfig}
 import io.glutenproject.cbo.CboConfig.PlannerType
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.rule.{CboRule, Shape, Shapes}
 
 import org.scalatest.funsuite.AnyFunSuite
@@ -38,8 +39,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("3 way join - dry run") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -53,8 +55,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("3 way join - reorder") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(JoinAssociateRule, JoinCommuteRule)))
@@ -68,8 +71,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("5 way join - reorder") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(JoinAssociateRule, JoinCommuteRule)))
@@ -88,8 +92,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   ignore("7 way join - reorder") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(JoinAssociateRule, JoinCommuteRule)))
@@ -108,8 +113,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   ignore("9 way join - reorder") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(JoinAssociateRule, JoinCommuteRule)))
@@ -129,8 +135,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   ignore("12 way join - reorder") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List(JoinAssociateRule, JoinCommuteRule)))
@@ -152,8 +159,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("2 way join - reorder, left deep only") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(leftDeepJoinRules(2)))
@@ -167,8 +175,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("3 way join - reorder, left deep only") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(leftDeepJoinRules(3)))
@@ -182,8 +191,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("5 way join - reorder, left deep only") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(leftDeepJoinRules(5)))
@@ -201,8 +211,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("7 way join - reorder, left deep only") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(leftDeepJoinRules(7)))
@@ -227,8 +238,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   test("9 way join - reorder, left deep only") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(leftDeepJoinRules(9)))
@@ -263,8 +275,9 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   ignore("12 way join - reorder, left deep only") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(leftDeepJoinRules(12)))
@@ -284,7 +297,7 @@ abstract class JoinReorderSuite extends AnyFunSuite {
   }
 }
 
-object JoinReorderSuite extends CboSuiteBase {
+object JoinReorderSuite {
 
   object JoinAssociateRule extends CboRule[TestNode] {
     override def shift(node: TestNode): Iterable[TestNode] = node match {

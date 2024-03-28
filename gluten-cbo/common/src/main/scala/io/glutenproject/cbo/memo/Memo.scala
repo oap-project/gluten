@@ -53,8 +53,8 @@ object Memo {
     private val memoTable: MemoTable.Writable[T] = MemoTable.create(cbo)
     private val cache: NodeToClusterMap[T] = new NodeToClusterMap(cbo)
 
-    private def newCluster(): CboClusterKey = {
-      memoTable.newCluster()
+    private def newCluster(metadata: Metadata): CboClusterKey = {
+      memoTable.newCluster(metadata)
     }
 
     private def addToCluster(clusterKey: CboClusterKey, can: CanonicalNode[T]): Unit = {
@@ -107,7 +107,8 @@ object Memo {
         cache.get(node)
       } else {
         // Node not yet added to cluster.
-        val clusterKey = newCluster()
+        val meta = cbo.metadataModel.metadataOf(node.self())
+        val clusterKey = newCluster(meta)
         addToCluster(clusterKey, node)
         clusterKey
       }

@@ -16,7 +16,8 @@
  */
 package io.glutenproject.cbo.path
 
-import io.glutenproject.cbo.{Cbo, CboSuiteBase}
+import io.glutenproject.cbo.Cbo
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.mock.MockCboPath
 import io.glutenproject.cbo.rule.CboRule
 
@@ -28,8 +29,9 @@ class CboPathSuite extends AnyFunSuite {
   test("Path aggregate - empty") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List.empty))
@@ -39,8 +41,9 @@ class CboPathSuite extends AnyFunSuite {
   test("Path aggregate") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.reuse(List.empty))
@@ -91,7 +94,7 @@ class CboPathSuite extends AnyFunSuite {
   }
 }
 
-object CboPathSuite extends CboSuiteBase {
+object CboPathSuite {
   case class Leaf(name: String, override val selfCost: Long) extends LeafLike {
     override def makeCopy(): LeafLike = this
   }

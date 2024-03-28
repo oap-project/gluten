@@ -18,6 +18,7 @@ package io.glutenproject.cbo.specific
 
 import io.glutenproject.cbo._
 import io.glutenproject.cbo.CboConfig.PlannerType
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.property.PropertySet
 import io.glutenproject.cbo.rule.{CboRule, Shape, Shapes}
 
@@ -39,8 +40,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   test("Project - dry run") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -55,8 +57,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   test("Project - required distribution") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -72,8 +75,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   test("Aggregate - none-distribution constraint") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -92,8 +96,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   test("Project - required ordering") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -109,8 +114,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   test("Project - required distribution and ordering") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -128,8 +134,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   test("Aggregate - avoid re-exchange") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -147,8 +154,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   test("Aggregate - avoid re-exchange, required ordering") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.none())
@@ -167,8 +175,9 @@ abstract class DistributedSuite extends AnyFunSuite {
   ignore("Aggregate - avoid re-exchange, partial") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         DistributedPropertyModel,
         ExplainImpl,
         CboRule.Factory.reuse(List(PartialAggregateRule)))
@@ -191,7 +200,7 @@ abstract class DistributedSuite extends AnyFunSuite {
   }
 }
 
-object DistributedSuite extends CboSuiteBase {
+object DistributedSuite {
 
   object PartialAggregateRule extends CboRule[TestNode] {
 

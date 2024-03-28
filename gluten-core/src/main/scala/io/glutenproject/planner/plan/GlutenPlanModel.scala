@@ -16,8 +16,9 @@
  */
 package io.glutenproject.planner.plan
 
-import io.glutenproject.cbo.PlanModel
+import io.glutenproject.cbo.{Metadata, PlanModel}
 import io.glutenproject.cbo.property.PropertySet
+import io.glutenproject.planner.metadata.GlutenMetadata
 import io.glutenproject.planner.property.GlutenProperties
 import io.glutenproject.planner.property.GlutenProperties.Conventions
 
@@ -33,9 +34,13 @@ object GlutenPlanModel {
     PlanModelImpl
   }
 
-  case class GroupLeafExec(groupId: Int, propertySet: PropertySet[SparkPlan]) extends LeafExecNode {
+  case class GroupLeafExec(
+      groupId: Int,
+      metadata: GlutenMetadata,
+      propertySet: PropertySet[SparkPlan])
+    extends LeafExecNode {
     override protected def doExecute(): RDD[InternalRow] = throw new IllegalStateException()
-    override def output: Seq[Attribute] = propertySet.get(GlutenProperties.SCHEMA_DEF).output
+    override def output: Seq[Attribute] = metadata.schema().output
     override def supportsColumnar: Boolean =
       propertySet.get(GlutenProperties.CONVENTION_DEF) match {
         case Conventions.ROW_BASED => false
@@ -56,8 +61,11 @@ object GlutenPlanModel {
 
     override def equals(one: SparkPlan, other: SparkPlan): Boolean = Objects.equals(one, other)
 
-    override def newGroupLeaf(groupId: Int, propSet: PropertySet[SparkPlan]): SparkPlan =
-      GroupLeafExec(groupId, propSet)
+    override def newGroupLeaf(
+        groupId: Int,
+        metadata: Metadata,
+        propSet: PropertySet[SparkPlan]): SparkPlan =
+      GroupLeafExec(groupId, metadata.asInstanceOf[GlutenMetadata], propSet)
 
     override def isGroupLeaf(node: SparkPlan): Boolean = node match {
       case _: GroupLeafExec => true

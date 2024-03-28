@@ -45,9 +45,9 @@ case class EnumeratedTransform(session: SparkSession, outputsColumnar: Boolean)
     Seq(GlutenProperties.Conventions.GLUTEN_COLUMNAR, GlutenProperties.Conventions.ROW_BASED)
 
   override def apply(plan: SparkPlan): SparkPlan = {
-    val constraintSet = PropertySet(List(GlutenProperties.Schemas.ANY, reqConvention))
+    val constraintSet = PropertySet(List(reqConvention))
     val altConstraintSets =
-      altConventions.map(altConv => PropertySet(List(GlutenProperties.Schemas.ANY, altConv)))
+      altConventions.map(altConv => PropertySet(List(altConv)))
     val planner = optimization.newPlanner(plan, constraintSet, altConstraintSets)
     val out = planner.plan()
     out

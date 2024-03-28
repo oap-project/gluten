@@ -20,7 +20,7 @@ import io.glutenproject.cbo.memo.{MemoLike, MemoState}
 import io.glutenproject.cbo.path.{CboPath, PathFinder}
 import io.glutenproject.cbo.property.PropertySet
 
-trait CboSuiteBase {
+object CboSuiteBase {
   trait TestNode {
     def selfCost(): Long
     def children(): Seq[TestNode]
@@ -49,14 +49,14 @@ trait CboSuiteBase {
     def withNewChildren(children: Seq[TestNode]): TestNode = this
   }
 
-  case class Group(id: Int, propSet: PropertySet[TestNode]) extends LeafLike {
+  case class Group(id: Int, meta: Metadata, propSet: PropertySet[TestNode]) extends LeafLike {
     override def selfCost(): Long = Long.MaxValue
     override def makeCopy(): LeafLike = copy()
   }
 
   object Group {
     def apply(id: Int): Group = {
-      Group(id, PropertySet(List.empty))
+      Group(id, MetadataModelImpl.DummyMetadata, PropertySet(List.empty))
     }
   }
 
@@ -110,8 +110,11 @@ trait CboSuiteBase {
       java.util.Objects.equals(one, other)
     }
 
-    override def newGroupLeaf(groupId: Int, propSet: PropertySet[TestNode]): TestNode =
-      Group(groupId, propSet)
+    override def newGroupLeaf(
+        groupId: Int,
+        meta: Metadata,
+        propSet: PropertySet[TestNode]): TestNode =
+      Group(groupId, meta, propSet)
 
     override def getGroupId(node: TestNode): Int = node match {
       case ngl: Group => ngl.id
@@ -127,6 +130,20 @@ trait CboSuiteBase {
   object ExplainImpl extends CboExplain[TestNode] {
     override def describeNode(node: TestNode): String = node match {
       case n => n.toString
+    }
+  }
+
+  object MetadataModelImpl extends MetadataModel[TestNode] {
+    case object DummyMetadata extends Metadata
+    override def metadataOf(node: TestNode): Metadata = node match {
+      case g: Group => throw new UnsupportedOperationException()
+      case n: TestNode => DummyMetadata
+      case other => throw new UnsupportedOperationException()
+    }
+    override def dummy(): Metadata = DummyMetadata
+    override def verify(one: Metadata, other: Metadata): Unit = {
+      assert(one == DummyMetadata)
+      assert(other == DummyMetadata)
     }
   }
 

@@ -21,7 +21,9 @@ import io.glutenproject.cbo.property.PropertySet
 
 import scala.collection.mutable
 
-trait CboClusterKey
+trait CboClusterKey {
+  def metadata: Metadata
+}
 
 object CboClusterKey {
   implicit class CboClusterKeyImplicits[T <: AnyRef](key: CboClusterKey) {
@@ -44,11 +46,11 @@ object CboCluster {
   }
 
   object MutableCboCluster {
-    def apply[T <: AnyRef](cbo: Cbo[T]): MutableCboCluster[T] = {
-      new RegularMutableCboCluster(cbo)
+    def apply[T <: AnyRef](cbo: Cbo[T], metadata: Metadata): MutableCboCluster[T] = {
+      new RegularMutableCboCluster(cbo, metadata)
     }
 
-    private class RegularMutableCboCluster[T <: AnyRef](val cbo: Cbo[T])
+    private class RegularMutableCboCluster[T <: AnyRef](val cbo: Cbo[T], metadata: Metadata)
       extends MutableCboCluster[T] {
       private val buffer: mutable.Set[CanonicalNode[T]] =
         mutable.Set()
@@ -58,6 +60,7 @@ object CboCluster {
       }
 
       override def add(t: CanonicalNode[T]): Unit = {
+        cbo.metadataModel.verify(metadata, cbo.metadataModel.metadataOf(t.self()))
         assert(!buffer.contains(t))
         buffer += t
       }

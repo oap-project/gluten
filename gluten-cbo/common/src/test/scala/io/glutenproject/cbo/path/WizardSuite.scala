@@ -16,7 +16,8 @@
  */
 package io.glutenproject.cbo.path
 
-import io.glutenproject.cbo.{Cbo, CboSuiteBase}
+import io.glutenproject.cbo.Cbo
+import io.glutenproject.cbo.CboSuiteBase._
 import io.glutenproject.cbo.mock.MockMemoState
 import io.glutenproject.cbo.rule.CboRule
 
@@ -28,8 +29,9 @@ class WizardSuite extends AnyFunSuite {
   test("None") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -52,8 +54,9 @@ class WizardSuite extends AnyFunSuite {
   test("Prune by maximum depth") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -128,8 +131,9 @@ class WizardSuite extends AnyFunSuite {
   test("Prune by pattern") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -218,8 +222,9 @@ class WizardSuite extends AnyFunSuite {
   test("Prune by mask") {
     val cbo =
       Cbo[TestNode](
-        CostModelImpl,
         PlanModelImpl,
+        CostModelImpl,
+        MetadataModelImpl,
         PropertyModelImpl,
         ExplainImpl,
         CboRule.Factory.none())
@@ -286,7 +291,7 @@ class WizardSuite extends AnyFunSuite {
   }
 }
 
-object WizardSuite extends CboSuiteBase {
+object WizardSuite {
   case class Leaf(name: String, override val selfCost: Long) extends LeafLike {
     override def makeCopy(): LeafLike = this
   }
