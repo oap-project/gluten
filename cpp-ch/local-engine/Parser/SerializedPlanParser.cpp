@@ -1929,23 +1929,23 @@ ActionsDAGPtr ASTParser::convertToActions(const NamesAndTypesList & name_and_typ
 ASTPtr ASTParser::parseToAST(const Names & names, const substrait::Expression & rel)
 {
     LOG_DEBUG(&Poco::Logger::get("ASTParser"), "substrait plan:\n{}", rel.DebugString());
-    if (rel.has_singular_or_list())
+    if (rel.has_scalar_function())
+    {
+        const auto & scalar_function = rel.scalar_function();
+        auto function_signature = function_mapping.at(std::to_string(rel.scalar_function().function_reference()));
+
+        auto substrait_name = function_signature.substr(0, function_signature.find(':'));
+        auto func_parser = FunctionParserFactory::instance().tryGet(substrait_name, plan_parser);
+        String function_name = func_parser ? func_parser->getCHFunctionName(scalar_function)
+                                           : SerializedPlanParser::getFunctionName(function_signature, scalar_function);
+
+        ASTs ast_args;
+        parseFunctionArgumentsToAST(names, scalar_function, ast_args);
+
+        return makeASTFunction(function_name, ast_args);
+    }
+    else
         return parseArgumentToAST(names, rel);
-    if (!rel.has_scalar_function())
-        throw Exception(ErrorCodes::BAD_ARGUMENTS, "the root of expression should be a scalar function:\n {}", rel.DebugString());
-
-    const auto & scalar_function = rel.scalar_function();
-    auto function_signature = function_mapping.at(std::to_string(rel.scalar_function().function_reference()));
-
-    auto substrait_name = function_signature.substr(0, function_signature.find(':'));
-    auto func_parser = FunctionParserFactory::instance().tryGet(substrait_name, plan_parser);
-    String function_name = func_parser ? func_parser->getCHFunctionName(scalar_function)
-                                       : SerializedPlanParser::getFunctionName(function_signature, scalar_function);
-
-    ASTs ast_args;
-    parseFunctionArgumentsToAST(names, scalar_function, ast_args);
-
-    return makeASTFunction(function_name, ast_args);
 }
 
 void ASTParser::parseFunctionArgumentsToAST(
