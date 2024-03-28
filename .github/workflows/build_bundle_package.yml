@@ -38,7 +38,7 @@ on:
 jobs:
   build-native-lib:
     runs-on: ubuntu-20.04
-    container: inteldpo/gluten-centos-packaging:latest
+    container: apache/gluten:gluten-vcpkg-builder_2024_03_17
     steps:
       - uses: actions/checkout@v2
       - name: Build Gluten velox third party
