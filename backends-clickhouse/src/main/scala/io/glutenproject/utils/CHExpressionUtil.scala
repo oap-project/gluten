@@ -180,6 +180,7 @@ object CHExpressionUtil {
     URL_DECODE -> DefaultValidator(),
     SKEWNESS -> DefaultValidator(),
     BIT_LENGTH -> DefaultValidator(),
-    MAKE_YM_INTERVAL -> DefaultValidator()
+    MAKE_YM_INTERVAL -> DefaultValidator(),
+    KURTOSIS -> DefaultValidator()
   )
 }

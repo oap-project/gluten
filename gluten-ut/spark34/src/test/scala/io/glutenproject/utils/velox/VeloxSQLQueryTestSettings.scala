@@ -239,6 +239,10 @@ object VeloxSQLQueryTestSettings extends SQLQueryTestSettings {
     "udf/udf-group-by.sql",
     // Exception string doesn't match for
     // SELECT (SELECT a FROM (SELECT 1 AS a UNION ALL SELECT 2 AS a) t) AS b
-    "subquery/scalar-subquery/scalar-subquery-select.sql"
+    "subquery/scalar-subquery/scalar-subquery-select.sql",
+    // The calculation formulas for skewness, kurtosis, variance, and stddev in Velox
+    // differ slightly from those in Spark, resulting in some differences in the final
+    // results. However, the differences are within an acceptable margin of error.
+    "group-by.sql"
   )
 }

@@ -31,8 +31,9 @@ object VeloxIntermediateData {
     Seq("ck", "n", "xMk", "yMk", "xAvg", "yAvg")
   // CovPopulation, CovSample
   private val veloxCovarIntermediateDataOrder: Seq[String] = Seq("ck", "n", "xAvg", "yAvg")
-  // Skewness
-  private val veloxSkewnessIntermediateDataOrder: Seq[String] = Seq("n", "avg", "m2", "m3", "m4")
+  // Skewness, Kurtosis
+  private val veloxCentralMomentAggIntermediateDataOrder: Seq[String] =
+    Seq("n", "avg", "m2", "m3", "m4")
 
   // Agg functions with inconsistent types of intermediate data between Velox and Spark.
   // StddevSamp, StddevPop, VarianceSamp, VariancePop
@@ -43,8 +44,8 @@ object VeloxIntermediateData {
   // Corr
   private val veloxCorrIntermediateTypes: Seq[DataType] =
     Seq(DoubleType, LongType, DoubleType, DoubleType, DoubleType, DoubleType)
-  // Skewness
-  private val veloxSkewnessIntermediateTypes: Seq[DataType] =
+  // Skewness, Kurtosis
+  private val veloxCentralMomentAggIntermediateTypes: Seq[DataType] =
     Seq(LongType, DoubleType, DoubleType, DoubleType, DoubleType)
 
   /**
@@ -62,8 +63,8 @@ object VeloxIntermediateData {
         veloxCorrIntermediateDataOrder
       case _: CovPopulation | _: CovSample =>
         veloxCovarIntermediateDataOrder
-      case _: Skewness =>
-        veloxSkewnessIntermediateDataOrder
+      case _: Skewness | _: Kurtosis =>
+        veloxCentralMomentAggIntermediateDataOrder
       case _ =>
         aggFunc.aggBufferAttributes.map(_.name)
     }
@@ -143,8 +144,8 @@ object VeloxIntermediateData {
           Some(veloxCovarIntermediateTypes)
         case _: StddevSamp | _: StddevPop | _: VarianceSamp | _: VariancePop =>
           Some(veloxVarianceIntermediateTypes)
-        case _: Skewness =>
-          Some(veloxSkewnessIntermediateTypes)
+        case _: Skewness | _: Kurtosis =>
+          Some(veloxCentralMomentAggIntermediateTypes)
         case _ if aggFunc.aggBufferAttributes.size > 1 =>
           Some(aggFunc.aggBufferAttributes.map(_.dataType))
         case _ => None
