@@ -273,7 +273,7 @@ jobs:
   #           -d=OFFHEAP_SIZE:2g,spark.memory.offHeap.size=2g \
   #           -d=OFFHEAP_SIZE:1g,spark.memory.offHeap.size=1g || true
 
-  run-tpc-test-centos8-celeborn:
+  run-tpc-test-ubuntu-2204-celeborn:
      needs: build-native-lib
      strategy:
        fail-fast: false
@@ -281,7 +281,7 @@ jobs:
          spark: ["spark-3.2"]
          celeborn: ["celeborn-0.4.0", "celeborn-0.3.2"]
      runs-on: ubuntu-20.04
-     container: centos:8
+     container: ubuntu:22.04
      steps:
        - uses: actions/checkout@v2
        - name: Download All Artifacts
@@ -289,31 +289,21 @@ jobs:
          with:
            name: velox-native-lib-${{github.sha}}
            path: ./cpp/build/releases
-       - name: Update mirror list
-         run: |
-           sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-* || true
-           sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-* || true
        - name: Setup java and maven
          run: |
-           yum update -y && yum install -y java-1.8.0-openjdk-devel wget
-           wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
-           tar -xvf apache-maven-3.8.8-bin.tar.gz
-           mv apache-maven-3.8.8 /usr/lib/maven
+           apt-get update && apt-get install -y openjdk-8-jdk maven wget
        - name: Build for Spark ${{ matrix.spark }}
          run: |
            cd $GITHUB_WORKSPACE/ 
-           export MAVEN_HOME=/usr/lib/maven
-           export PATH=${PATH}:${MAVEN_HOME}/bin
            mvn clean install -P${{ matrix.spark }} -Pbackends-velox,rss -DskipTests
        - name: TPC-H SF1.0 && TPC-DS SF1.0 Parquet local spark3.2 with ${{ matrix.celeborn }}
          run: |
-           export MAVEN_HOME=/usr/lib/maven
-           export PATH=${PATH}:${MAVEN_HOME}/bin
-           export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk
+           export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
            EXTRA_PROFILE=""
-           if [ ${{ matrix.celeborn }} == 'celeborn-0.4.0' ]; then
+           if [ "${{ matrix.celeborn }}" = "celeborn-0.4.0" ]; then
              EXTRA_PROFILE="-Pceleborn-0.4"
            fi
+           echo "EXTRA_PROFILE: ${EXTRA_PROFILE}"
            cd /opt && mkdir -p celeborn && \
            wget https://archive.apache.org/dist/incubator/celeborn/${{ matrix.celeborn }}-incubating/apache-${{ matrix.celeborn }}-incubating-bin.tgz && \
            tar xzf apache-${{ matrix.celeborn }}-incubating-bin.tgz -C /opt/celeborn --strip-components=1 && cd celeborn && \
@@ -349,7 +339,7 @@ jobs:
       - name: Gluten CPP Test
         run: |
           cd $GITHUB_WORKSPACE/cpp/build && \
-          ctest -V && \
+          ctest -V
       - name: Setup java and maven
         run: |
           wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
