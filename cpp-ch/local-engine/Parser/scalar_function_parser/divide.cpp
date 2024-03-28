@@ -58,7 +58,7 @@ public:
         const auto * right_arg = new_args[1];
         
         if (isDecimal(removeNullable(left_arg->result_type)) || isDecimal(removeNullable(right_arg->result_type)))
-            return toFunctionNode(actions_dag, "sparkDivideDecimal", {left_arg, right_arg});
+            return convertNodeTypeIfNeeded(substrait_func, toFunctionNode(actions_dag, "sparkDivideDecimal", {left_arg, right_arg}), actions_dag);
         
         const auto * divide_node = toFunctionNode(actions_dag, "divide", {left_arg, right_arg});
         DataTypePtr result_type = divide_node->result_type;
