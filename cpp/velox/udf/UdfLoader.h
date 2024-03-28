@@ -34,8 +34,13 @@ class UdfLoader {
     std::string returnType;
     std::string argTypes;
 
+    std::string intermediateType{};
+
     UdfSignature(std::string name, std::string returnType, std::string argTypes)
         : name(name), returnType(returnType), argTypes(argTypes) {}
+
+    UdfSignature(std::string name, std::string returnType, std::string argTypes, std::string intermediateType)
+        : name(name), returnType(returnType), argTypes(argTypes), intermediateType(intermediateType) {}
 
     ~UdfSignature() = default;
   };
@@ -46,10 +51,9 @@ class UdfLoader {
 
   std::unordered_set<std::shared_ptr<UdfSignature>> getRegisteredUdfSignatures();
 
-  void registerUdf();
+  std::unordered_set<std::string> getRegisteredUdafNames();
 
-  // unused
-  bool validateUdf(const std::string& name, const std::vector<facebook::velox::TypePtr>& argTypes);
+  void registerUdf();
 
  private:
   void loadUdfLibraries0(const std::vector<std::string>& libPaths);
@@ -81,5 +85,8 @@ class UdfLoader {
   facebook::velox::type::fbhive::HiveTypeParser parser_{};
   google::protobuf::Arena arena_{};
   VeloxToSubstraitTypeConvertor convertor_{};
+
+  std::unordered_set<std::shared_ptr<UdfSignature>> signatures_;
+  std::unordered_set<std::string> names_;
 };
 } // namespace gluten

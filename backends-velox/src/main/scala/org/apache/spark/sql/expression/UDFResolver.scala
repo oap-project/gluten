@@ -27,9 +27,12 @@ import io.glutenproject.vectorized.JniWorkspace
 import org.apache.spark.{SparkConf, SparkContext, SparkEnv, SparkFiles}
 import org.apache.spark.deploy.SparkHadoopUtil
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.FunctionIdentifier
+import org.apache.spark.sql.catalyst.{FunctionIdentifier, InternalRow}
 import org.apache.spark.sql.catalyst.analysis.FunctionRegistry.FunctionBuilder
-import org.apache.spark.sql.catalyst.expressions.{Expression, ExpressionInfo}
+import org.apache.spark.sql.catalyst.expressions.{AttributeReference, Expression, ExpressionInfo}
+import org.apache.spark.sql.catalyst.expressions.aggregate.AggregateFunction
+import org.apache.spark.sql.catalyst.expressions.codegen.{CodegenContext, ExprCode}
+import org.apache.spark.sql.errors.QueryExecutionErrors
 import org.apache.spark.sql.types.{DataType, StructType}
 import org.apache.spark.util.Utils
 
@@ -41,6 +44,31 @@ import java.nio.file.{Files, FileVisitOption, Paths}
 
 import scala.collection.JavaConverters.asScalaIteratorConverter
 import scala.collection.mutable
+
+case class UserDefinedAggregateFunction(
+    name: String,
+    dataType: DataType,
+    nullable: Boolean,
+    children: Seq[Expression],
+    override val aggBufferAttributes: Seq[AttributeReference])
+  extends AggregateFunction {
+
+  override def aggBufferSchema: StructType = StructType.fromAttributes(aggBufferAttributes)
+
+  override val inputAggBufferAttributes: Seq[AttributeReference] =
+    aggBufferAttributes.map(_.newInstance())
+
+  final override def eval(input: InternalRow = null): Any =
+    throw QueryExecutionErrors.cannotEvaluateExpressionError(this)
+
+  final override protected def doGenCode(ctx: CodegenContext, ev: ExprCode): ExprCode =
+    throw QueryExecutionErrors.cannotGenerateCodeForExpressionError(this)
+
+  override protected def withNewChildrenInternal(
+      newChildren: IndexedSeq[Expression]): Expression = {
+    this.copy(children = newChildren)
+  }
+}
 
 case class UDFExpression(
     name: String,
@@ -78,8 +106,13 @@ case class UDFExpression(
 
 object UDFResolver extends Logging {
   private val UDFNames = mutable.HashSet[String]()
-
+  // (udf_name, arg1, arg2, ...) => return type
   private val UDFMap = mutable.HashMap[(String, Seq[DataType]), ExpressionType]()
+
+  private val UDAFNames = mutable.HashSet[String]()
+  // (udaf_name, arg1, arg2, ...) => return type, intermediate attributes
+  private val UDAFMap =
+    mutable.HashMap[(String, Seq[DataType]), (ExpressionType, Seq[AttributeReference])]()
 
   private val LIB_EXTENSION = ".so"
 
@@ -103,7 +136,41 @@ object UDFResolver extends Logging {
       (name, argTypes.dataType.asInstanceOf[StructType].fields.map(_.dataType)),
       returnType)
     UDFNames += name
-    logInfo(s"Registered UDF: $name -> $returnType")
+    logInfo(s"Registered UDF: $name($argTypes) -> $returnType")
+  }
+
+  def registerUDAF(
+      name: String,
+      returnType: Array[Byte],
+      argTypes: Array[Byte],
+      intermediateTypes: Array[Byte]): Unit = {
+    registerUDAF(
+      name,
+      ConverterUtils.parseFromBytes(returnType),
+      ConverterUtils.parseFromBytes(argTypes),
+      ConverterUtils.parseFromBytes(intermediateTypes)
+    )
+  }
+
+  private def registerUDAF(
+      name: String,
+      returnType: ExpressionType,
+      argTypes: ExpressionType,
+      intermediateTypes: ExpressionType): Unit = {
+    assert(argTypes.dataType.isInstanceOf[StructType])
+    assert(intermediateTypes.dataType.isInstanceOf[StructType])
+
+    val aggBufferAttributes =
+      intermediateTypes.dataType.asInstanceOf[StructType].fields.zipWithIndex.map {
+        case (f, index) =>
+          AttributeReference(s"inter_$index", f.dataType, f.nullable)()
+      }
+    UDAFMap.put(
+      (name, argTypes.dataType.asInstanceOf[StructType].fields.map(_.dataType)),
+      (returnType, aggBufferAttributes)
+    )
+    UDAFNames += name
+    logInfo(s"Registered UDAF: $name($argTypes) -> $returnType")
   }
 
   def parseName(name: String): (String, String) = {
@@ -241,13 +308,41 @@ object UDFResolver extends Logging {
               new FunctionIdentifier(name),
               new ExpressionInfo(classOf[UDFExpression].getName, name),
               (e: Seq[Expression]) => getUdfExpression(name)(e))
+        }.toSeq ++ UDAFNames.map {
+          name =>
+            (
+              new FunctionIdentifier(name),
+              new ExpressionInfo(classOf[UserDefinedAggregateFunction].getName, name),
+              (e: Seq[Expression]) => getUdafExpression(name)(e))
         }.toSeq
     }
   }
 
   private def getUdfExpression(name: String)(children: Seq[Expression]) = {
     val expressionType =
-      UDFMap.getOrElse((name, children.map(_.dataType)), throw new IllegalStateException())
+      UDFMap.getOrElse(
+        (name, children.map(_.dataType)),
+        throw new UnsupportedOperationException(
+          s"UDF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} " +
+            s"is not registered.")
+      )
     UDFExpression(name, expressionType.dataType, expressionType.nullable, children)
+  }
+
+  private def getUdafExpression(name: String)(children: Seq[Expression]) = {
+    val (expressionType, aggBufferAttributes) =
+      UDAFMap.getOrElse(
+        (name, children.map(_.dataType)),
+        throw new UnsupportedOperationException(
+          s"UDAF $name -> ${children.map(_.dataType.simpleString).mkString(", ")} " +
+            s"is not registered.")
+      )
+
+    UserDefinedAggregateFunction(
+      name,
+      expressionType.dataType,
+      expressionType.nullable,
+      children,
+      aggBufferAttributes)
   }
 }

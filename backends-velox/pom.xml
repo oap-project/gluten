@@ -225,7 +225,9 @@
           <junitxml>.</junitxml>
           <tagsToExclude>${tagsToExclude}</tagsToExclude>
           <systemProperties>
-            <velox.udf.lib.path>${cpp.build.dir}/velox/udf/examples/libmyudf.so</velox.udf.lib.path>
+            <velox.udf.lib.path>
+              ${cpp.build.dir}/velox/udf/examples/libmyudf.so,${cpp.build.dir}/velox/udf/examples/libmyudaf.so
+            </velox.udf.lib.path>
           </systemProperties>
         </configuration>
       </plugin>

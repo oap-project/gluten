@@ -31,6 +31,7 @@ import io.glutenproject.utils.VeloxIntermediateData
 import org.apache.spark.sql.catalyst.expressions._
 import org.apache.spark.sql.catalyst.expressions.aggregate._
 import org.apache.spark.sql.execution._
+import org.apache.spark.sql.expression.UserDefinedAggregateFunction
 import org.apache.spark.sql.internal.SQLConf
 import org.apache.spark.sql.types._
 
@@ -715,6 +716,8 @@ object VeloxAggregateFunctionsBuilder {
         if (ignoreNulls) sigName = Some(ExpressionNames.FIRST_IGNORE_NULL)
       case Last(_, ignoreNulls) =>
         if (ignoreNulls) sigName = Some(ExpressionNames.LAST_IGNORE_NULL)
+      case UserDefinedAggregateFunction(name, _, _, _, _) =>
+        sigName = Some(name)
       case _ =>
     }
 

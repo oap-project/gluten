@@ -24,6 +24,7 @@
 namespace {
 
 using namespace facebook::velox;
+using namespace facebook::velox::exec;
 
 static const char* kInteger = "int";
 static const char* kBigInt = "bigint";
@@ -118,10 +119,11 @@ const char* myUdf1Arg2[] = {kBigInt};
 const char* myUdf2Arg1[] = {kBigInt};
 const char* myDateArg[] = {kDate, kInteger};
 DEFINE_GET_UDF_ENTRIES {
-  udfEntries[0] = {"myudf1", kInteger, 1, myUdf1Arg1};
-  udfEntries[1] = {"myudf1", kBigInt, 1, myUdf1Arg2};
-  udfEntries[2] = {"myudf2", kBigInt, 1, myUdf2Arg1};
-  udfEntries[3] = {"mydate", kDate, 2, myDateArg};
+  int index = 0;
+  udfEntries[index++] = {"myudf1", kInteger, 1, myUdf1Arg1};
+  udfEntries[index++] = {"myudf1", kBigInt, 1, myUdf1Arg2};
+  udfEntries[index++] = {"myudf2", kBigInt, 1, myUdf2Arg1};
+  udfEntries[index++] = {"mydate", kDate, 2, myDateArg};
 }
 
 DEFINE_REGISTER_UDF {

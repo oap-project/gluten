@@ -20,6 +20,7 @@
 #include <re2/re2.h>
 #include <string>
 #include "TypeUtils.h"
+#include "udf/UdfLoader.h"
 #include "utils/Common.h"
 #include "velox/core/ExpressionEvaluator.h"
 #include "velox/exec/Aggregate.h"
@@ -1146,9 +1147,11 @@ bool SubstraitToVeloxPlanValidator::validate(const ::substrait::AggregateRel& ag
       "approx_distinct",
       "skewness"};
 
+  auto udfFuncs = UdfLoader::getInstance()->getRegisteredUdafNames();
+
   for (const auto& funcSpec : funcSpecs) {
     auto funcName = SubstraitParser::getNameBeforeDelimiter(funcSpec);
-    if (supportedAggFuncs.find(funcName) == supportedAggFuncs.end()) {
+    if (supportedAggFuncs.find(funcName) == supportedAggFuncs.end() && udfFuncs.find(funcName) == udfFuncs.end()) {
       LOG_VALIDATION_MSG(funcName + " was not supported in AggregateRel.");
       return false;
     }

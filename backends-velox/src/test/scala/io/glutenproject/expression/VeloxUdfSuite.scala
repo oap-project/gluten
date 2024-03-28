@@ -79,7 +79,22 @@ abstract class VeloxUdfSuite extends GlutenQueryTest with SQLHelper {
                          |  mydate(cast('2024-03-25' as date), 5)
                          |""".stripMargin)
     df.collect()
-    assert(df.collect().sameElements(Array(Row(6, 6L, 105, Date.valueOf("2024-03-30")))))
+    assert(
+      df.collect()
+        .sameElements(Array(Row(6, 6L, 105, Date.valueOf("2024-03-30")))))
+  }
+
+  test("test udaf") {
+    val df = spark.sql("""select
+                         |  myavg(1),
+                         |  myavg(1L),
+                         |  myavg(cast(1.0 as float)),
+                         |  myavg(cast(1.0 as double))
+                         |""".stripMargin)
+    df.collect()
+    assert(
+      df.collect()
+        .sameElements(Array(Row(1.0, 1.0, 1.0, 1.0))))
   }
 }
 
