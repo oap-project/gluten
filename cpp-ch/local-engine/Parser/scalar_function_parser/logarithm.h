@@ -38,7 +38,7 @@ public:
     explicit FunctionParserLogBase(SerializedPlanParser * plan_parser_) : FunctionParser(plan_parser_) {}
     ~FunctionParserLogBase() override = default;
 
-    virtual String getCHFunctionName() const { return "log"; }
+    virtual String getCHFunctionName() const = 0;
     virtual const DB::ActionsDAG::Node * getParameterLowerBound(ActionsDAGPtr &, const DataTypePtr &) const { return nullptr; }
 
     const ActionsDAG::Node * parse(

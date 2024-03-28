@@ -28,7 +28,7 @@ public:
     static constexpr auto name = "log2";
 
     String getName() const override { return name; }
-    String getCHFunctionName() const override { return "log2"; }
+    String getCHFunctionName() const override { return name; }
     const DB::ActionsDAG::Node * getParameterLowerBound(ActionsDAGPtr & actions_dag, const DataTypePtr & data_type) const override
     {
         return addColumnToActionsDAG(actions_dag, data_type, 0.0);
