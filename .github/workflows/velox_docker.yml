@@ -22,6 +22,7 @@ on:
       - 'pom.xml'
       - 'backends-velox/**'
       - 'gluten-celeborn/**'
+      - 'gluten-uniffle/**'
       - 'gluten-core/**'
       - 'gluten-data/**'
       - 'gluten-delta/**'
@@ -340,6 +341,61 @@ jobs:
   #           --local --preset=velox-with-celeborn --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
   #         bash /opt/celeborn/sbin/stop-worker.sh \
   #         && bash /opt/celeborn/sbin/stop-master.sh
+
+  run-tpc-test-centos8-uniffle:
+    needs: build-native-lib
+    strategy:
+      fail-fast: false
+      matrix:
+        spark: ["spark-3.2"]
+    runs-on: ubuntu-20.04
+    container: centos:8
+    steps:
+      - uses: actions/checkout@v2
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: velox-native-lib-${{github.sha}}
+          path: ./cpp/build/releases
+      - name: Update mirror list
+        run: |
+          sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-* || true
+          sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-* || true
+      - name: Setup java and maven
+        run: |
+          yum update -y && yum install -y java-1.8.0-openjdk-devel wget
+          wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
+          tar -xvf apache-maven-3.8.8-bin.tar.gz
+          mv apache-maven-3.8.8 /usr/lib/maven
+      - name: Build for Spark ${{ matrix.spark }}
+        run: |
+          cd $GITHUB_WORKSPACE/ && \
+          export MAVEN_HOME=/usr/lib/maven && \
+          export PATH=${PATH}:${MAVEN_HOME}/bin && \
+          mvn clean install -P${{ matrix.spark }} -Pbackends-velox -Prss-uniffle -DskipTests
+      - name: TPC-H SF1.0 && TPC-DS SF1.0 Parquet local spark3.2 with uniffle 0.8.0
+        run: |
+          export MAVEN_HOME=/usr/lib/maven && \
+          export PATH=${PATH}:${MAVEN_HOME}/bin && \
+          export export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk && \
+          cd /opt && \
+          wget -nv https://archive.apache.org/dist/incubator/uniffle/0.8.0/apache-uniffle-0.8.0-incubating-bin.tar.gz && \
+          tar xzf apache-uniffle-0.8.0-incubating-bin.tar.gz -C /opt/ && mv /opt/rss-0.8.0-hadoop2.8 /opt/uniffle && \
+          wget -nv https://archive.apache.org/dist/hadoop/common/hadoop-2.8.5/hadoop-2.8.5.tar.gz && \
+          tar xzf hadoop-2.8.5.tar.gz -C /opt/ && \
+          cd /opt/uniffle && mkdir shuffle_data && \
+          echo -e "XMX_SIZE=16g\nHADOOP_HOME=/opt/hadoop-2.8.5" > ./bin/rss-env.sh && \
+          echo -e "rss.coordinator.server.periodic.output.interval.times 1\nrss.coordinator.shuffle.nodes.max 1\nrss.rpc.server.port 19999" > ./conf/coordinator.conf && \
+          echo -e "rss.server.heartbeat.delay 3000\nrss.rpc.server.port 19997\nrss.jetty.http.port 19996\nrss.server.netty.port 19995\nrss.storage.basePath /opt/uniffle/shuffle_data\nrss.storage.type MEMORY_LOCALFILE\nrss.coordinator.quorum localhost:19999\nrss.server.flush.thread.alive 5\nrss.server.single.buffer.flush.threshold 64m" > ./conf/server.conf && \
+          bash ./bin/start-coordinator.sh && bash ./bin/start-shuffle-server.sh && \
+          sleep 120 && \
+          tail -n 200 ./logs/coordinator.log && \
+          tail -n 200 ./logs/shuffle_server.log && \
+          cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss-uniffle && \
+          GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+            --local --preset=velox-with-uniffle --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
+          bash /opt/uniffle/bin/stop-coordinator.sh && bash /opt/uniffle/bin/stop-shuffle-server.sh && \
+          rm -rf /opt/uniffle && rm -rf /opt/hadoop-2.8.5
 
   run-spark-test-spark32:
     runs-on: ubuntu-20.04

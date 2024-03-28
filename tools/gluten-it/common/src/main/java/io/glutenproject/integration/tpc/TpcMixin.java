@@ -35,10 +35,10 @@ public class TpcMixin {
   @CommandLine.Option(required = true, names = {"--benchmark-type"}, description = "TPC benchmark type: h, ds", defaultValue = "h")
   private String benchmarkType;
 
-  @CommandLine.Option(names = {"-p", "--preset"}, description = "Preset used: vanilla, velox, velox-with-celeborn...", defaultValue = "velox")
+  @CommandLine.Option(names = {"-p", "--preset"}, description = "Preset used: vanilla, velox, velox-with-celeborn, velox-with-uniffle...", defaultValue = "velox")
   private String preset;
 
-  @CommandLine.Option(names = {"--baseline-preset"}, description = "Baseline preset used: vanilla, velox, velox-with-celeborn...", defaultValue = "vanilla")
+  @CommandLine.Option(names = {"--baseline-preset"}, description = "Baseline preset used: vanilla, velox, velox-with-celeborn, velox-with-uniffle...", defaultValue = "vanilla")
   private String baselinePreset;
 
   @CommandLine.Option(names = {"--log-level"}, description = "Set log level: 0 for DEBUG, 1 for INFO, 2 for WARN", defaultValue = "2")
@@ -91,6 +91,9 @@ public class TpcMixin {
         break;
       case "velox-with-celeborn":
         conf = Constants.VELOX_WITH_CELEBORN_CONF();
+        break;
+      case "velox-with-uniffle":
+        conf = Constants.VELOX_WITH_UNIFFLE_CONF();
         break;
       default:
         throw new IllegalArgumentException("Preset not found: " + preset);

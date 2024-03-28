@@ -58,6 +58,25 @@ object Constants {
     .set("spark.celeborn.push.data.timeout", "600s")
     .set("spark.celeborn.push.limit.inFlight.timeout", "1200s")
 
+  val VELOX_WITH_UNIFFLE_CONF: SparkConf = new SparkConf(false)
+    .set("spark.gluten.sql.columnar.forceShuffledHashJoin", "true")
+    .set("spark.sql.parquet.enableVectorizedReader", "true")
+    .set("spark.plugins", "io.glutenproject.GlutenPlugin")
+    .set("spark.shuffle.manager", "org.apache.spark.shuffle.gluten.uniffle.GlutenRssShuffleManager")
+    .set("spark.rss.coordinator.quorum", "localhost:19999")
+    .set("spark.rss.storage.type", "MEMORY_LOCALFILE")
+    .set("spark.rss.client.type", "GRPC_NETTY")
+    .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    .set("spark.shuffle.service.enabled", "false")
+    .set("spark.sql.adaptive.localShuffleReader.enabled", "false")
+    .set("spark.dynamicAllocation.enabled", "false")
+    .set("spark.sql.optimizer.runtime.bloomFilter.enabled", "true")
+    .set("spark.sql.optimizer.runtime.bloomFilter.applicationSideScanSizeThreshold", "0")
+    .set(
+      "spark.gluten.sql.columnar.physicalJoinOptimizeEnable",
+      "false"
+    )
+
   @deprecated
   val TYPE_MODIFIER_DATE_AS_DOUBLE: TypeModifier =
     new TypeModifier(TypeUtils.typeAccepts(_, DateType), DoubleType) {

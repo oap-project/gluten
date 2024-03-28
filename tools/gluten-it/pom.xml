@@ -22,6 +22,7 @@
     <scala.binary.version>2.12</scala.binary.version>
     <spark.major.version>3</spark.major.version>
     <celeborn.version>0.3.0-incubating</celeborn.version>
+    <uniffle.version>0.8.0</uniffle.version>
     <gluten.version>1.2.0-SNAPSHOT</gluten.version>
     <guava.version>32.0.1-jre</guava.version>
     <tpch.version>1.1</tpch.version>
