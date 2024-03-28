@@ -613,4 +613,39 @@ class ScalarFunctionsValidateSuite extends FunctionsValidateTest {
     }
   }
 
+  test("bitwise_and") {
+    runQueryAndCompare(
+      "select cast(l_orderkey as tinyint) & cast(l_partkey as tinyint)," +
+        " cast(l_orderkey as int) & cast(l_partkey as int), l_orderkey & l_partkey" +
+        " from lineitem") {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+  }
+
+  test("bitwise_not") {
+    runQueryAndCompare(
+      "select ~(cast(l_orderkey as tinyint)), ~(cast(l_orderkey as int)), ~l_orderkey" +
+        " from lineitem") {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+  }
+
+  test("bitwise_or") {
+    runQueryAndCompare(
+      "select cast(l_orderkey as tinyint) | cast(l_partkey as tinyint)," +
+        " cast(l_orderkey as int) | cast(l_partkey as int), l_orderkey | l_partkey" +
+        " from lineitem") {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+  }
+
+  test("bitwise_xor") {
+    runQueryAndCompare(
+      "select cast(l_orderkey as tinyint) ^ cast(l_partkey as tinyint)," +
+        " cast(l_orderkey as int) ^ cast(l_partkey as int), l_orderkey ^ l_partkey" +
+        " from lineitem") {
+      checkOperatorMatch[ProjectExecTransformer]
+    }
+  }
+
 }
