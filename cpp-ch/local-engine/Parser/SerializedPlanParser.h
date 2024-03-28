@@ -137,7 +137,7 @@ static const std::map<std::string, std::string> SCALAR_FUNCTIONS
         "char_length"}, /// Notice: when input argument is binary type, corresponding ch function is length instead of char_length
        {"replace", "replaceAll"},
        {"regexp_replace", "replaceRegexpAll"},
-       {"regexp_extract", "regexpExtract"},
+       // {"regexp_extract", "regexpExtract"},
        {"regexp_extract_all", "regexpExtractAllSpark"},
        {"chr", "char"},
        {"rlike", "match"},
