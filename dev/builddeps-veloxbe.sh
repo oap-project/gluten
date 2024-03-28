@@ -32,6 +32,7 @@ VELOX_BRANCH=""
 VELOX_HOME=""
 VELOX_PARAMETER=""
 COMPILE_ARROW_JAVA=OFF
+GLULTEN_CPP_ONLY=OFF
 
 # set default number of threads as cpu cores minus 2
 if [[ "$(uname)" == "Darwin" ]]; then
@@ -143,7 +144,10 @@ do
         NUM_THREADS=("${arg#*=}")
         shift # Remove argument name from processing
         ;;
-	      *)
+         --gluten_cpp_only=*)
+	    GLULTEN_CPP_ONLY=("${arg#*=}")
+	    ;;
+	    *)
         OTHER_ARGUMENTS+=("$1")
         shift # Remove generic argument from processing
         ;;
@@ -199,7 +203,9 @@ function build_gluten_cpp {
 }
 
 function build_velox_backend {
-  build_velox
+  if [ "$GLULTEN_CPP_ONLY" = "OFF" ]; then
+      build_velox
+  fi
   build_gluten_cpp
 }
 
