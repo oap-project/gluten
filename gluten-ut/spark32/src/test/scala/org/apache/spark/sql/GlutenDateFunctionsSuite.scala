@@ -248,4 +248,42 @@ class GlutenDateFunctionsSuite extends DateFunctionsSuite with GlutenSQLTestsTra
         }
     }
   }
+
+  testGluten("to_utc_timestamp with literal zone") {
+    val df = Seq(
+      (Timestamp.valueOf("2015-07-24 00:00:00"), "2015-07-24 00:00:00"),
+      (Timestamp.valueOf("2015-07-25 00:00:00"), "2015-07-25 00:00:00")
+    ).toDF("a", "b")
+    checkAnswer(
+      df.select(to_utc_timestamp(col("a"), "America/Los_Angeles")),
+      Seq(
+        Row(Timestamp.valueOf("2015-07-24 07:00:00")),
+        Row(Timestamp.valueOf("2015-07-25 07:00:00")))
+    )
+    checkAnswer(
+      df.select(to_utc_timestamp(col("b"), "America/Los_Angeles")),
+      Seq(
+        Row(Timestamp.valueOf("2015-07-24 07:00:00")),
+        Row(Timestamp.valueOf("2015-07-25 07:00:00")))
+    )
+  }
+
+  testGluten("to_utc_timestamp with column zone") {
+    val df = Seq(
+      (Timestamp.valueOf("2015-07-24 00:00:00"), "2015-07-24 00:00:00", "America/Los_Angeles"),
+      (Timestamp.valueOf("2015-07-25 00:00:00"), "2015-07-25 00:00:00", "Europe/Paris")
+    ).toDF("a", "b", "c")
+    checkAnswer(
+      df.select(to_utc_timestamp(col("a"), col("c"))),
+      Seq(
+        Row(Timestamp.valueOf("2015-07-24 07:00:00")),
+        Row(Timestamp.valueOf("2015-07-24 22:00:00")))
+    )
+    checkAnswer(
+      df.select(to_utc_timestamp(col("b"), col("c"))),
+      Seq(
+        Row(Timestamp.valueOf("2015-07-24 07:00:00")),
+        Row(Timestamp.valueOf("2015-07-24 22:00:00")))
+    )
+  }
 }

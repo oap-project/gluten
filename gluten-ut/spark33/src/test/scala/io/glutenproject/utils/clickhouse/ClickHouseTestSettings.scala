@@ -315,6 +315,8 @@ class ClickHouseTestSettings extends BackendTestSettings {
     .exclude("SPARK-30793: truncate timestamps before the epoch to seconds and minutes")
     .excludeGlutenTest("unix_timestamp")
     .excludeGlutenTest("to_unix_timestamp")
+    .exclude("to_utc_timestamp with literal zone")
+    .exclude("to_utc_timestamp with column zone")
   enableSuite[GlutenDeprecatedAPISuite]
   enableSuite[GlutenDynamicPartitionPruningV1SuiteAEOff].excludeGlutenTest(
     "SPARK-32659: Fix the data issue when pruning DPP on non-atomic type")
