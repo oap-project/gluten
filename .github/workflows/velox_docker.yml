@@ -47,7 +47,7 @@ concurrency:
 jobs:
   build-native-lib:
     runs-on: ubuntu-20.04
-    container: inteldpo/gluten-centos-packaging:latest # centos7 with depedencies installed
+    container: inteldpo/gluten-centos-packaging:latest # centos7 with dependencies installed
     steps:
       - uses: actions/checkout@v2
       - name: Build Gluten velox third party
@@ -60,7 +60,7 @@ jobs:
           cd $GITHUB_WORKSPACE/ && \
           sed -i '/^headers/d' ep/build-velox/build/velox_ep/CMakeLists.txt && \
           export NUM_THREADS=4
-          ./dev/builddeps-veloxbe.sh --build_tests=OFF  --build_benchmarks=OFF --enable_s3=ON \
+          ./dev/builddeps-veloxbe.sh --build_tests=OFF --build_benchmarks=OFF --enable_s3=ON \
           --enable_gcs=ON --enable_hdfs=ON --enable_abfs=ON
 
       - uses: actions/upload-artifact@v2
@@ -275,73 +275,51 @@ jobs:
   #           -d=OFFHEAP_SIZE:2g,spark.memory.offHeap.size=2g \
   #           -d=OFFHEAP_SIZE:1g,spark.memory.offHeap.size=1g || true
 
-  # run-tpc-test-centos8-celeborn:
-  #   needs: build-native-lib
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       spark: ["spark-3.2"]
-  #   runs-on: ubuntu-20.04
-  #   container: centos:8
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Download All Artifacts
-  #       uses: actions/download-artifact@v2
-  #       with:
-  #         name: velox-native-lib-${{github.sha}}
-  #         path: ./cpp/build/releases
-  #     - name: Update mirror list
-  #       run: |
-  #         sed -i -e "s|mirrorlist=|#mirrorlist=|g" /etc/yum.repos.d/CentOS-* || true
-  #         sed -i -e "s|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g" /etc/yum.repos.d/CentOS-* || true
-  #     - name: Setup java and maven
-  #       run: |
-  #         yum update -y && yum install -y java-1.8.0-openjdk-devel wget
-  #         wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
-  #         tar -xvf apache-maven-3.8.8-bin.tar.gz
-  #         mv apache-maven-3.8.8 /usr/lib/maven
-  #     - name: Build for Spark ${{ matrix.spark }}
-  #       run: |
-  #         cd $GITHUB_WORKSPACE/ 
-  #         export MAVEN_HOME=/usr/lib/maven
-  #         export PATH=${PATH}:${MAVEN_HOME}/bin
-  #         mvn -ntp clean install -P${{ matrix.spark }} -Pbackends-velox -DskipTests
-  #     - name: TPC-H SF1.0 && TPC-DS SF1.0 Parquet local spark3.2 with Celeborn 0.4.0
-  #       run: |
-  #         export MAVEN_HOME=/usr/lib/maven
-  #         export PATH=${PATH}:${MAVEN_HOME}/bin
-  #         cd /opt && mkdir -p celeborn && \
-  #         wget https://archive.apache.org/dist/incubator/celeborn/celeborn-0.4.0-incubating/apache-celeborn-0.4.0-incubating-bin.tgz && \
-  #         tar xzf apache-celeborn-0.4.0-incubating-bin.tgz -C /opt/celeborn --strip-components=1 && cd celeborn && \
-  #         mv ./conf/celeborn-env.sh.template ./conf/celeborn-env.sh && \
-  #         echo -e "CELEBORN_MASTER_MEMORY=4g\nCELEBORN_WORKER_MEMORY=4g\nCELEBORN_WORKER_OFFHEAP_MEMORY=8g" > ./conf/celeborn-env.sh && \
-  #         echo -e "celeborn.worker.commitFiles.threads 128\nceleborn.worker.sortPartition.threads 64" > ./conf/celeborn-defaults.conf \
-  #         && bash ./sbin/start-master.sh && bash ./sbin/start-worker.sh && \
-  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn -ntp clean install -Pspark-3.2,rss,celeborn-0.4 \
-  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
-  #           --local --preset=velox-with-celeborn --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
-  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
-  #           --local --preset=velox-with-celeborn --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
-  #         bash /opt/celeborn/sbin/stop-worker.sh \
-  #         && bash /opt/celeborn/sbin/stop-master.sh && rm -rf /opt/celeborn
-  #     - name: TPC-H SF1.0 && TPC-DS SF10.0 Parquet local spark3.2 with Celeborn 0.3.2
-  #       run: |
-  #         export MAVEN_HOME=/usr/lib/maven
-  #         export PATH=${PATH}:${MAVEN_HOME}/bin
-  #         cd /opt && mkdir -p celeborn && \
-  #         wget https://archive.apache.org/dist/incubator/celeborn/celeborn-0.3.2-incubating/apache-celeborn-0.3.2-incubating-bin.tgz && \
-  #         tar xzf apache-celeborn-0.3.2-incubating-bin.tgz -C /opt/celeborn --strip-components=1 && cd celeborn && \
-  #         mv ./conf/celeborn-env.sh.template ./conf/celeborn-env.sh && \
-  #         echo -e "CELEBORN_MASTER_MEMORY=4g\nCELEBORN_WORKER_MEMORY=4g\nCELEBORN_WORKER_OFFHEAP_MEMORY=8g" > ./conf/celeborn-env.sh && \
-  #         echo -e "celeborn.worker.commitFiles.threads 128\nceleborn.worker.sortPartition.threads 64" > ./conf/celeborn-defaults.conf \
-  #         && bash ./sbin/start-master.sh && bash ./sbin/start-worker.sh && \
-  #         cd $GITHUB_WORKSPACE/tools/gluten-it && mvn -ntp clean install -Pspark-3.2,rss \
-  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
-  #           --local --preset=velox-with-celeborn --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 \
-  #         && GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
-  #           --local --preset=velox-with-celeborn --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
-  #         bash /opt/celeborn/sbin/stop-worker.sh \
-  #         && bash /opt/celeborn/sbin/stop-master.sh
+  run-tpc-test-ubuntu-2204-celeborn:
+     needs: build-native-lib
+     strategy:
+       fail-fast: false
+       matrix:
+         spark: ["spark-3.2"]
+         celeborn: ["celeborn-0.4.0", "celeborn-0.3.2"]
+     runs-on: ubuntu-20.04
+     container: ubuntu:22.04
+     steps:
+       - uses: actions/checkout@v2
+       - name: Download All Artifacts
+         uses: actions/download-artifact@v2
+         with:
+           name: velox-native-lib-${{github.sha}}
+           path: ./cpp/build/releases
+       - name: Setup java and maven
+         run: |
+           apt-get update && apt-get install -y openjdk-8-jdk maven wget
+       - name: Build for Spark ${{ matrix.spark }}
+         run: |
+           cd $GITHUB_WORKSPACE/ 
+           mvn clean install -P${{ matrix.spark }} -Pbackends-velox,rss -DskipTests
+       - name: TPC-H SF1.0 && TPC-DS SF1.0 Parquet local spark3.2 with ${{ matrix.celeborn }}
+         run: |
+           export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+           EXTRA_PROFILE=""
+           if [ "${{ matrix.celeborn }}" = "celeborn-0.4.0" ]; then
+             EXTRA_PROFILE="-Pceleborn-0.4"
+           fi
+           echo "EXTRA_PROFILE: ${EXTRA_PROFILE}"
+           cd /opt && mkdir -p celeborn && \
+           wget https://archive.apache.org/dist/incubator/celeborn/${{ matrix.celeborn }}-incubating/apache-${{ matrix.celeborn }}-incubating-bin.tgz && \
+           tar xzf apache-${{ matrix.celeborn }}-incubating-bin.tgz -C /opt/celeborn --strip-components=1 && cd celeborn && \
+           mv ./conf/celeborn-env.sh.template ./conf/celeborn-env.sh && \
+           echo -e "CELEBORN_MASTER_MEMORY=4g\nCELEBORN_WORKER_MEMORY=4g\nCELEBORN_WORKER_OFFHEAP_MEMORY=8g" > ./conf/celeborn-env.sh && \
+           echo -e "celeborn.worker.commitFiles.threads 128\nceleborn.worker.sortPartition.threads 64" > ./conf/celeborn-defaults.conf && \
+           bash ./sbin/start-master.sh && bash ./sbin/start-worker.sh && \
+           cd $GITHUB_WORKSPACE/tools/gluten-it && mvn clean install -Pspark-3.2,rss ${EXTRA_PROFILE} && \
+           GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+             --local --preset=velox-with-celeborn --benchmark-type=h --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
+           GLUTEN_IT_JVM_ARGS=-Xmx5G sbin/gluten-it.sh queries-compare \
+             --local --preset=velox-with-celeborn --benchmark-type=ds --error-on-memleak --off-heap-size=10g -s=1.0 --threads=16 --iterations=1 && \
+           bash /opt/celeborn/sbin/stop-worker.sh && \
+           bash /opt/celeborn/sbin/stop-master.sh && rm -rf /opt/celeborn
 
   run-spark-test-spark32:
     runs-on: ubuntu-20.04
@@ -350,7 +328,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Gluten velox third party
         run: |
-          yum install sudo patch java-1.8.0-openjdk-devel wget -y && \
+          yum install sudo patch java-1.8.0-openjdk-devel wget numactl-devel -y && \
           cd ep/build-velox/src && \
           ./get_velox.sh && \
           source /opt/rh/gcc-toolset-9/enable && \
@@ -360,6 +338,10 @@ jobs:
           cd $GITHUB_WORKSPACE/cpp && \
           source /opt/rh/gcc-toolset-9/enable && \
           ./compile.sh --build_velox_backend=ON --build_protobuf=ON --build_tests=ON --build_examples=ON --build_benchmarks=ON
+      - name: Gluten CPP Test
+        run: |
+          cd $GITHUB_WORKSPACE/cpp/build && \
+          ctest -V
       - name: Setup java and maven
         run: |
           wget https://downloads.apache.org/maven/maven-3/3.8.8/binaries/apache-maven-3.8.8-bin.tar.gz
@@ -386,6 +368,11 @@ jobs:
           export PATH=${PATH}:${MAVEN_HOME}/bin
           mvn -ntp clean install -Pspark-3.2 -Pspark-ut -Pbackends-velox -Prss -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark32/spark_home/" -DtagsToExclude=org.apache.spark.tags.ExtendedSQLTest,io.glutenproject.tags.UDFTest,io.glutenproject.tags.SkipTestTags && \
           mvn -ntp test -Pspark-3.2 -Pbackends-velox -DtagsToExclude=None -DtagsToInclude=io.glutenproject.tags.UDFTest
+      - name: Gluten CPP Benchmark Test
+        run: |
+          # This test depends on example.json generated by the above mvn test.
+          cd $GITHUB_WORKSPACE/cpp/build/velox/benchmarks && \
+          ./generic_benchmark --run-example --with-shuffle --threads 1 --iterations 1
 
   run-spark-test-spark32-slow:
     runs-on: ubuntu-20.04
@@ -502,8 +489,6 @@ jobs:
           export MAVEN_HOME=/usr/lib/maven 
           export PATH=${PATH}:${MAVEN_HOME}/bin
           mvn -ntp clean install -Pspark-3.3 -Pbackends-velox -Prss -Piceberg -Pdelta -Pspark-ut -DargLine="-Dspark.test.home=$GITHUB_WORKSPACE//shims/spark33/spark_home/" -DtagsToInclude=org.apache.spark.tags.ExtendedSQLTest
-
-
 
   run-spark-test-spark34:
     runs-on: ubuntu-20.04
