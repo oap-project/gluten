@@ -43,13 +43,21 @@ env:
   JENKINS_PORT: 8080
   JENKINS_USER: jenkins:11fd1b5a82bfd638bd9b3749c96b324ff2
 
+permissions:  # added using https://github.com/step-security/secure-repo
+  contents: read
+
 jobs:
   velox-trigger-benchmark:
     if: github.event.pull_request.merged == true
     runs-on: velox-self-hosted
     container: ubuntu:22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Harden Runner
+        uses: step-security/harden-runner@63c24ba6bd7ba022e95695ff85de572c04a18142 # v2.7.0
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - run: apt-get update && apt-get install ca-certificates -y && update-ca-certificates
       - run: sed -i 's/http\:\/\/archive.ubuntu.com/https\:\/\/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
       - run: apt-get update
