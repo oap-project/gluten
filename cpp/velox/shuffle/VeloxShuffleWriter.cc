@@ -25,6 +25,7 @@
 #include "utils/VeloxArrowUtils.h"
 #include "utils/macros.h"
 #include "velox/buffer/Buffer.h"
+#include "velox/common/base/Nulls.h"
 #include "velox/type/HugeInt.h"
 #include "velox/type/Timestamp.h"
 #include "velox/type/Type.h"
@@ -649,13 +650,14 @@ arrow::Status VeloxShuffleWriter::splitBinaryType(
     uint32_t binaryIdx,
     const facebook::velox::FlatVector<facebook::velox::StringView>& src,
     std::vector<BinaryBuf>& dst) {
-  auto srcRawValues = src.rawValues();
+  const auto* srcRawValues = src.rawValues();
+  const auto* srcRawNulls = src.rawNulls();
 
   for (auto& pid : partitionUsed_) {
     auto& binaryBuf = dst[pid];
 
     // use 32bit offset
-    auto dstOffsetBase = (BinaryArrayLengthBufferType*)(binaryBuf.lengthPtr) + partitionBufferBase_[pid];
+    auto dstLengthBase = (BinaryArrayLengthBufferType*)(binaryBuf.lengthPtr) + partitionBufferBase_[pid];
 
     auto valueOffset = binaryBuf.valueOffset;
     auto dstValuePtr = binaryBuf.valuePtr + valueOffset;
@@ -668,10 +670,11 @@ arrow::Status VeloxShuffleWriter::splitBinaryType(
     for (auto i = 0; i < numRows; i++) {
       auto rowId = rowOffset2RowId_[rowOffsetBase + i];
       auto& stringView = srcRawValues[rowId];
-      auto stringLen = stringView.size();
+      size_t isNull = srcRawNulls && facebook::velox::bits::isBitNull(srcRawNulls, rowId);
+      auto stringLen = (isNull - 1) & stringView.size();
 
       // 1. copy length, update offset.
-      dstOffsetBase[i] = stringLen;
+      dstLengthBase[i] = stringLen;
       valueOffset += stringLen;
 
       // Resize if necessary.
@@ -691,8 +694,8 @@ arrow::Status VeloxShuffleWriter::splitBinaryType(
         binaryBuf.valuePtr = valueBuffer->mutable_data();
         binaryBuf.valueCapacity = capacity;
         dstValuePtr = binaryBuf.valuePtr + valueOffset - stringLen;
-        // Need to update dstOffsetBase because lengthPtr can be updated if Reserve triggers spill.
-        dstOffsetBase = (BinaryArrayLengthBufferType*)(binaryBuf.lengthPtr) + partitionBufferBase_[pid];
+        // Need to update dstLengthBase because lengthPtr can be updated if Reserve triggers spill.
+        dstLengthBase = (BinaryArrayLengthBufferType*)(binaryBuf.lengthPtr) + partitionBufferBase_[pid];
       }
 
       // 2. copy value
