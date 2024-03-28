@@ -89,6 +89,7 @@ object GlutenWriterColumnarRules {
   def getNativeFormat(cmd: DataWritingCommand): Option[String] = {
     val parquetHiveFormat = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
     val orcHiveFormat = "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat"
+    val textHiveFormat = "org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"
 
     if (!BackendsApiManager.getSettings.enableNativeWriteFiles()) {
       return None
@@ -133,6 +134,8 @@ object GlutenWriterColumnarRules {
           Some("parquet")
         } else if (command.table.storage.outputFormat.get.equals(orcHiveFormat)) {
           Some("orc")
+        } else if (command.table.storage.outputFormat.get.equals(textHiveFormat)) {
+          Some("text")
         } else {
           None
         }

@@ -18,6 +18,7 @@ package org.apache.spark.sql.hive.execution
 
 import io.glutenproject.execution.datasource.GlutenOrcWriterInjects
 import io.glutenproject.execution.datasource.GlutenParquetWriterInjects
+import io.glutenproject.execution.datasource.GlutenTextWriterInjects
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.internal.config.SPECULATION_ENABLED
@@ -100,23 +101,28 @@ class HiveFileFormat(fileSinkConf: FileSinkDesc)
     if ("true".equals(sparkSession.sparkContext.getLocalProperty("isNativeAppliable"))) {
       val nativeFormat = sparkSession.sparkContext.getLocalProperty("nativeFormat")
       val isParquetFormat = nativeFormat.equals("parquet")
+      val isOrcFormat = nativeFormat.equals("orc")
       val compressionCodec = if (fileSinkConf.compressed) {
         // hive related configurations
         fileSinkConf.compressCodec
       } else if (isParquetFormat) {
         val parquetOptions = new ParquetOptions(options, sparkSession.sessionState.conf)
         parquetOptions.compressionCodecClassName
-      } else {
+      } else if (isOrcFormat) {
         val orcOptions = new OrcOptions(options, sparkSession.sessionState.conf)
         orcOptions.compressionCodec
+      } else {
+        null
       }
-
       val nativeConf = if (isParquetFormat) {
         logInfo("Use Gluten parquet write for hive")
         GlutenParquetWriterInjects.getInstance().nativeConf(options, compressionCodec)
-      } else {
+      } else if (isOrcFormat) {
         logInfo("Use Gluten orc write for hive")
         GlutenOrcWriterInjects.getInstance().nativeConf(options, compressionCodec)
+      } else {
+        logInfo("Use Gluten text write for hive")
+        GlutenTextWriterInjects.getInstance().nativeConf(options, compressionCodec)
       }
 
       new OutputWriterFactory {
@@ -136,8 +142,12 @@ class HiveFileFormat(fileSinkConf: FileSinkDesc)
             GlutenParquetWriterInjects
               .getInstance()
               .createOutputWriter(path, dataSchema, context, nativeConf);
-          } else {
+          } else if (isOrcFormat) {
             GlutenOrcWriterInjects
+              .getInstance()
+              .createOutputWriter(path, dataSchema, context, nativeConf);
+          } else {
+            GlutenTextWriterInjects
               .getInstance()
               .createOutputWriter(path, dataSchema, context, nativeConf);
           }

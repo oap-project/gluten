@@ -19,6 +19,7 @@
 #include "ORCOutputFormatFile.h"
 #include "OutputFormatFile.h"
 #include "ParquetOutputFormatFile.h"
+#include "TextOutputFormatFile.h"
 
 namespace DB
 {
@@ -83,6 +84,8 @@ OutputFormatFilePtr OutputFormatFileUtil::createFile(
         return std::make_shared<ORCOutputFormatFile>(context, file_uri, write_buffer_builder, preferred_column_names);
 #endif
 
+    if ("text" == boost::to_lower_copy(format_hint) || "csv" == boost::to_lower_copy(format_hint))
+	return std::make_shared<TextOutputFormatFile>(context, file_uri, write_buffer_builder, preferred_column_names);
 
     throw DB::Exception(DB::ErrorCodes::NOT_IMPLEMENTED, "Format not supported for file :{}", file_uri);
 }

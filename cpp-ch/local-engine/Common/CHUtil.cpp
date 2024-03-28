@@ -650,6 +650,9 @@ void BackendInitializerUtil::initSettings(std::map<std::string, std::string> & b
     settings.set("function_json_value_return_type_allow_complex", true);
     settings.set("function_json_value_return_type_allow_nullable", true);
     settings.set("precise_float_parsing", true);
+    auto delimiter = std::string(1, '\001');
+    settings.set("format_csv_delimiter", delimiter);
+    settings.set("output_format_csv_hive_style", true);
 }
 
 void BackendInitializerUtil::initContexts(DB::Context::ConfigurationPtr config)

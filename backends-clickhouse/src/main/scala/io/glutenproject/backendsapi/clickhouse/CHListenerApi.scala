@@ -20,6 +20,7 @@ import io.glutenproject.GlutenConfig
 import io.glutenproject.backendsapi.ListenerApi
 import io.glutenproject.execution.CHBroadcastBuildSideCache
 import io.glutenproject.execution.datasource.{GlutenOrcWriterInjects, GlutenParquetWriterInjects, GlutenRowSplitter}
+import io.glutenproject.execution.datasource.GlutenTextWriterInjects
 import io.glutenproject.expression.UDFMappings
 import io.glutenproject.vectorized.{CHNativeExpressionEvaluator, JniLibLoader}
 
@@ -73,6 +74,7 @@ class CHListenerApi extends ListenerApi with Logging {
     GlutenParquetWriterInjects.setInstance(new CHParquetWriterInjects())
     GlutenOrcWriterInjects.setInstance(new CHOrcWriterInjects())
     GlutenMergeTreeWriterInjects.setInstance(new CHMergeTreeWriterInjects())
+    GlutenTextWriterInjects.setInstance(new CHTextWriterInjects())
     GlutenRowSplitter.setInstance(new CHRowSplitter())
   }
 

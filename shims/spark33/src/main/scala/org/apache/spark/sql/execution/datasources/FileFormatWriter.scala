@@ -18,6 +18,7 @@ package org.apache.spark.sql.execution.datasources
 
 import io.glutenproject.execution.datasource.GlutenOrcWriterInjects
 import io.glutenproject.execution.datasource.GlutenParquetWriterInjects
+import io.glutenproject.execution.datasource.GlutenTextWriterInjects
 
 import org.apache.spark._
 import org.apache.spark.internal.Logging
@@ -279,8 +280,10 @@ object FileFormatWriter extends Logging {
       val nativeFormat = sparkSession.sparkContext.getLocalProperty("nativeFormat")
       if ("parquet".equals(nativeFormat)) {
         (GlutenParquetWriterInjects.getInstance().executeWriterWrappedSparkPlan(wrapped), None)
-      } else {
+      } else if ("orc".equals(nativeFormat)) {
         (GlutenOrcWriterInjects.getInstance().executeWriterWrappedSparkPlan(wrapped), None)
+      } else {
+        (GlutenTextWriterInjects.getInstance().executeWriterWrappedSparkPlan(wrapped), None)
       }
     }
 
