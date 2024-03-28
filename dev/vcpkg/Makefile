@@ -27,5 +27,12 @@ docker-image:
 		--tag "$(DOCKER_IMAGE)" \
 		.
 
+docker-image-gha:
+	docker build \
+		--file docker/Dockerfile.gha \
+		--tag "$(DOCKER_IMAGE)" \
+		.
+
+
 $(CCACHE_DIR) $(VCPKG_BINARY_CACHE_DIR) $(MAVEN_M2_DIR): %:
 	mkdir -p $@

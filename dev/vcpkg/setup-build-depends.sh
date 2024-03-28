@@ -35,7 +35,7 @@ install_centos_7() {
         cmake3 ninja-build perl-IPC-Cmd autoconf autoconf-archive automake libtool \
         devtoolset-9 \
         bison \
-        java-1.8.0-openjdk java-1.8.0-openjdk-devel
+        java-1.8.0-openjdk patch sudo
 
     # Requires git >= 2.7.4
     if [[ "$(git --version)" != "git version 2."* ]]; then
