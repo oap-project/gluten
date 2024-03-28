@@ -244,6 +244,15 @@ struct<1:int>
 
 
 -- !query
+SELECT corr(DISTINCT x, y), udf(corr(DISTINCT y, x)), count(*)
+  FROM (VALUES (1, 1), (2, 2), (2, 2)) t(x, y)
+-- !query schema
+struct<corr(DISTINCT x, y):double,udf(corr(DISTINCT y, x)):double,count(1):bigint>
+-- !query output
+0.9999999999999999	0.9999999999999999	3
+
+
+-- !query
 SELECT udf(1) FROM range(10) HAVING true
 -- !query schema
 struct<udf(1):int>

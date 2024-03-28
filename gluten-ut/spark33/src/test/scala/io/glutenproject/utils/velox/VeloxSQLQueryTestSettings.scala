@@ -233,10 +233,9 @@ object VeloxSQLQueryTestSettings extends SQLQueryTestSettings {
 
   private val OVERWRITE_SQL_QUERY_LIST: Set[String] = Set(
     // Velox corr has better computation logic but it fails Spark's precision check.
-    // Remove -- SPARK-24369 multiple distinct aggregations having the same argument set,
-    //        -- SPARK-37613: Support ANSI Aggregate Function: regr_r2
+    // Overwrite below test cases.
+    // -- SPARK-24369 multiple distinct aggregations having the same argument set
     "group-by.sql",
-    // Remove -- SPARK-24369 multiple distinct aggregations having the same argument set
     "udf/udf-group-by.sql"
   )
 }

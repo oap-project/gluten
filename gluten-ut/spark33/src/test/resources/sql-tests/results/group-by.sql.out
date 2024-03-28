@@ -273,6 +273,15 @@ struct<1:int>
 
 
 -- !query
+SELECT corr(DISTINCT x, y), corr(DISTINCT y, x), count(*)
+  FROM (VALUES (1, 1), (2, 2), (2, 2)) t(x, y)
+-- !query schema
+struct<corr(DISTINCT x, y):double,corr(DISTINCT y, x):double,count(1):bigint>
+-- !query output
+0.9999999999999999	0.9999999999999999	3
+
+
+-- !query
 SELECT 1 FROM range(10) HAVING true
 -- !query schema
 struct<1:int>
@@ -882,6 +891,24 @@ SELECT regr_r2(y, x) FROM testRegression WHERE x IS NOT NULL
 struct<regr_r2(y, x):double>
 -- !query output
 0.997690531177829
+
+
+-- !query
+SELECT k, corr(y, x), regr_r2(y, x) FROM testRegression GROUP BY k
+-- !query schema
+struct<k:int,corr(y, x):double,regr_r2(y, x):double>
+-- !query output
+1	NULL	NULL
+2	0.9988445981121533	0.997690531177829
+
+
+-- !query
+SELECT k, corr(y, x) FILTER (WHERE x IS NOT NULL), regr_r2(y, x) FROM testRegression GROUP BY k
+-- !query schema
+struct<k:int,corr(y, x) FILTER (WHERE (x IS NOT NULL)):double,regr_r2(y, x):double>
+-- !query output
+1	NULL	NULL
+2	0.9988445981121533	0.997690531177829
 
 
 -- !query

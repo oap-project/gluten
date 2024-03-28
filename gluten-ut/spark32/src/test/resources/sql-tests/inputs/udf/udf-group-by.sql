@@ -71,6 +71,10 @@ SELECT 1 from (
 ) b
 where b.z != b.z;
 
+-- SPARK-24369 multiple distinct aggregations having the same argument set
+SELECT corr(DISTINCT x, y), udf(corr(DISTINCT y, x)), count(*)
+  FROM (VALUES (1, 1), (2, 2), (2, 2)) t(x, y);
+
 -- SPARK-25708 HAVING without GROUP BY means global aggregate
 SELECT udf(1) FROM range(10) HAVING true;
 

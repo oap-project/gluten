@@ -84,6 +84,10 @@ SELECT 1 from (
 ) b
 where b.z != b.z;
 
+-- SPARK-24369 multiple distinct aggregations having the same argument set
+SELECT corr(DISTINCT x, y), corr(DISTINCT y, x), count(*)
+  FROM (VALUES (1, 1), (2, 2), (2, 2)) t(x, y);
+
 -- SPARK-25708 HAVING without GROUP BY means global aggregate
 SELECT 1 FROM range(10) HAVING true;
 
@@ -243,6 +247,8 @@ SELECT k, count(*) FILTER (WHERE x IS NOT NULL), regr_count(y, x) FROM testRegre
 -- SPARK-37613: Support ANSI Aggregate Function: regr_r2
 SELECT regr_r2(y, x) FROM testRegression;
 SELECT regr_r2(y, x) FROM testRegression WHERE x IS NOT NULL;
+SELECT k, corr(y, x), regr_r2(y, x) FROM testRegression GROUP BY k;
+SELECT k, corr(y, x) FILTER (WHERE x IS NOT NULL), regr_r2(y, x) FROM testRegression GROUP BY k;
 
 -- SPARK-27974: Support ANSI Aggregate Function: array_agg
 SELECT
