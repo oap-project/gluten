@@ -140,11 +140,6 @@ abstract class HashAggregateExecTransformer(
     }
 
     for (expr <- aggregateExpressions) {
-      expr.mode match {
-        case Partial | PartialMerge =>
-        case _ =>
-          throw new GlutenNotSupportException(s"${expr.mode} not supported.")
-      }
       val aggFunc = expr.aggregateFunction
       aggFunc match {
         case _ @VeloxIntermediateData.Type(veloxTypes: Seq[DataType]) =>
