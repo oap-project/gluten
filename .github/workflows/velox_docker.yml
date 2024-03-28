@@ -47,7 +47,7 @@ concurrency:
 jobs:
   build-native-lib:
     runs-on: ubuntu-20.04
-    container: inteldpo/gluten-centos-packaging:latest # centos7 with depedencies installed
+    container: apache/gluten:gluten-vcpkg-builder_2024_03_17 # centos7 with depedencies installed
     steps:
       - uses: actions/checkout@v2
       - name: Build Gluten velox third party
