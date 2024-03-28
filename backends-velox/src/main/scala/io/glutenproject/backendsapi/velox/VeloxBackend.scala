@@ -501,4 +501,6 @@ object BackendSettings extends BackendSettingsApi {
   }
 
   override def shouldRewriteCollect(): Boolean = true
+
+  override def supportAdvancedCbo(): Boolean = true
 }

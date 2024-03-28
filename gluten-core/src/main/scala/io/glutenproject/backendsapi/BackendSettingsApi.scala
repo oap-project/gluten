@@ -136,4 +136,6 @@ trait BackendSettingsApi {
   def shouldRewriteTypedImperativeAggregate(): Boolean = false
 
   def shouldRewriteCollect(): Boolean = false
+
+  def supportAdvancedCbo(): Boolean = false
 }
